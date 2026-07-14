@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { dirname, relative, resolve } from 'node:path';
 import { AUTHORED_NPC_CHARACTER_IDS } from '../src/spritegen/authored';
 import { decodePng, type Img } from './imageio';
 
@@ -304,6 +304,7 @@ function inspectCharacter(row: CharacterRow): void {
 
 function writeMarkdown(rows: CharacterRow[]): void {
   const outPath = resolve(process.cwd(), markdownOut);
+  const htmlLink = relative(dirname(outPath), resolve(process.cwd(), htmlOut)).replaceAll('\\', '/');
   const issueRows = rows.filter((row) => row.issues.length > 0);
   const lines: string[] = [
     '# Character Animation Audit',
@@ -321,7 +322,7 @@ function writeMarkdown(rows: CharacterRow[]): void {
     `- Warnings: ${rows.reduce((n, row) => n + row.issues.filter((issue) => issue.severity === 'warn').length, 0)}`,
     `- Review hints: ${rows.reduce((n, row) => n + row.issues.filter((issue) => issue.severity === 'review').length, 0)}`,
     '',
-    'Interactive playback page: [character_animation_audit.html](character_animation_audit.html)',
+    `Interactive playback page: [${htmlLink}](${htmlLink})`,
     '',
     '## Correction Workflow',
     '',

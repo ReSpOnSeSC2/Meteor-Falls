@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   CUTSCENES,
   ch8PartyCutsceneId,
+  ch9PartyCutsceneId,
   cutscenePanelFilenames,
   type CutsceneBeat,
 } from './cutscenes';
@@ -195,6 +196,32 @@ describe('cutscene registry', () => {
     expect(ch8PartyCutsceneId('dragon', false)).toBe('ch8_dragon_departed');
     expect(ch8PartyCutsceneId('heartlight', true)).toBe('ch8_heartlight');
     expect(ch8PartyCutsceneId('heartlight', false)).toBe('ch8_heartlight_departed');
+  });
+
+  it('keeps the Chapter 9 gallery canonical while every ensemble runtime cut is branch-truthful', () => {
+    const expected = [
+      'orient_less_express_to_valea',
+      'valea_stelelor_arrival',
+      'buni_feast_basket',
+      'castle_hoaxula',
+      'count_hoaxula_unmasked',
+      'monastery_bell_tower_resonance',
+      'trial_of_the_mute_mountain',
+    ];
+    expect(CUTSCENES.ch9_journey.beats.map((beat) => beat.art)).toEqual(expected);
+    for (const moment of ['train', 'arrival', 'buni', 'castle', 'unmasked', 'heartlight', 'choice'] as const) {
+      const present = ch9PartyCutsceneId(moment, true);
+      const departed = ch9PartyCutsceneId(moment, false);
+      expect(present).toBe(`ch9_${moment}_pippa`);
+      expect(departed).toBe(`ch9_${moment}_departed`);
+      expect(CUTSCENES[present].beats).toHaveLength(1);
+      expect(CUTSCENES[departed].beats).toHaveLength(1);
+      expect(CUTSCENES[present].beats[0].art).toMatch(/_pippa$/);
+      expect(CUTSCENES[departed].beats[0].art).toMatch(/_departed$/);
+    }
+    expect(CUTSCENES.ch9_trial.beats.map((beat) => beat.art)).toEqual([
+      'trial_of_the_mute_mountain',
+    ]);
   });
 
   it('prefers runtime-resolution _4x panels over legacy _01 placeholders', () => {

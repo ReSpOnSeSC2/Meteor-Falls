@@ -200,7 +200,13 @@ import {
 } from './ch2';
 import { makeFontSheet, FONT_CHARS, FONT_CELL_W, FONT_CELL_H, FONT_CHARS_PER_ROW } from './font';
 import { RAMP, C, px } from '../palette';
-import { applyAuthoredAthleteSheet, applyAuthoredBattlerSheet, applyAuthoredBustSheet, applyAuthoredGolferSheet } from './authored';
+import {
+  AUTHORED_NPC_CHARACTER_IDS,
+  applyAuthoredAthleteSheet,
+  applyAuthoredBattlerSheet,
+  applyAuthoredBustSheet,
+  applyAuthoredGolferSheet,
+} from './authored';
 
 export const GAME_W = 400 * ART_SCALE;
 export const GAME_H = 225 * ART_SCALE;
@@ -234,7 +240,10 @@ function addCharacter(scene: Phaser.Scene, id: string): void {
   const spec = CAST[id];
   // ADR-101: the 44-frame walk/run/diag sheet + the two appended IDLE frames
   // (44 breath, 45 blink). One sheet, so the idle costs nothing extra to bind.
-  addSheet(scene, id, [...generateCharacterFrames(spec), ...generateIdleFrames(spec)], 4);
+  // Authored NPC sheets are installed before this pass and do not have a CAST
+  // procedural recipe. They still need the same 46-frame animation keys.
+  if (spec) addSheet(scene, id, [...generateCharacterFrames(spec), ...generateIdleFrames(spec)], 4);
+  else if (!scene.textures.exists(id)) return;
   // the down-facing idle: a slow breath, a periodic blink (ADR-101). The
   // overworld plays it when the actor is standing still, facing the camera.
   const idleKey = `${id}-idle-down`;
@@ -451,6 +460,7 @@ function makeSpiral(): Pixmap {
 export function generateAllTextures(scene: Phaser.Scene): void {
   // characters + specials
   Object.keys(CAST).forEach((id) => addCharacter(scene, id));
+  AUTHORED_NPC_CHARACTER_IDS.forEach((id) => addCharacter(scene, id));
   addSheet(scene, 'dog', generateDogFrames(), 4);
   addSheet(scene, 'glint', generateGlintFrames(), 2);
   addSheet(scene, 'angel', generateAngelFrames(), 2);

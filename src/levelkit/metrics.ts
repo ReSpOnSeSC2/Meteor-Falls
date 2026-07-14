@@ -76,7 +76,7 @@ export function livingCityViolations(m: LivingLike): string[] {
   // facades. Collapse identical placements and prefer the doored state.
   const placed = new Map<string, LivingLike['props'][number]>();
   for (const p of m.props) {
-    if (!p.sprite.startsWith('bldg_') || !p.solid) continue;
+    if (!p.sprite.startsWith('bldg_') || !p.solid || p.facadeUse === 'outdoor-court') continue;
     // Phase art may legitimately change sprite keys (locked/open shed, dark/lit
     // storefront) while remaining one physical facade. Position + collision
     // footprint is the identity; prefer whichever state owns the real door.

@@ -19,6 +19,25 @@ painted party never contradicts serialized party state. All nine runtime/source
 panel pairs are 1600×900. Riverboat owns arrival, Yak owns the temple leg, and
 Lucille remains the non-spoiling backtracking connection.
 
+## Chapter 9 contextual runtime contract
+
+ADR-144's four-stage Chapter 9 production close retires the old single-reel
+entry behavior. `ch9_journey` remains the complete seven-panel
+gallery/reference sequence, but runtime never plays it as the Valea arrival
+reel. The Orient Less-Express owns a contextual train beat, followed only at
+their matching world moments by arrival, Buni, Castle, unmask, monastery,
+COMPASSION-choice, and solo Trial cuts. Every presentation commits its durable
+seen stage before or with the story transaction so an interrupted save resumes
+at the next uncommitted beat.
+
+Train, arrival, Buni, Castle, unmask, monastery, and choice each ship a
+1600×900 `_pippa` / `_departed` pair. The present composition contains Jay,
+Mia/Faye, Milo, Dorin, and Pippa; the departed composition contains Jay,
+Mia/Faye, Milo, and Dorin. Runtime selects from serialized Pippa state. The solo
+Trial panel is shared. All fourteen contextual runtime panels have matching
+source masters. Dorin has travelled since Chapter 5: the Trial is his name/Comet
+Ω awakening and never a join scene.
+
 How cutscenes are made now, the per-beat execution plan, and **the stages/sprites
 that still need to be built** for the hybrid versions. Pairs with
 [`PROMPT_WORLD_ANIMATIONS.md` §7](PROMPT_WORLD_ANIMATIONS.md) (the beat list) and
@@ -47,15 +66,17 @@ or a Heartlight wakes → HYBRID (where a map exists to stage on).
 
 Hybrid needs an **overworld map to stage on** and **sprites for the cast**.
 
-- **ch1–ch8:** executable map stages exist. Chapters 4, 6, 7, and 8 have
+- **ch1–ch9:** executable map stages exist. Chapters 4, 6, 7, 8, and 9 have
   production-scale world contracts; a beat may still deliberately use a STILL
   when spectacle or travel reads better than sprite blocking.
-- **ch9–ch10:** retain their existing execution until their own production-stage
-  and cast contracts are reviewed. Do not use Chapter 8's implementation to infer
-  their hybrid readiness.
+- **ch9:** its implemented, production-closed stages are `valea_stelelor`,
+  `old_road`, `castle_hoaxula`, and `stone_brow_monastery`.
+- **ch10:** retain its existing execution until its own production-stage and
+  cast contracts are reviewed.
 
-So "mostly use the overworld map" is the plan — it just can't apply to chapters
-whose overworld doesn't exist yet. Those play as stills in the meantime, no waste.
+So "mostly use the overworld map" applies through Chapter 9 where the
+implemented stage contract calls for it. Chapter 10 retains deliberate stills
+until its own stages exist.
 
 ---
 
@@ -70,24 +91,27 @@ Ordered by payoff. Each unblocks the HYBRID column below.
 | **Llama** overworld NPC loader | ch2 llama_jungle_paths | ambient sprite exists; needs an `NPC_CHARACTER_ART` entry |
 | **Wintermoor groundskeeper, porter** | ch3 greenhouse/first-borrow | no art — author 2 sheets |
 | **ch4 loaders:** kvisthavn_fisher, kvisthavn_shopkeeper, mayor_of_lilleby, lilleby_giant_child, lilleby_undertaker | ch4 town beats | **PNG masters already exist — just add `NPC_CHARACTER_ART` loaders** (cheap win) |
-| **Buni, Count Hoaxula** | ch9 | no art — author 2 sheets |
+| **Valea live cast, Count Hoaxula** | ch9 | Nine live villagers reuse four strict-clean 46-frame sheet identities; Count's registered battle/mini forms serve reveal cards, so no new NPC sheet identity is required |
 | Boss overworld stand-ins (Whisperwig, Whiskerzilla, Cobra Raja, paper dragon, etc.) | reveals | optional — reveals can use the battle art as a card instead |
 
 ### B. Overworld maps (the actual stages — the big one)
-Production stages now exist through Chapter 8. The Chapter 8 stage roster is
+Production stages now exist through Chapter 9; Chapter 9's replacement stages
+are implemented and closed under ADR-144. The Chapter 8 stage roster is
 exactly `lotus_harbor`, `bamboo_road`, `spore_forest`, and `mt_shu_temple`;
-do not revive the historical “no maps” blocker. Remaining stage work belongs to:
-- **ch9:** valea, castle_hoaxula, monastery, mute_mountain
+Chapter 9 keeps exactly `valea_stelelor`, `old_road`, `castle_hoaxula`, and
+`stone_brow_monastery`; the Trial is a court inside Stone Brow, not a fifth
+`mute_mountain` map. Do not revive either historical “no maps” blocker.
+Remaining unfrozen stage work belongs to:
 - **ch10:** sea_of_silence, aurora_station, launch_site
 
 Until a map exists, I keep that chapter's beats as stills and wire them at
 chapter entry.
 
 ### C. Dialogue
-Historical scaffold panels often had empty captions. Chapter 8's contextual
-runtime dialogue and branch reactions are now authored in the world scenes;
-do not classify it as blocked on dialogue. Review later chapters beat by beat
-rather than carrying the old ch2–ch10 blanket assumption forward.
+Historical scaffold panels often had empty captions. Chapters 8 and 9 now have
+authored contextual runtime dialogue and branch reactions in their world
+scenes; do not classify either as blocked on dialogue. Review later chapters
+beat by beat rather than carrying the old ch2–ch10 blanket assumption forward.
 
 ---
 
@@ -170,12 +194,18 @@ production world supplies the riverboat quay, harbor terraces, forest safe
 pockets, Yak terrace, folded guardian halls, Dragon arena, and separate bell
 approach; Chapter 8 is no longer blocked on maps or named NPC sheets.
 
-### Ch9 — Valea · ❌ NO MAPS → STILL
-orient_less_express_to_valea, valea_stelelor_arrival, buni_feast_basket,
-castle_hoaxula, count_hoaxula_unmasked, monastery_bell_tower_resonance,
-**trial_of_the_mute_mountain (Dorin joins ✅ + dialogue exists →HYBRID)**.
-→ STILL; the Dorin trial is the prime hybrid once a Valea map exists. Needs
-Buni + Count Hoaxula sprites.
+### Ch9 — Valea · ✅ PRODUCTION MAPS → CONTEXTUAL RUNTIME PANELS
+`orient_less_express_to_valea`, `valea_stelelor_arrival`, `buni_feast_basket`,
+`castle_hoaxula`, `count_hoaxula_unmasked`,
+`monastery_bell_tower_resonance`, and `trial_of_the_mute_mountain` remain the
+seven-beat gallery/reference order. Runtime instead plays only the matching
+train, arrival, Buni, Castle, unmask, monastery, COMPASSION-choice, and solo
+Trial moments. Train/arrival/Buni/Castle/unmask/monastery/choice use the fourteen
+shipped, Dorin-correct Pippa-present/departed runtime panels selected from
+serialized state; all fourteen retain source masters. Trial is shared and
+stages Dorin's birth name and Comet Ω awakening. The production world supplies
+Valea's rail apron, Old Road, attraction/backstage route, separate boss/choice
+chambers, and Stone Brow's trial/name/bell courts. No join occurs.
 
 ### Ch10 — Mars / Endgame · ❌ NO MAPS → STILL / SPECTACLE
 sea_of_silence_arrival, tiki_magma_golem, mauna_lani_parts_run,
@@ -194,7 +224,7 @@ the launch + homesong are the animation candidates.
    Heartlight (maps/cast all exist). *Fully buildable now.*
 2. **ch2–ch3 hybrids** — prepend `showCard()` to the wired scenes + author the
    missing groundskeeper/porter sprites. *Buildable now.*
-3. **Maintain contextual cuts for production chapters 4–8** — preserve each full
+3. **Maintain contextual cuts for production chapters 4–9** — preserve each full
    gallery reel and attach only spoiler-safe one-beat ids at runtime.
-4. **Ch9–10 stages and missing cast** — review those chapters independently;
-   until then their deliberate stills remain live.
+4. **Ch10 stages and missing cast** — review the finale independently; until
+   then its deliberate stills remain live.

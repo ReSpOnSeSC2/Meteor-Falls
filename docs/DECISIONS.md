@@ -6589,3 +6589,64 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   order require migration and focused contract-test review. Exact gate, editor,
   art, render, and live-QA evidence belongs in
   `docs/CH8_PRODUCTION_VERIFICATION.md`. ☄️
+
+## ADR-144 — CHAPTER 9 PRODUCTION CONTRACT (four Romania maps, train arrival, save v26)
+
+- **Date:** 2026-07-14
+- **Status:** Accepted and implemented for the Chapter 9 production rollout.
+  Measured gate/live-QA evidence is recorded in
+  `docs/CH9_PRODUCTION_VERIFICATION.md`; registration or the old compact
+  scaffold alone is not production proof. This
+  decision explicitly supersedes “unlanded / no maps / no art,” the 5,300-HP
+  Count, the twenty-enemy and 10–15-NPC package quotas, the Lucille-owned Valea
+  arrival, and the claim that Dorin joins in Romania.
+- **Decision — stable four-map world:** Chapter 9 keeps the save-facing ids
+  `valea_stelelor`, `old_road`, `castle_hoaxula`, and
+  `stone_brow_monastery`, rebuilt at 80×64, 96×72, 72×96, and 64×88.
+  `src/data/maps_ch9.ts` and exported `CH9_WORLD` own dimensions, reciprocal
+  mouths, player-feet landings, recovery and migration points, story/choice
+  rectangles, parking, and developer profiles. Valea is a crescent village
+  above a rail apron; the Old Road is a screened/exposed switchback with three
+  safe pockets; Castle Hoaxula is a bankrupt attraction route from ticket queue
+  through backstage to separate boss and choice chambers; Stone Brow is a quiet
+  three-court trial/name/bell procession without random encounters.
+- **Decision — train and contextual cinema:** the **Orient Less-Express** owns
+  the canonical Chapter 9 arrival. Bert and Lucille do not fly the party to
+  Valea, and the train is a visible exterior landmark rather than a new dungeon
+  or a door into Chapter 7's train. `ch9_journey` remains a seven-panel gallery,
+  never an entry reel. Runtime plays only the matching train, arrival, Buni,
+  castle, unmask, monastery, choice, and solo-trial moments. Party-visible
+  moments select Pippa-present or Pippa-departed 1600×900 panels from serialized
+  state and include Dorin, who has travelled with the party since Chapter 5.
+- **Decision — focused content:** the regional quest is `bunis_table`; its five
+  flag-backed ingredients, full-bag reward retry, Feast Basket, recipe, and Buni
+  Caller are idempotent and remain reachable after the boss. The regular roster
+  is exactly Haystack Mimic (12,000 HP), Ribcage Rattler (15,000), Moss Strigoi
+  (17,000), Animated Armor (20,000), and Wolf of the Old Road (24,000), plus
+  **Count Hoaxula at 95,000 HP**. Every regular and both Count forms require
+  base/wear-1/wear-2 art that is visibly progressive and byte-distinct.
+- **Decision — boss, choice, and awakening order:** the Count starts
+  THEATRICAL, escrows one valid equipped slot on turn two without removing the
+  item from its owner's bag, switches once at inclusive 50% to UNMASKED, and
+  permits good-or-better PRAY mercy only while unmasked. Every terminal path
+  restores the exact equipment slot before Overworld save control returns.
+  Victory commits before the separate COMPASSION choice. OPEN HAND clears the
+  Stolen Light/withholding consequences and grants Vlad's Caller; IRON banks
+  Stolen Light and `dorin_withholds`. Stone Brow then commits the Trial, Dorin's
+  birth name and Comet Ω awakening, Heartlight 9, Ember 9, and completion as
+  independently resumable stages. This is Dorin's homecoming, never a join.
+- **Decision — compatibility and art:** save version is **26**. v25→v26
+  deterministically recovers positions on exactly the four rebuilt maps and
+  Chapter 9 parking to Valea's apron, recurses through Held Breath snapshots,
+  rejects future versions, and preserves unrelated story, branch, party,
+  inventory, economy, property, vehicle, quest, Caller, echo, and departed-hero
+  state. The retained Romania strip, eight Valea facades, four strict-clean NPC
+  sheets, Castle background, enemy/mini bases, train strip, and existing panel
+  compositions are reused. New raster work is limited to branch-truthful
+  contextual panels, genuinely distinct missing wear, and retained provenance;
+  shared authored attraction props are reused before new world art.
+- **Consequences:** changes to a stable id, `CH9_WORLD` point, train ownership,
+  Buni transaction, focused roster, Count phase/theft cleanup, COMPASSION
+  transaction, Pippa/Dorin panel rule, monastery chronology, or v26 recovery
+  require focused contract, migration, and asset-test review. The durable
+  implementation contract is `docs/chapters/ch9/blueprint.md`. ☄️

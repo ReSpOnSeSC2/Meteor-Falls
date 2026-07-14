@@ -161,11 +161,11 @@ export const ABILITIES: Record<string, AbilityDef> = Object.fromEntries(
     // martial artist's kit roughly doubles (7 → ~14): the Comet, Healing, and
     // Brainjam ladders complete; Mirror gains a party version (nearly free on
     // the S16 mitigateIncoming seam); and two MARTIAL STANCES make his own turn
-    // a defensive/offensive choice. He joins late (Ch.9) nearly complete — a
-    // master, not a student — so his unlocks cluster high. Voice: formal, calm,
+    // a defensive/offensive choice. His Ch.9 homecoming completes the path of a
+    // master, not a new recruit, so his unlocks cluster high. Voice: formal, calm,
     // faintly baffled by the modern world; his battle lines read like sutras.
-    // ADR-133 (curve re-eval): Comet RE-DERIVED for Dorin's REAL join (ADR-125 — he
-    // joins L26 / Ch.5-end and travels Ch.6→10, NOT the old Ch.9 join the §1d ceiling
+    // ADR-133 (curve re-eval): Comet RE-DERIVED for Dorin's Ch.5-end recruitment
+    // (ADR-125 — he joins at L26 and travels Ch.6→10, NOT the obsolete Ch.9 join the §1d ceiling
     // numbers were computed for). The old powers (α1070…Ω6497) made him ~×4 over-band
     // the moment he joined (Comet β alone = ~4,170 AoE at L26). Re-derived on the band
     // curve at his real earn-levels (α on-join L26→Ch.6, β L33→Ch.7, γ L40→Ch.8,
@@ -176,7 +176,7 @@ export const ABILITIES: Record<string, AbilityDef> = Object.fromEntries(
     A({ id: 'vibe_comet_b', name: 'Vibe Comet Beta', kind: 'vibe', pp: 30, power: 900, target: 'enemies', element: 'none', text: '{user} called down the cold stars!', fx: 'comet_b' }),
     A({ id: 'vibe_comet_g', name: 'Vibe Comet Gamma', kind: 'vibe', pp: 44, power: 2000, target: 'enemies', element: 'none', text: 'The mountain answers. The sky falls.', fx: 'comet_g' }),
     // Comet Ω is the single awakening now (trial_of_the_mute_mountain, §6) — the
-    // mastery earned at the Trial that lets him join. NOT a level unlock.
+    // mastery earned at the homecoming Trial. NOT a level unlock or join gate.
     A({ id: 'vibe_comet_o', name: 'Vibe Comet Omega', kind: 'vibe', pp: 60, power: 3400, target: 'enemies', element: 'none', text: 'The sky opened. The stars remembered.', fx: 'comet_o' }),
     A({ id: 'mirror', name: 'Mirror', kind: 'vibe', pp: 4, power: 0, target: 'self', element: 'none', status: 'mirror', text: '{user} became perfectly still water.', fx: 'mirror_snap' }),
     // party Mirror — overlaps Jay's Power Shield on purpose but lands FASTER

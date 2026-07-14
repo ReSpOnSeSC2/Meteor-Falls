@@ -705,6 +705,11 @@ the game; §A6 levels 46 / 52–55+), banded, iconed (forged tail / hand-drawn s
 headlessly: tsc + full vitest + the validator + `vite build` + the `art:icons` region/forge sheets read
 by eye. **The catalog ends with the LAST item in the game — the Player's House Key.**
 
+**Current supersession (2026-07-14):** this M21 section remains an accurate
+catalog-era log, but its “UNLANDED” scope is historical. Chapter 9 is now
+production-closed under ADR-144; the current measured QA record appears at the
+end of this document and in `docs/CH9_PRODUCTION_VERIFICATION.md`.
+
 | Check | Result |
 |---|---|
 | **Ch.9 Romania — the emotional heart** — Mia's **THE HOLY PAN** (§A8 TOP — the monastery's sincere home, price 0), the **Candelabra** (Hoaxula's boss-drop), **BUNI'S PANTRY** (Sarmale §A8; **Mămăligă cu Brânză** = best HP/$ in the game; the 5 Feast Basket ingredients §A10 #18; cozonac/mici/ciorbă/plăcintă/papanași), **Monastery Tea** (§A8), the căciulă hat rung + velvet/harvest/monastery bodies, the **MONASTERY BELL CLAPPER** (§A8 key — Stone Brow, NOT Mt. Shu), the **Saint's Medal** (HOLY-resist, completing the §A8 four), Hoaxula's theatrical props (fake fangs, a Cleveland season pass, Vibe in a jar), a sincere Vigil-Candle revival | ✅ 45 items; `WEAPON_LADDER[ch9]`/`PP_LINE[ch9]`/`ARMOR_LINE[ch9]` pass both ways; mămăligă asserted best HP/$ in the whole catalog |
@@ -827,24 +832,34 @@ ADR-059/060). No save migration — Milo's join is a party push + a flag; the aw
 | `npm run validate` + `npx tsc --noEmit` + `npx vite build` + `npm run balance` | ✅ validator GREEN (0 fails) + tsc clean + `vite build` clean + balance read by eye (the Mainframe falls in a fair window at lvl 18) |
 | Full `npx vitest run` | ⚠ all Ch.3 Part-2 suites green; the only reds remain the CONCURRENT, in-development `occupyCity` "Living-City Law (S18)" cases (the user's in-flight work, independent of Ch.3) |
 
-## Chapter 8 production close — ADR-143 (2026-07-13)
+## Chapter 8 production close — ADR-143 (published 2026-07-13)
 
-This is the current Chapter 8 QA contract. It supersedes the M20 catalog-only
-assumptions above. Exact exit codes, totals, visual findings, and control states
-must be copied from the final run into `docs/CH8_PRODUCTION_VERIFICATION.md`;
-unchecked rows must not be described as optional polish.
+This published result replaces the earlier pre-final table. The complete record
+is `docs/CH8_PRODUCTION_VERIFICATION.md`.
 
-| Check | Close state |
+| Check | Published final result |
 | --- | --- |
-| Four production maps, reciprocal/body-safe routes, `CH8_WORLD`, twenty-two Lotus units, historical services, eight explicit facade promotions | implementation and focused contracts present; actual-method runtime 9/9, broader behavioral 108/108, maps 21/21, migrations + Title 230/230; pre-final generated manifest had 62 tiles, 325 props, 276 facades, 10 regions, 99 NPCs, 1,461 dialogue IDs, 275 maps, 154 handlers / 153 used trigger IDs; final regeneration **pending** |
-| Riverboat arrival, Yak transition, spoiler-safe contextual panels, branch-safe Pippa compositions | implementation and asset contracts present; final live observations **pending** |
-| Trust compatibility, Clicker public clearing, Pippa stay/departed serialized bench | implementation and focused contracts present; final live observations **pending** |
-| Mushroomized: common-input deterministic phases; keyboard/touch/controller parity; Spore Antidote, reusable Scroll, doctor, defeat recovery | implementation and automated contracts present; touch A/D-pad combat input verified, but live Mushroomized movement/cures remain **pending**; physical controller unavailable |
-| Teleport Alpha/Beta: one elder grant, 96/32 run-ups, PP accounting, wall failure, visited safe arrivals, follower/vehicle behavior, modal locks | implementation and automated contracts present; live success/wall-failure observations **pending** |
-| Exactly five quests, full-bag retries, exactly-once rewards/Callers, permanent footprints and post-boss backtracking | implementation and focused contracts present; final focused summary **pending** |
-| Four regular enemies; Spore infliction; Origami dedicated `refold` move kind with four-turn physical shield + FIRE/FREEZE profile shared by damage and Spy/Scope; Porcelain split; 45,000-HP Paper Dragon AIRBORNE/grounded/BURNING; Paper Fan before bell | Origami focused combat **pass 15/15** and typecheck pass; final enemy-frame/balance/live observations **pending** |
-| Save v25 migration and thirteen development profiles | implementation and focused contracts present; final migration/profile summaries **pending** |
-| Typecheck, door audit, mapeditor generation, validation, strict visual, enemy frames, strict animation, balance, focused tests, full tests, build, Ch8 render, diff check | typecheck **pass**; focused safety groups above **pass**; strict visual **pass 144/144 authored, 0 legacy**. Mapeditor/render observations are explicitly **non-closing pre-final snapshots**; all final aggregate/regenerated gates remain **pending final close run** |
-| Original-resolution map/facade/cutscene/enemy/NPC review and settled browser-console inspection | pre-final map sheet reviewed: all 27 panels present, no geometry defect; hotel-title renderer issue fixed; final rerender/rereview and remaining art review **pending final close record** |
-| Live controls and responsive layouts | desktop 1280×720 rendered Lotus Harbor, Bamboo Road, and regular Ch8 combat; KeyZ advanced dialogue/combat. Phone portrait 390×844 and landscape 844×390 rendered; touch A and D-pad selection worked in Ch8 combat. Physical controller unavailable, so no live controller pass is claimed. Remaining critical-path states **pending** |
-| Browser console | live QA exposed an unhandled `navigator.storage.persist` rejection; `native.ts` was patched and the post-fix console retest is **pending** |
+| World and editor | **PASS** — four production maps and `CH8_WORLD`; `maps_ch8` 21/21; 22 Lotus units; 62 tiles, 325 props, 276 facades, 10 regions, 99 NPCs, 1,461 dialogue ids, 275 maps, 154 handlers / 153 used trigger ids. |
+| Story and systems | **PASS** — riverboat/Yak travel, contextual Pippa variants, Trust/Clicker continuity, serialized departed bench, Mushroomized lifecycle, elder-only Teleport Beta, and five retry-safe quests. |
+| Combat | **PASS** — four focused regulars, real Refold runtime, and 45,000-HP Paper Dragon with AIRBORNE/grounded/BURNING phases and retry-safe Paper Fan. |
+| Save and profiles | **PASS** — deterministic recursive v25 migration and thirteen coherent development profiles. |
+| Final automated gates | **PASS** — strict visual 144/144 authored and 0 legacy; enemy frames 147/147 hi-res; strict animation 84/100 clean, 0 errors, 0 warnings, 58 reviewed hints; full tests 123/123 files and 2,017/2,017 tests; build 1,066 modules. |
+| Map/encounter evidence | **PASS** — 275-map door audit with no real door defects; `output/maps_ch8.png` 1186×7084 with 27 panels; 273/275 encounter-pressure clear with only two frozen-rotor waivers. |
+| Original-resolution and live QA | **PASS** — map, facade, cutscene, NPC, regular-enemy, and Dragon-form review clean; desktop and phone layouts/touch exercised; fresh settled console 0 warnings / 0 errors; QA tabs/server closed. Physical controller hardware was unavailable and no hardware pass was claimed. |
+
+## Chapter 9 production close — ADR-144 (2026-07-14)
+
+This is the current Chapter 9 QA result. Exact evidence and waiver wording live
+in `docs/CH9_PRODUCTION_VERIFICATION.md`.
+
+| Check | Final result |
+| --- | --- |
+| Four-map world and cast | **PASS** — Valea 80×64, Old Road 96×72, Castle 72×96, Stone Brow 64×88; centralized `CH9_WORLD`; reciprocal body-safe route; nine villagers reusing four sheets; five pickup cues; Castle picnic recovery. |
+| Story, quest, choice, and continuity | **PASS** — resumable train/arrival; Buni partial/full-bag/exactly-once behavior; OPEN HAND/IRON atomicity; exact Held Breath restoration/re-decision; Pippa-present/departed copy and art; separately resumed trial, name, awakening, Heartlight, Ember 9, and completion. |
+| Combat | **PASS** — five distinct regulars with useful drops and real wear; theatrical theft/restore, cadence counters, exact 50% unmask, UNMASKED-only mercy, and every terminal path tested; Count stays 95,000 HP at level 46 with conservative TTK 5 / read TTK 4. |
+| Save and profiles | **PASS** — deterministic recursive v26 geometry migration; 25 coherent states including ten present/departed pairs and direct real-battle contexts. |
+| Focused/full tests | **PASS** — focused 17/17 files and 462/462 tests; full 133/133 files and 2,177/2,177 tests; TypeScript clean. |
+| Editor, map, and encounters | **PASS** — 273 generated maps; 0 real door defects, 11 intentional one-way transitions, 2 frozen-pyramid door waivers; validator 270/273 static with 3 frozen-rotor waivers and 271/273 pressure with 2; encounters 271/273 clear with the same 2 pressure waivers. |
+| Art/audits/render | **PASS** — fourteen contextual panels plus masters, eleven wear corrections plus masters, thirteen reviewed contacts; strict visual 144/144 authored and 0 legacy; enemy frames 147/147 hi-res; animation 84/100 clean, 0 errors, 0 warnings, 58 inherited reviewed hints; 1186×1088 four-panel map render clean at original resolution. |
+| Build and browser | **PASS** — 1,082-module build; desktop critical path plus both choices and calm backtracking; portrait full-bag retry; landscape real unmasked battle/touch; fresh `completeDeparted` console 0 warnings / 0 errors; tabs finalized and server stopped. Physical controller hardware was unavailable and no hardware pass is claimed. |
+| Scope | **PASS** — protected primary hashes unchanged; protected paths, `tmp/**`, and baseline reports excluded; exact literal allow-list commit only; no push or merge. |

@@ -1,11 +1,11 @@
 # Asset Work Packages — parallel production
 
 The full art job (see [`../IMAGE_ASSET_MANIFEST.md`](../IMAGE_ASSET_MANIFEST.md))
-split into **17 self-contained packages** so multiple people/agents can work in
-parallel. Each `PKG-NN.md` is standalone: scope, exact image checklist, sizes,
-filenames, and how it wires into the engine. Pick a package, produce its PNGs,
-drop them in the listed `assets/art/...` path, add the one-line entry to the
-matching list in `src/spritegen/authored.ts`.
+was split into **17 self-contained packages** so multiple people/agents could
+work in parallel. Each `PKG-NN.md` is standalone: scope, image checklist,
+sizes, filenames, and engine wiring. Check its current status/supersession note
+before starting; a production-closed package is a retained record, not a work
+queue to rerun.
 
 ## Packages
 
@@ -25,13 +25,24 @@ matching list in `src/spritegen/authored.ts`.
 | 12 | Ch.5 Minimus — full region bundle | ~110 | — |
 | 13 | Ch.6 Africa — full region bundle | ~110 | — |
 | 14 | Ch.7 India — full region bundle | ~110 | — |
-| 15 | Ch.8 China — full region bundle | ~110 | — |
-| 16 | Ch.9 Romania — full region bundle | ~110 | — |
+| 15 | Ch.8 China — completed production package (ADR-143) | closed retained set + additions | — |
+| 16 | Ch.9 Romania — retained package + completed production remediation | retained set + 25 runtime edits / 25 masters | — |
 | 17 | Ch.10 Alaska/Hawaii/Mars finale | ~140 | — |
 
-All packages are **independent** — no package blocks another, so all 17 can run
-at once. Packages 11–17 each follow the same per-region template (§18 of the
-manifest); 01–10 are the global/cross-chapter art.
+The packages were designed to be **independent**: open packages can run in
+parallel without blocking one another. Packages 11–17 originated from the same
+per-region template (§18 of the manifest), but newer chapter ADRs supersede its
+historical quotas. In particular, closed Chapters 8 and 9 are records, not open
+parallel assignments; 01–10 remain the global/cross-chapter briefs.
+
+> **PKG-16 supersession (ADR-144, 2026-07-14):** Chapter 9 is not a blank
+> ~110-image region bundle. Its Romania strip, eight facades, four strict-clean
+> NPC sheets, background, enemy/mini bases, train, and source compositions are
+> retained; nine live villagers reuse the four sheet identities. Its completed
+> remediation adds fourteen branch-truthful contextual runtime panels with
+> fourteen source masters plus eleven distinct wear corrections with eleven
+> generated masters. PKG-16 is production-closed; see
+> [`PKG-16-ch9-Romania.md`](PKG-16-ch9-Romania.md).
 
 ## Shared rules (every package)
 

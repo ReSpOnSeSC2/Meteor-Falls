@@ -341,8 +341,8 @@ export const BOSS_SCRIPTS: Record<string, BossScriptDef> = {
   // Hushed theme-park actor from Cleveland, broke and armed with stolen Vibe. THEATRICAL
   // phase — fake spells, real damage; on turn 2 he palms one of the party's equipped
   // items (returned on win). UNMASKED at 50% HP — the cape drops, the Cleveland accent
-  // sobs through, the attacks go wild AoE. Mia's PRAY at "good" tier or better ends the
-  // second phase in MERCY (the game's quietest victory — returnStolen + endBattleMercy).
+  // sobs through and the attacks become desperate. Mia's PRAY at "good" tier or better
+  // ends the second phase in MERCY; BattleScene restores any stolen gear atomically.
   // The `mercyEnding` template (forge/bosses.ts), expanded inline with real §A11 dialogue
   // ids. Weak to FIRE (he is paper, wax, and greasepaint); mind_immune rides the EnemyDef.
   // Heartlight 9. Money > combat: 95,000 HP sits far under the Ch.9 Fortune target ($400M).
@@ -385,25 +385,31 @@ export const BOSS_SCRIPTS: Record<string, BossScriptDef> = {
         id: 'command_windup',
         trigger: { kind: 'turnCount', n: 3, every: 3 },
         once: false,
-        actions: [{ kind: 'windup', line: 'hoaxula_command', amount: 800, status: 'crying', turns: 1 }],
+        actions: [{
+          kind: 'windup',
+          line: 'hoaxula_command',
+          amount: 800,
+          element: 'volt',
+          status: 'crying',
+          turns: 1,
+        }],
       },
       {
         // under 50% HP — the cape comes off and the man from Cleveland is underneath
         id: 'unmask',
-        trigger: { kind: 'hpBelow', frac: 0.5 },
+        trigger: { kind: 'hpBelow', frac: 0.5, inclusive: true, form: 'theatrical' },
         actions: [
-          { kind: 'setForm', form: 'unmasked' },
           { kind: 'scriptLine', line: 'hoaxula_unmask' },
+          { kind: 'setForm', form: 'unmasked' },
         ],
       },
       {
         // Mia's Pray at "good" or better — the quiet mercy that ends it (returns the gear)
         id: 'mercy',
-        trigger: { kind: 'prayTierAtLeast', tier: 'good' },
-        actions: [
-          { kind: 'returnStolen' },
-          { kind: 'endBattleMercy' },
-        ],
+        trigger: { kind: 'prayTierAtLeast', tier: 'good', form: 'unmasked' },
+        // BattleScene's terminal mercy effect atomically freezes the outcome,
+        // returns the exact stolen slot, then presents the ending copy.
+        actions: [{ kind: 'endBattleMercy' }],
       },
     ],
   }),

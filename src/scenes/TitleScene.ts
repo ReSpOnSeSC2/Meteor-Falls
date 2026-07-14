@@ -2,8 +2,10 @@
 import { INPUT } from '../engine/input';
 import { AUDIO } from '../engine/audio';
 import { GS, makeHeroState, type MushroomizeState } from '../engine/state';
-import type { CallerRecord } from '../schemas';
+import type { CallerRecord, EquipSlot } from '../schemas';
 import { departHero } from '../engine/party';
+import { captureEcho } from '../engine/echo';
+import { clearDownstreamChoiceFlags, recordChoice } from '../engine/choice';
 import { Dialogue } from '../ui/windows';
 import { colorOf } from '../palette';
 import { RAMP, px } from '../palette';
@@ -20,6 +22,10 @@ import { CH5_MAP_IDS, CH5_WORLD } from '../data/maps_ch5';
 import { CH6_MAP_IDS, CH6_WORLD } from '../data/maps_ch6';
 import { CH7_MAP_IDS, CH7_WORLD } from '../data/maps_ch7';
 import { CH8_MAP_IDS, CH8_WORLD } from '../data/maps_ch8';
+import { CH9_MAP_IDS, CH9_WORLD } from '../data/maps_ch9';
+import { BAG_MAX } from '../data/items';
+import { QUESTS } from '../data/quests';
+import { CHOICES } from '../data/choices';
 import { CH8_CLICKER_CALLER } from '../engine/ch8Story';
 
 export const CH3_DEV_MAP_IDS = [
@@ -440,6 +446,355 @@ export function chapter8DevSpawn(mapId: string, state: Chapter8DevState): { x: n
   };
 }
 
+export const CH9_DEV_MAP_IDS = CH9_MAP_IDS;
+const CH9_DEV_MAP_SET: ReadonlySet<string> = new Set(CH9_DEV_MAP_IDS);
+
+export const CH9_DEV_STATES = [
+  'arrival', 'arrivalDeparted', 'village', 'buniActive', 'buniFull',
+  'buniFullDeparted', 'oldRoad', 'castleEntry', 'preBoss', 'preBossDeparted',
+  'theatrical', 'postUnmask', 'postUnmaskDeparted', 'postBoss',
+  'postBossDeparted', 'iron', 'ironDeparted', 'openHand', 'openHandDeparted',
+  'monastery', 'monasteryDeparted', 'awakening', 'awakeningDeparted',
+  'complete', 'completeDeparted',
+] as const;
+export type Chapter9DevState = (typeof CH9_DEV_STATES)[number];
+export type Chapter9HeroId = 'rex' | 'faye' | 'milo' | 'pippa' | 'dorin';
+export type Chapter9DevChoice = 'iron' | 'mercy' | null;
+
+/** Each named STRINGS-path profile is the exact story twin of its present-Pippa
+ * state. Keeping that relation in one table prevents battle, spawn, and flag
+ * staging from drifting as the developer survey matrix grows. */
+const CH9_DEPARTED_BASE_STATE = {
+  arrivalDeparted: 'arrival',
+  buniFullDeparted: 'buniFull',
+  preBossDeparted: 'preBoss',
+  postUnmaskDeparted: 'postUnmask',
+  postBossDeparted: 'postBoss',
+  ironDeparted: 'iron',
+  openHandDeparted: 'openHand',
+  monasteryDeparted: 'monastery',
+  awakeningDeparted: 'awakening',
+  completeDeparted: 'complete',
+} as const satisfies Readonly<Partial<Record<Chapter9DevState, Chapter9DevState>>>;
+
+function chapter9BaseState(state: Chapter9DevState): Chapter9DevState {
+  return CH9_DEPARTED_BASE_STATE[state as keyof typeof CH9_DEPARTED_BASE_STATE] ?? state;
+}
+
+export interface Chapter9HeroLoadout {
+  readonly bag: readonly string[];
+  readonly equip: Readonly<Partial<Record<EquipSlot, string>>>;
+}
+
+/** BattleScene consumes this optional developer-only phase seam. Keeping it on
+ * the ordinary launch object means the named phase labels run the real battle scene,
+ * including theft, windups, mercy, teardown, and equipment restoration. */
+export interface Chapter9DevBattleContext {
+  readonly form: 'theatrical' | 'unmasked';
+  readonly hp: 95000 | 47500;
+  readonly bossTurns: 0 | 2;
+  readonly introSeen: boolean;
+  readonly stolen?: Readonly<{ heroId: 'rex'; slot: 'weapon' }>;
+}
+
+export interface Chapter9DevBattleLaunchConfig {
+  enemyIds: ['count_hoaxula'];
+  advantage: 'none';
+  guestChad: false;
+  glintAssist: false;
+  glintSupernova: false;
+  boss: true;
+  backdrop: 'castle_hoaxula';
+  prayTutorial: false;
+  devContext: Chapter9DevBattleContext;
+}
+
+export interface Chapter9DevProfile {
+  readonly state: Chapter9DevState;
+  readonly flags: readonly string[];
+  readonly embers: 8 | 9;
+  readonly keyItems: readonly string[];
+  readonly party: readonly Chapter9HeroId[];
+  readonly departed: readonly Chapter9HeroId[];
+  readonly level: 46;
+  readonly rewindCount: number;
+  readonly callers: readonly CallerRecord[];
+  readonly loadouts: Readonly<Record<Chapter9HeroId, Chapter9HeroLoadout>>;
+  readonly fullBag: boolean;
+  readonly choice: Chapter9DevChoice;
+  readonly echoAnchor: 'ch9_count' | null;
+  readonly battleContext: Chapter9DevBattleContext | null;
+}
+
+const CH9_FULL_PARTY = ['rex', 'faye', 'milo', 'pippa', 'dorin'] as const;
+const CH9_DEPARTED_PARTY = ['rex', 'faye', 'milo', 'dorin'] as const;
+const CH9_BUNI_INGREDIENT_FLAGS = [
+  'q_buni_smantana', 'q_buni_branza', 'q_buni_mushrooms',
+  'q_buni_cabbage', 'q_buni_plums',
+] as const;
+
+const CH9_PRIOR_FLAGS = [
+  ...CH8_BASE_FLAGS,
+  'ch8_arrived', 'ch8_yak_departed', 'ch8_yak_arrived', 'ch8_false_folds_seen',
+  'thread_trust_esc1', 'thread_trust_esc2', 'thread_trust_esc3', 'thread_trust_esc4',
+  'thread_trust_climax', 'thread_trust_resolve',
+  'thread_clicker_seed', 'thread_clicker_crisis', 'thread_clicker_clearing',
+  'awake_surge_a', 'awake_lifeup_a', 'awake_fire_a', 'awake_starsong_a', 'awake_teleport_b',
+  'ch8_dragon_seen', 'paper_dragon_defeated', 'paper_fan_claimed',
+  'ch8_heartlight_seen', 'ember8', 'ch8_complete',
+  'army_misread', 'army_checkpoint', 'army_tank', 'army_flyover', 'army_clearing',
+] as const;
+
+export const CH9_ARMY_CALLER = {
+  quest: 'thread:army',
+  name: 'General Buckle',
+  quote: 'Rule Twelve says that when the dark comes for the kids you wronged, you send the whole friendly army. We are standing by.',
+  effect: { kind: 'damage', power: 1200 },
+} as const satisfies CallerRecord;
+
+const buniCaller = QUESTS.bunis_table?.caller;
+if (!buniCaller) throw new Error("Buni's Table must define its finale Caller");
+export const CH9_BUNI_CALLER = {
+  quest: 'bunis_table',
+  name: buniCaller.name,
+  quote: buniCaller.quote,
+  effect: { ...buniCaller.effect },
+} satisfies CallerRecord;
+
+const vladCaller = CHOICES.ch9_count.options.find((option) => option.id === 'mercy')?.caller;
+if (!vladCaller) throw new Error('The Chapter 9 OPEN HAND must define Vlad as a Caller');
+export const CH9_VLAD_CALLER = {
+  quest: 'choice:ch9_count',
+  name: vladCaller.name,
+  quote: vladCaller.quote,
+  effect: { ...vladCaller.effect },
+} satisfies CallerRecord;
+
+const copyCaller = (caller: Readonly<CallerRecord>): CallerRecord => ({
+  ...caller,
+  effect: { ...caller.effect },
+});
+
+function chapter9Loadouts(
+  fullBag: boolean,
+  buniDone: boolean,
+  countDefeated: boolean,
+  chapterComplete: boolean,
+): Readonly<Record<Chapter9HeroId, Chapter9HeroLoadout>> {
+  const loadout = (
+    weapon: string,
+    body: string,
+    arms: string,
+    other: string,
+    extras: readonly string[] = [],
+  ): Chapter9HeroLoadout => {
+    const bag = [weapon, body, arms, other, 'baozi', 'peking_pancake', 'scroll_of_calm', ...extras];
+    while (fullBag && bag.length < BAG_MAX) bag.push('baozi');
+    return {
+      bag,
+      equip: { weapon, body, arms, other },
+    };
+  };
+  return {
+    rex: loadout(
+      'hall_of_famer_bat',
+      'lacquer_robe',
+      'prayer_wraps',
+      'star_pendant',
+      [
+        ...(buniDone ? ['basket_feast'] : []),
+        ...(countDefeated ? ['candelabra'] : []),
+      ],
+    ),
+    faye: loadout(
+      'chefs_pan', 'silk_changshan', 'glass_bangles', 'jade_pendant',
+      chapterComplete ? ['holy_pan'] : [],
+    ),
+    milo: loadout('gauss_lobber', 'lacquer_robe', 'silk_armguards', 'cash_coin_charm'),
+    pippa: loadout('paper_fan', 'silk_changshan', 'silk_armguards', 'paper_crane_charm'),
+    dorin: loadout('river_beads', 'monks_robe', 'prayer_wraps', 'lucky_knot'),
+  };
+}
+
+function chapter9BattleContext(state: Chapter9DevState): Chapter9DevBattleContext | null {
+  const baseState = chapter9BaseState(state);
+  if (baseState === 'theatrical') {
+    return { form: 'theatrical', hp: 95000, bossTurns: 0, introSeen: false };
+  }
+  if (baseState === 'postUnmask') {
+    return {
+      form: 'unmasked', hp: 47500, bossTurns: 2, introSeen: true,
+      stolen: { heroId: 'rex', slot: 'weapon' },
+    };
+  }
+  return null;
+}
+
+export function chapter9DevBattleConfig(state: Chapter9DevState): Chapter9DevBattleLaunchConfig | null {
+  const devContext = chapter9BattleContext(state);
+  if (!devContext) return null;
+  return {
+    enemyIds: ['count_hoaxula'],
+    advantage: 'none',
+    guestChad: false,
+    glintAssist: false,
+    glintSupernova: false,
+    boss: true,
+    backdrop: 'castle_hoaxula',
+    prayTutorial: false,
+    devContext: { ...devContext },
+  };
+}
+
+/** Deterministic Chapter 9 survey save. Present profiles use the completed FREE
+ * Trust leaf; every named departed twin uses STRINGS and serializes the exact
+ * Pippa record through departHero instead of leaving an impossible shell. */
+export function chapter9DevProfile(value: string | null): Chapter9DevProfile {
+  const state: Chapter9DevState = CH9_DEV_STATES.includes(value as Chapter9DevState)
+    ? value as Chapter9DevState
+    : 'village';
+  const baseState = chapter9BaseState(state);
+  const isDeparted = baseState !== state;
+  const isArrival = baseState === 'arrival';
+  const isComplete = baseState === 'complete';
+  const buniDone = [
+    'castleEntry', 'preBoss', 'theatrical', 'postUnmask', 'postBoss', 'iron',
+    'openHand', 'monastery', 'awakening', 'complete',
+  ].includes(baseState);
+  const countDefeated = [
+    'postBoss', 'iron', 'openHand', 'monastery', 'awakening', 'complete',
+  ].includes(baseState);
+  const openHand = ['openHand', 'monastery', 'awakening', 'complete'].includes(baseState);
+  const choice: Chapter9DevChoice = baseState === 'iron' ? 'iron' : openHand ? 'mercy' : null;
+  const flags: string[] = [
+    ...CH9_PRIOR_FLAGS,
+    'ch6_string_decided',
+    isDeparted ? 'axis_trust_strings' : 'axis_trust_free',
+    'ch9_train_committed', 'ch9_train_seen',
+  ];
+
+  if (isDeparted) flags.push('pippa_left');
+  if (!isArrival) flags.push('ch9_arrived');
+  if (baseState === 'buniActive' || baseState === 'oldRoad') {
+    flags.push('q_bunis', 'q_buni_smantana', 'q_buni_cabbage', 'q_buni_plums');
+  }
+  if (baseState === 'buniFull') {
+    flags.push('q_bunis', 'ch9_buni_panel_seen', ...CH9_BUNI_INGREDIENT_FLAGS, 'q_bunis_gather', 'q_bunis_cook');
+  }
+  if (buniDone) {
+    flags.push(
+      'q_bunis', 'ch9_buni_panel_seen', ...CH9_BUNI_INGREDIENT_FLAGS,
+      'q_bunis_gather', 'q_bunis_cook', 'q_bunis_done', 'feast_recipe',
+    );
+  }
+  if (countDefeated) flags.push('count_hoaxula_defeated', 'ch9_candelabra_claimed');
+  if (baseState === 'postUnmask' || countDefeated) flags.push('ch9_unmasked_panel_seen');
+  if (choice === 'iron') {
+    flags.push('ch9_count_decided', 'axis_compassion_iron', 'stolen_light_banked', 'dorin_withholds');
+  } else if (choice === 'mercy') {
+    flags.push('ch9_count_decided', 'axis_compassion_openhand');
+  }
+  if (baseState === 'awakening' || isComplete) flags.push('ch9_trial_seen', 'ch9_dorin_name_spoken');
+  if (isComplete) {
+    flags.push(
+      'awake_comet_o', 'ch9_heartlight_seen', 'ember9', 'ch9_holy_pan_claimed',
+      'ch9_complete', 'ch9_card_seen',
+    );
+  }
+
+  const keyItems = [
+    'star_locket', 'big_little_lens', 'royal_thimble', 'train_ticket',
+    'riverboat_pass', 'lotus_seal', 'orient_express_ticket',
+    ...((baseState === 'awakening' || isComplete) ? ['trial_stone'] : []),
+    ...(isComplete ? ['monastery_bell_clapper'] : []),
+  ];
+  const callers = [copyCaller(CH9_ARMY_CALLER), copyCaller(CH8_CLICKER_CALLER)];
+  if (buniDone) callers.push(copyCaller(CH9_BUNI_CALLER));
+  if (choice === 'mercy') callers.push(copyCaller(CH9_VLAD_CALLER));
+
+  return {
+    state,
+    flags: [...new Set(flags)],
+    embers: isComplete ? 9 : 8,
+    keyItems: [...new Set(keyItems)],
+    party: isDeparted ? CH9_DEPARTED_PARTY : CH9_FULL_PARTY,
+    departed: isDeparted ? ['pippa'] : [],
+    level: 46,
+    rewindCount: isDeparted ? 3 : 0,
+    callers,
+    loadouts: chapter9Loadouts(baseState === 'buniFull', buniDone, countDefeated, isComplete),
+    fullBag: baseState === 'buniFull',
+    choice,
+    echoAnchor: baseState === 'postBoss' || baseState === 'iron' || baseState === 'openHand' ? 'ch9_count' : null,
+    battleContext: chapter9BattleContext(state),
+  };
+}
+
+/** Install the profile through the same serializable records used by ordinary
+ * saves. This is exported so the exact departed record and full-bag state can be
+ * verified headlessly rather than inferred from profile labels. */
+export function installChapter9DevProfile(profile: Chapter9DevProfile): void {
+  profile.flags.forEach((flag) => GS.setFlag(flag));
+  GS.data.embers = profile.embers;
+  GS.data.departedHeroes = {};
+  const roster = CH9_FULL_PARTY.filter((id) => profile.party.includes(id) || profile.departed.includes(id));
+  GS.data.party = roster.map((id) => {
+    const hero = makeHeroState(id, profile.level, GS.data.heroNames[id]);
+    hero.bag = [...profile.loadouts[id].bag];
+    hero.equip = { ...profile.loadouts[id].equip };
+    return hero;
+  });
+  GS.data.keyItems = [...new Set([...GS.data.keyItems, ...profile.keyItems])];
+  GS.data.callers = profile.callers.map(copyCaller);
+  GS.data.echoes.rewindCount = profile.rewindCount;
+  profile.departed.forEach((id) => departHero(id));
+  if (profile.choice) recordChoice('ch9_count', profile.choice);
+}
+
+/** Refresh the real pre-choice Held Breath snapshot after TitleScene has placed
+ * the player at the requested dev map feet. Branch profiles are temporarily
+ * normalized to pre-choice, captured, then restored through recordChoice. */
+export function primeChapter9DevEcho(profile: Chapter9DevProfile): void {
+  if (!profile.echoAnchor) return;
+  clearDownstreamChoiceFlags(9);
+  captureEcho(profile.echoAnchor);
+  if (profile.choice) recordChoice('ch9_count', profile.choice);
+}
+
+/** Every Chapter 9 state/map pair resolves through CH9_WORLD. The named state's
+ * authored feet win on its home map; all cross-map combinations use the closest
+ * harmless survey point so exhaustive query-string QA remains safe. */
+export function chapter9DevSpawn(mapId: string, state: Chapter9DevState): { x: number; y: number; facing: Facing } {
+  const baseState = chapter9BaseState(state);
+  const point = mapId === CH9_MAP_IDS[0]
+    ? baseState === 'arrival' ? CH9_WORLD.valea.profiles.arrival
+      : baseState === 'buniActive' ? CH9_WORLD.valea.profiles.buni
+        : baseState === 'buniFull' ? CH9_WORLD.valea.profiles.fullBag
+          : baseState === 'complete' ? CH9_WORLD.valea.profiles.complete
+            : CH9_WORLD.valea.profiles.village
+    : mapId === CH9_MAP_IDS[1]
+      ? CH9_WORLD.oldRoad.profiles.road
+      : mapId === CH9_MAP_IDS[2]
+        ? baseState === 'castleEntry' ? CH9_WORLD.castle.profiles.entry
+          : baseState === 'preBoss' ? CH9_WORLD.castle.profiles.preBoss
+            : baseState === 'theatrical' ? CH9_WORLD.castle.profiles.theatrical
+              : baseState === 'postUnmask' ? CH9_WORLD.castle.profiles.postUnmask
+                : baseState === 'postBoss' ? CH9_WORLD.castle.profiles.postBoss
+                  : baseState === 'iron' || baseState === 'openHand' ? CH9_WORLD.castle.profiles.choice
+                    : CH9_WORLD.castle.profiles.entry
+        : mapId === CH9_MAP_IDS[3]
+          ? baseState === 'awakening' ? CH9_WORLD.monastery.profiles.awakening
+            : baseState === 'complete' ? CH9_WORLD.monastery.profiles.complete
+              : CH9_WORLD.monastery.profiles.monastery
+          : null;
+  if (!point) return chapter3DevSpawn(mapId);
+  return {
+    x: point.x * TILE_PX + TILE_PX / 2,
+    y: point.y * TILE_PX + TILE_PX * 0.75,
+    facing: point.facing,
+  };
+}
+
 /** A representative, deterministic Chapter 3 survey save. It includes the
  * two prior Heartlights and Mia's Freeze; post-join states also carry Jay's
  * First Borrow and enough real stats/PP to exercise PUPPET. */
@@ -517,7 +872,7 @@ export class TitleScene extends Phaser.Scene {
     if (import.meta.env.DEV) {
       const params = new URLSearchParams(window.location.search);
       const devMap = params.get('devMap');
-      if (devMap && (LEGACY_DEV_MAPS.has(devMap) || CH3_DEV_MAP_SET.has(devMap) || CH4_DEV_MAP_SET.has(devMap) || CH5_DEV_MAP_SET.has(devMap) || CH6_DEV_MAP_SET.has(devMap) || CH7_DEV_MAP_SET.has(devMap) || CH8_DEV_MAP_SET.has(devMap))) {
+      if (devMap && (LEGACY_DEV_MAPS.has(devMap) || CH3_DEV_MAP_SET.has(devMap) || CH4_DEV_MAP_SET.has(devMap) || CH5_DEV_MAP_SET.has(devMap) || CH6_DEV_MAP_SET.has(devMap) || CH7_DEV_MAP_SET.has(devMap) || CH8_DEV_MAP_SET.has(devMap) || CH9_DEV_MAP_SET.has(devMap))) {
         GS.reset();
         GS.setFlag('intro_done');
         GS.setFlag('op_fell');
@@ -531,6 +886,7 @@ export class TitleScene extends Phaser.Scene {
         const isChapter6 = CH6_DEV_MAP_SET.has(devMap);
         const isChapter7 = CH7_DEV_MAP_SET.has(devMap);
         const isChapter8 = CH8_DEV_MAP_SET.has(devMap);
+        const isChapter9 = CH9_DEV_MAP_SET.has(devMap);
         if (isChapter3) {
           // Default to a clean post-join/pre-boss survey state. `devState`
           // exposes the production before/after beats without console surgery:
@@ -594,6 +950,8 @@ export class TitleScene extends Phaser.Scene {
             const carrier = GS.hero('pippa') ?? GS.data.party[0];
             if (carrier && !GS.hasItem(item)) GS.addItem(item, carrier.id);
           }
+        } else if (isChapter9) {
+          installChapter9DevProfile(chapter9DevProfile(params.get('devState')));
         }
         this.started = true;
         AUDIO.stopMusic();
@@ -630,7 +988,9 @@ export class TitleScene extends Phaser.Scene {
         const ch7Spawn = ch7Profile ? chapter7DevSpawn(devMap, ch7Profile.state) : null;
         const ch8Profile = isChapter8 ? chapter8DevProfile(params.get('devState')) : null;
         const ch8Spawn = ch8Profile ? chapter8DevSpawn(devMap, ch8Profile.state) : null;
-        let spawnPx = ch8Spawn ?? ch7Spawn ?? ch6Spawn ?? ch5Spawn ?? ch4Spawn ?? (ch3Spawn
+        const ch9Profile = isChapter9 ? chapter9DevProfile(params.get('devState')) : null;
+        const ch9Spawn = ch9Profile ? chapter9DevSpawn(devMap, ch9Profile.state) : null;
+        let spawnPx = ch9Spawn ?? ch8Spawn ?? ch7Spawn ?? ch6Spawn ?? ch5Spawn ?? ch4Spawn ?? (ch3Spawn
           ? { x: ch3Spawn.x, y: ch3Spawn.y, facing: ch3Spawn.facing }
           : { x: spawn.x * TILE_PX + TILE_PX / 2, y: spawn.y * TILE_PX, facing: 'down' as Facing });
         // Any rollout map can opt into an exact authored micro-scene without
@@ -644,13 +1004,29 @@ export class TitleScene extends Phaser.Scene {
           spawn = { x: devX, y: devY };
           spawnPx = { x: devX * TILE_PX + TILE_PX / 2, y: devY * TILE_PX, facing: 'down' };
         }
-        this.scene.start('overworld', {
+        const overworldStart = {
           mapId: devMap,
           x: spawnPx.x,
           y: spawnPx.y,
           facing: spawnPx.facing,
           devFullMap: params.get('devFullMap') === '1',
-        });
+        };
+        if (ch9Profile) {
+          GS.data.map = devMap;
+          GS.data.x = spawnPx.x;
+          GS.data.y = spawnPx.y;
+          GS.data.facing = spawnPx.facing;
+          primeChapter9DevEcho(ch9Profile);
+          const battleConfig = chapter9DevBattleConfig(ch9Profile.state);
+          if (battleConfig) {
+            // Direct battle profiles are real BattleScene runs. When the battle
+            // tears down, return to the authored safe restart feet for inspection.
+            this.game.events.once('mf-battle-end', () => this.game.scene.start('overworld', overworldStart));
+            this.scene.start('battle', battleConfig);
+            return;
+          }
+        }
+        this.scene.start('overworld', overworldStart);
         return;
       }
     }

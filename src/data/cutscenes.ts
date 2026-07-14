@@ -433,20 +433,64 @@ const CH8: Cutscene[] = [
   { id: 'ch8_heartlight_departed', chapter: 'ch8', beats: [CH8_BEATS.heartlightDeparted] },
 ];
 
+const CH9_LEGACY_BEATS = {
+  train: panels('orient_less_express_to_valea')[0],
+  arrival: panels('valea_stelelor_arrival')[0],
+  buni: panels('buni_feast_basket')[0],
+  castle: panels('castle_hoaxula')[0],
+  unmasked: panels('count_hoaxula_unmasked')[0],
+  heartlight: panels('monastery_bell_tower_resonance')[0],
+  trial: panels('trial_of_the_mute_mountain')[0],
+} satisfies Record<string, CutsceneBeat>;
+
+export type Ch9PartyCutsceneMoment =
+  | 'train'
+  | 'arrival'
+  | 'buni'
+  | 'castle'
+  | 'unmasked'
+  | 'heartlight'
+  | 'choice';
+
+export type Ch9PartyCutsceneId = `ch9_${Ch9PartyCutsceneMoment}_${'pippa' | 'departed'}`;
+
+/** Chapter 9 occurs after Dorin joins and after Pippa may leave. Every ensemble
+ * still is selected from serialized party truth, never from a profile label. */
+export function ch9PartyCutsceneId(
+  moment: Ch9PartyCutsceneMoment,
+  pippaPresent: boolean,
+): Ch9PartyCutsceneId {
+  return `ch9_${moment}_${pippaPresent ? 'pippa' : 'departed'}`;
+}
+
+function ch9PartyBeat(moment: Ch9PartyCutsceneMoment, pippaPresent: boolean): CutsceneBeat {
+  const artStem: Record<Ch9PartyCutsceneMoment, string> = {
+    train: 'orient_less_express_to_valea',
+    arrival: 'valea_stelelor_arrival',
+    buni: 'buni_feast_basket',
+    castle: 'castle_hoaxula',
+    unmasked: 'count_hoaxula_unmasked',
+    heartlight: 'monastery_bell_tower_resonance',
+    choice: 'choice_ch9_iron_or_open',
+  };
+  return panels(`${artStem[moment]}_${pippaPresent ? 'pippa' : 'departed'}`)[0];
+}
+
 const CH9: Cutscene[] = [
   {
     id: 'ch9_journey',
     chapter: 'ch9',
-    beats: panels(
-      'orient_less_express_to_valea',
-      'valea_stelelor_arrival',
-      'buni_feast_basket',
-      'castle_hoaxula',
-      'count_hoaxula_unmasked',
-      'monastery_bell_tower_resonance',
-      'trial_of_the_mute_mountain',
-    ),
+    // Retained as a gallery/source record. Runtime uses only the one-panel
+    // contextual entries below so arrival cannot spoiler the whole chapter.
+    beats: Object.values(CH9_LEGACY_BEATS),
   },
+  ...(['train', 'arrival', 'buni', 'castle', 'unmasked', 'heartlight', 'choice'] as const)
+    .flatMap((moment): Cutscene[] => [true, false].map((pippaPresent) => ({
+      id: ch9PartyCutsceneId(moment, pippaPresent),
+      chapter: 'ch9',
+      beats: [ch9PartyBeat(moment, pippaPresent)],
+    }))),
+  { id: 'ch9_trial', chapter: 'ch9', beats: [CH9_LEGACY_BEATS.trial] },
 ];
 
 const CH10: Cutscene[] = [

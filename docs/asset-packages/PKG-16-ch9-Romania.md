@@ -1,76 +1,99 @@
-# PKG-16 — Chapter 9: Romania (full region bundle)
+# PKG-16 — Chapter 9: Romania (production reconciliation)
 
-A complete art set for an **unlanded** chapter (no art exists yet). Canon source:
-`src/data/chapters.ts` (`CHAPTER_MANIFESTS['9']`) + `docs/GAME_BIBLE.md §A6/§A7`.
+> **Status (ADR-144, 2026-07-14):** the historical “unlanded / no art,”
+> 5,300-HP boss, 10–15-NPC, and twenty-enemy package requests are superseded.
+> Chapter 9's four-map production contract and retained art package are now
+> implemented and production-closed. This document records what was reused and
+> the completed remediation; it is not authority to regenerate the region
+> wholesale.
 
-- **Region:** Romania · **biome:** painted-gates / castle
-- **Boss:** count_hoaxula (5300 HP)
-- **Settlement(s):** valea_stelelor
-- **Travel in:** train · **Dungeon:** castle_hoaxula
+Canon sources are `docs/chapters/ch9/blueprint.md`, ADR-144 in
+`docs/DECISIONS.md`, and executable registries under `src/data/` and
+`src/spritegen/`.
 
-## Resolution target
-The HD render is live: `ART_SCALE = 4` → **1600×900** framebuffer. Runtime cells
-are **native × 4**; size source art to the 4× cell (a gentle reduction, not the
-old 1× crush).
+- **Region:** Romania · painted-gates village / bankrupt gothic attraction
+- **Travel in:** the Orient Less-Express; Bert and Lucille do not own arrival
+- **Maps:** `valea_stelelor` 80×64 · `old_road` 96×72 ·
+  `castle_hoaxula` 72×96 · `stone_brow_monastery` 64×88
+- **Regional quest:** `bunis_table`
+- **Regular roster:** exactly five — Haystack Mimic, Ribcage Rattler, Moss
+  Strigoi, Animated Armor, Wolf of the Old Road
+- **Boss:** Count Hoaxula, 95,000 HP, theatrical and unmasked forms
+- **Continuity:** Dorin joined in Chapter 5; Romania is his homecoming and
+  Comet Ω awakening. Every party-visible panel obeys serialized Pippa state.
 
-- Tiles: 16×16 native → **64×64** runtime cells.
-- Characters: 24×32 native → **96×128** runtime cells, exactly the
-  `*_4x_master` cell, so they are native at 4× with no downscale.
-- Busts: 32×32 native → **128×128** runtime cells.
-- Battlers: 28×36 native → **112×144** runtime cells.
-- Athletes/golfers: 32×40 native → **128×160** runtime cells.
+## Resolution and animation contract
 
-Full-screen art (cutscene panels, screen backgrounds) is authored at **1600×900**.
+The live framebuffer is 1600×900 at `ART_SCALE = 4`. Runtime cells are native
+×4: tile 64×64, character 96×128, bust 128×128, and nominal battler 112×144.
+Full-screen panels/backgrounds are 1600×900. Valea's nine live villagers reuse
+four strict-clean identities under the 46-frame, four-column, 384×1536 sheet
+contract. Strict visual, animation, and enemy-frame gates may not be weakened
+to accept replacement art.
 
-## 1. Region tileset (~12–16 cells, 64×64 runtime / 16×16 native)
-Ground/wall/floor/water for the painted-gates / castle biome. Add new named cells to
-`TILESET` (`src/spritegen/tiles.ts`) and pack into a region strip
-`assets/art/world/Romania_tiles_16.png`.
+## Retained runtime package
 
-## 2. Dungeon art (castle_hoaxula)
-Walls, floor, props, set dressing, the boss-trigger door. Built in the LEVELKIT
-LAB recipe; reskin with hand art. `assets/art/world/dungeons/castle_hoaxula/`.
+- `assets/art/world/Romania_tiles_16.png` — registered 192×64 regional strip.
+- Eight registered Valea facades: painted house, cottage, inn, shop, hall,
+  church, mill, and barn, with retained source masters.
+- Four registered strict-clean NPC sheets and exact runtime masters:
+  `vs_buni`, `vs_provisioner`, `vs_shepherd`, and `vs_kid`.
+- The five regular-enemy base identities, their minis, Ribcage's three distinct
+  wear stages, Count's theatrical/unmasked bases, and Count's mini.
+- `assets/art/backgrounds/castle_hoaxula.png` at 1600×900.
+- `assets/art/vehicles/orient_less_express.png`; production uses it as a large
+  exterior rail-apron landmark, not a new interior or Chapter 7 dungeon.
+- Seven existing Chapter 9 journey compositions and the existing choice
+  composition as source/visual references; the solo Trial panel remains shared.
+- Shared authored ticket window, velvet ropes, curtains, posters, gift boxes,
+  crates, benches, and stage fixtures for Castle Hoaxula dressing.
 
-## 3. Settlement facades (~8)
-Landmark + generic buildings for valea_stelelor in the region style. Path
-`assets/art/world/facades/`.
+## Completed raster remediation
 
-## 4. NPC roster — ~10–15, 8-dir 96×128 runtime / 24×32 native
-Townsfolk, shopkeepers, quest-givers. Same 8-direction → 46-frame contract as
-the heroes. `assets/art/characters/<id>_anim_46_4x.png`; add ids to
-`NPC_CHARACTER_ART` in `src/spritegen/authored.ts`. (Ids come from the
-chapter's promoted settlement draft — `src/data/drafts/ch9/`.)
+1. Seven contextual **Pippa-present/Pippa-departed pairs** now ship for train,
+   arrival, Buni, castle, unmask, monastery, and COMPASSION choice. Present
+   versions show Jay, Mia/Faye, Milo, Dorin, and Pippa; departed versions show
+   Jay, Mia/Faye, Milo, and Dorin. Runtime chooses from serialized party state.
+   All fourteen 1600×900 runtime panels have fourteen matching source masters.
+2. Haystack Mimic, Moss Strigoi, Animated Armor, and Wolf of the Old Road now
+   have visibly progressive, byte-distinct wear 1 and wear 2.
+3. Count theatrical now has distinct wear 2; Count unmasked has distinct wear 1
+   and wear 2. Ribcage's already-distinct stages remain intact. These eleven
+   corrected wear outputs have eleven matching generated masters.
+4. New image-generation results retain the named masters above. Legacy assets
+   without master files retain repository provenance: the Orient Less-Express
+   runtime asset traces through `b83bc19a`, `8bcfe5f2`, and `01aa9171`, while
+   Ribcage's retained battler family traces to `74bca949`. Choice remediation
+   has its dedicated runtime pair and source masters.
 
-## 5. Enemy roster — **20 enemies × 3 wear = 60 images**
-The §A7 ecosystem (`GAME_BIBLE.md` line 530/551):
-- 4 road/field roamers
-- 3 dungeon specialists
-- 2 social/urban oddities
-- 2 rare/high-value
-- 2 late-chapter pressure
-- 1 set-piece enemy
+The closed remediation is fourteen contextual panel outputs plus eleven wear
+corrections and their 25 corresponding masters. It did not require a new NPC
+sheet identity, facade family, regional strip, background, base enemy identity,
+mini set, or generic dungeon-art folder.
 
-Author each at battle scale (large; fit-scaled in engine). Three wear stages
-each: `battle_<id>.png`, `_w1.png`, `_w2.png` under `assets/art/enemies/`;
-add to `ENEMY_BATTLE_ART` in `src/spritegen/authored.ts`. The 20 ids are
-scaffolded in `src/data/drafts/ch9/roster.ts` (`npm run scaffold -- ch9`).
+## World-art use
 
-## 6. Boss — count_hoaxula
-Bespoke, multi-frame, larger than enemies (NOT an enlarged enemy). 3 wear
-stages. `assets/art/enemies/battle_count_hoaxula*.png`.
-
-## 7. Battle background
-The region's arena backdrop. `assets/art/backgrounds/castle_hoaxula.png`.
-
-## 8. Cutscene panels (~6–8, 1600×900)
-The chapter's §A6 beats + the **train** travel-in set-piece. (Coordinate file
-names with PKG-01: `assets/art/cutscenes/ch9/<beat>_NN.png`.)
-
-## 9. Regional extras
-- One **home/interior** for the property arc (`src/data/properties.ts`).
-- The region's **road vehicle(s)** (coordinate with PKG-07).
-- ~3 **picnic table** placements use the shared prop (no new art).
+Valea deliberately places all eight facade identities and nine live villagers
+around an outdoor Buni table court, green/well, civic lane, church court, and
+mill/barn work lane. Five visible pantry cues sit beside their pickup tiles and
+retire with the same durable collection flags.
+Dedicated shop, church, home, castle-room, and train map ids are non-goals.
+Castle Hoaxula first reuses the registered attraction/backstage prop vocabulary;
+meteor rocks and trail markers do not substitute for its throne, scenery, gift
+shop, dressing room, or foreclosure wall. Its restart foyer includes a usable
+picnic recovery table with collision-clear recovery feet.
 
 ## Acceptance
-Tileset, dungeon, facades, ~12 NPCs, 20-enemy roster (×3 wear), boss, backdrop,
-cutscene panels, and the regional home all authored and wired for Chapter 9.
+
+- The four frozen map dimensions and `CH9_WORLD` points pass production map,
+  reachability, door/body, migration, profile, and render contracts.
+- The train owns contextual arrival; the seven-panel gallery is never an entry
+  reel; party art is Dorin-correct and Pippa-branch-truthful.
+- The exact five-regular roster plus 95,000-HP Count is wired, balanced, and
+  covered by byte-distinct wear/source tests.
+- All retained/new art passes strict visual, animation, enemy-frame, and
+  original-resolution review.
+- Integrated production-close evidence is recorded in
+  `docs/CH9_PRODUCTION_VERIFICATION.md`; the package is closed by that combined
+  world, gameplay, art, automated, and live-QA evidence rather than asset
+  registration alone.

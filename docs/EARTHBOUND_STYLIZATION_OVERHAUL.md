@@ -3,8 +3,8 @@
 > **China production contract (2026-07-13):** Chapter 8 implements a 112×80
 > fan-shaped Lotus Harbor, braided Bamboo Road, safe-pocket Spore Forest, and
 > folded-court Mt. Shu Temple, with eight explicit Lotus facade promotions.
-> Its final aggregate gates, evidence refresh, and commit remain pending under
-> ADR-143; the broader shared 47-blob terrain-family program is also separate.
+> Its production close completed under ADR-143; the broader shared 47-blob
+> terrain-family program remains separate.
 
 > **Norway completed (2026-07-12):** the Chapter 4 slice now uses deliberate
 > 64×48 through 112×80 grids with six different spatial signatures, additional
@@ -125,9 +125,9 @@ the rebuild is the Track-A layout; the town renders in the existing tileset unti
 | 5 | **Kvisthavn/Lilleby** (Ch4) | **Winters** + scale-gag (Saturn Valley tone) | Reuses Winters; giant-scale layer built |
 | 6 | **Minimus** (Ch5) | **Dalaam** (jewel-box scale) | Reuses hedge autotile; **locks Dalaam grammar** (reused Ch8) |
 | 7 | **Zanzibel** (Ch6) | **Scaraba/Dusty Dunes** | Reuses Pyramid/desert kit; cleanest 1:1 |
-| 8 | **Lotus Harbor** (Ch8) | **Dalaam** (temple) + spore-forest | **Production layout/art implemented 2026-07-13; final close pending:** fan-shaped terraced river crescent, eight explicit Lotus facade promotions, braided Bamboo ascent, asymmetric safe-pocket Spore loops, and folded Mt. Shu courts. Shared 47-blob ground-family polish remains separate. |
+| 8 | **Lotus Harbor** (Ch8) | **Dalaam** (temple) + spore-forest | **Production layout/art shipped 2026-07-13:** fan-shaped terraced river crescent, eight explicit Lotus facade promotions, braided Bamboo ascent, asymmetric safe-pocket Spore loops, and folded Mt. Shu courts. Shared 47-blob ground-family polish remains separate. |
 | 9 | **Chandrapore** (Ch7) | **Fourside** (density) + **Scaraba** (warmth) | **Production layout + art shipped 2026-07-13:** three-district 120×88 city, fourteen original source/promoted facade pairs, Majestic/Station landmarks, and palace-spire axis. Shared 47-blob ground-family polish remains separate. |
-| 10 | **Valea Stelelor** (Ch9) | **Threed** (castle) + Winters/Dalaam (monastery) | Emotional heart; bespoke Threed gothic palette |
+| 10 | **Valea Stelelor** (Ch9) | **Threed** (castle) + Winters/Dalaam (monastery) | **Production world/art shipped 2026-07-14:** inhabited painted-gate village, switchback Old Road, attraction/backstage Castle, and processional Stone Brow courts. Shared 47-blob ground-family polish remains separate. |
 | 11 | **Aurora + Mauna Lani** (Ch10) | **Winters-ice** + **Summers-lava** | Reuses proven grammars + elemental layers |
 | 12 | **Mars/Sea of Silence** (Ch10) | **Cave of the Past + Magicant + Giygas lair** | **Do LAST** — most bespoke + tonally load-bearing |
 
@@ -249,3 +249,32 @@ As with Chapter 3, this production close does **not** declare the game-wide
 or later per-region shared refinements must land through the frozen-index art
 pipeline and re-review Chapter 8 as a consumer; they are not permission to
 replace its four layouts or authored Lotus facade closed world.
+
+### Chapter 9 status amendment (2026-07-14)
+
+Chapter 9 is no longer a future Valea/castle placeholder. Its four stable map
+ids now carry four distinct production signatures:
+
+- `valea_stelelor` (80×64): a warm painted-gate crescent around Buni's table,
+  green/well, civic lane, church court, and mill/barn work lane;
+- `old_road` (96×72): a broad follower-safe switchback ribbon with three safe
+  pockets and readable field, beech, shrine, and wolf-overlook pacing;
+- `castle_hoaxula` (72×96): a deliberately shabby attraction that progresses
+  from ticket queue through fake crypt, gift shop, backstage/foreclosure seams,
+  boss arena, and a separate moral-choice chamber;
+- `stone_brow_monastery` (64×88): a quiet processional climb with distinct
+  trial, birth-name/awakening, and bell/Heartlight courts.
+
+Valea's nine live villagers reuse four strict-clean NPC sheet identities. Five
+visible pantry cues sit beside Buni's ingredient pickups and retire with their
+collection flags; Castle Hoaxula's restart foyer includes a collision-clear,
+usable picnic recovery table. The art close adds fourteen contextual runtime
+panels with fourteen source masters and eleven distinct wear corrections with
+eleven generated masters. These are closed Chapter 9 production assets, not
+placeholders for a new generic NPC sheet/identity or dungeon package.
+
+As with Chapters 3 and 8, this production close does **not** declare the
+game-wide 47-blob program finished. Shared terrain transitions, shore/corner
+families, or later regional refinements must land through the frozen-index art
+pipeline and re-review Chapter 9 as a consumer; they are not permission to
+replace its four maps, nine-villager live cast, or closed contextual art set.

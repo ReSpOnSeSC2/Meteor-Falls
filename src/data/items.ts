@@ -310,7 +310,7 @@ const ITEM_BAND: Record<string, ItemBand> = {
   ming_vase: 'ch8', terracotta_soldier: 'ch8', jade_bi_disc: 'ch8', harbor_lantern: 'ch8',
   yak_treats: 'ch8', riverboat_pass: 'ch8', lotus_seal: 'ch8',
   // ── Ch.9 ROMANIA (Valea Stelelor village / Castle Hoaxula / Stone Brow Monastery)
-  // S17 M21 (ADR-091) — THE LAST-WORLD CATALOG: the emotional heart; Dorin joins
+  // S17 M21 (ADR-091) — THE LAST-WORLD CATALOG: the emotional heart; Dorin comes home
   // (Trial of the Mute Mountain). BUNI'S PANTRY (Sarmale, Mămăligă — best HP/$ in
   // the game), the Feast Basket fare, Monastery Tea (§A8), harvest/village foods,
   // the căciulă hat rung + velvet/harvest/castle bodies, a sincere holy revival,
@@ -3608,7 +3608,7 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
 
     /* ───────────── Ch.9 ROMANIA — Valea Stelelor / Castle Hoaxula / Stone Brow ──
      * S17 M21 (ADR-091) — THE LAST-WORLD CATALOG. The emotional heart (§A6, lvl 46):
-     * Dorin joins after the Trial of the Mute Mountain; Buni feeds the party till
+     * Dorin completes his homecoming at the Trial of the Mute Mountain; Buni feeds the party till
      * their HP overflows; Count Hoaxula is a bankrupt theme-park vampire from
      * Cleveland with very real stolen Vibe. Velvet, harvest, candlelit castle —
      * §A11.7. The Theatrical phase can be funny; Buni, the Trial, and the monastery

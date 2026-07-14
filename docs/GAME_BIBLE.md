@@ -67,7 +67,7 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 - **Jay:** Vibe Surge α (L1) /β (L16) /γ (L31) /Ω (L47); Lifeup α/β/γ (L3/L20/L38); Shield α/Σ (L9/L33); Flash α (L24); Hypno α (L6); **Teleport α (L26) / Teleport β (taught by the Mt. Shu elder in Ch.8)**
 - **Mia:** Vibe Fire α–Ω (L1/15/29/44); Vibe Freeze α–Ω (L4/18/32/46); Vibe Volt α–γ (L10/26/40); Magnet α (L8); **Pray (L1)**
 - **Pippa:** No Vibe. **Pinpoint Mark** (joins; next ally ignores miss/evasion), **Royal Rally** (joins; party Speed/Luck pulse), **Pocket Patch** (joins; small heal + status peel), **Scale Step** (L30; self-evasion + decoy), **Big-Little Focus** (Ch.5 build with Milo; party-wide Focus), **Bellwether** (L44; morale burst that strengthens the next Pray/caller-style effect)
-- **Dorin:** Vibe Comet α (joins) / Ω (L52); Vibe Freeze line shared; Mirror (joins); Brainjam α/Ω (L44/50); Healing α–γ
+- **Dorin:** Vibe Comet α (joins) / Ω (Chapter 9 Stone Brow awakening); Vibe Freeze line shared; Mirror (joins); Brainjam α/Ω (L44/50); Healing α–γ
 - **Milo:** No Vibe. **Spy** (reveals enemy HP/weakness), **Repair** (turns Broken Gizmos found in the world into working battle items overnight when sleeping), Bottle Rocket tiers (single → Big → Multi)
 
 > *(Amended 2026-06-12 per Appendix rule 6: the main cast expands from four
@@ -638,9 +638,38 @@ the retry-safe Paper Fan before the separate bell approach. Heartlight 8 is
 
 ### Chapter 9 — "The Count of Valea Stelelor" (Romania) — target level: 46
 
-The emotional heart. **Valea Stelelor** ("Valley of the Stars") — painted gates, haystacks, a grandmother named **Buni** who feeds the party until their HP overflows and gives the **Feast Basket** recipe quest. A "vampire," **Count Hoaxula**, terrorizes the valley from his castle — he's actually a Hushed theme-park actor from Cleveland whose haunted-castle attraction went bankrupt, now armed with very real stolen Vibe. Meanwhile Jay's group is summoned up the mountain: **Dorin** completes the **Trial of the Mute Mountain** at Stone Brow Monastery (playable solo sequence: Dorin meditates while the mountain "deletes" his senses one by one — screen goes dark, then silent, then UI vanishes — until he releases his fear) and **joins the party**.
+> **Production amendment (ADR-144, 2026-07-14):** the Orient Less-Express owns
+> arrival; Bert and Lucille do not fly the party to Valea. The stable world is
+> `valea_stelelor` 80×64, `old_road` 96×72, `castle_hoaxula` 72×96, and
+> `stone_brow_monastery` 64×88. The historical 5,300-HP boss, twenty-enemy,
+> 10–15-NPC, five-quest, “no maps/no art,” and Dorin-joins claims are superseded.
 
-**Resonance Site:** monastery bell tower. **BOSS 9 — COUNT HOAXULA** (5,300 HP / two phases: Theatrical phase — fake spells, real damage, steals one equipped item (returned on win); Unmasked phase at 50% — sobbing Cleveland accent, attacks become wild AoE; Mia's Pray "Good" tier or better instantly ends his second phase in mercy — the game's quietest victory).
+The emotional heart. **Valea Stelelor** ("Valley of the Stars") is a painted
+folk village gathered around Buni's table, a green and well, church court, and
+mill lane above the rail platform. **Buni** feeds the party until their HP
+overflows and owns the chapter's one regional quest, `bunis_table`: five
+flag-backed pantry ingredients return for the retry-safe Feast Basket, recipe,
+and Buni Caller. The Old Road climbs through hay fields, damp beech bends, three
+safe pockets, and a wolf overlook to **Castle Hoaxula**, a foreclosed haunted
+attraction whose ticket queue, cardboard scares, gift shop, dressing room, and
+backstage accounts reveal the joke before the throne.
+
+**BOSS 9 — COUNT HOAXULA** is a Hushed theme-park actor from Cleveland armed
+with stolen Vibe: **95,000 HP**, level 46. He begins THEATRICAL, escrows one
+valid equipped slot on turn two, and switches once at inclusive 50% to the
+UNMASKED form. Good-or-better PRAY can end the fight in mercy only while
+unmasked; ordinary zero-HP victory remains valid, and every exit restores the
+exact equipment slot. Victory leads to the separate COMPASSION choice: OPEN
+HAND restores warmth and Vlad's Caller; IRON banks Stolen Light and makes Dorin
+withhold Comet Ω.
+
+**Resonance Site:** Stone Brow Monastery. Dorin has travelled with the party
+since Chapter 5. The **Trial of the Mute Mountain** is his homecoming and
+awakening, not an introduction: a shared, Dorin-focused panel opens the staged
+trial court; the separate name court lets him speak his birth name and awaken
+Comet Ω; and the bell court records Heartlight and Ember 9. This production
+sequence does not remove the party or normal UI. Pippa-present/departed dialogue
+and party panels always follow serialized state and never fabricate her.
 
 ### Chapter 10 — "The Long Shot" (Alaska → Hawaii → MARS) — target level: 52–55+
 
@@ -656,9 +685,9 @@ The Locket holds 9 Embers; the 10th never landed on Earth. **Aurora Station, Ala
 
 ## A7. Enemy Roster (200 unique enemy types — canon target; full movesets in data files, Prompt 10)
 
-The full-game planning target remains **200 unique standard enemy types**: 20 per chapter across 10 chapters. "Unique" means a distinct concept, sprite/silhouette, moveset hook, death line, and drop identity; palette swaps, raw stat bumps, and "same enemy but stronger" variants do **not** count. The table below began as the **seed six per chapter** that anchors tone and mechanics. Accepted production ADRs may deliberately freeze a smaller authored roster for a chapter rather than add filler: ADR-143 does so for Chapter 8, whose executable roster is exactly four regular enemies plus Paper Dragon.
+The full-game planning target remains **200 unique standard enemy types**: 20 per chapter across 10 chapters. "Unique" means a distinct concept, sprite/silhouette, moveset hook, death line, and drop identity; palette swaps, raw stat bumps, and "same enemy but stronger" variants do **not** count. The table below began as the **seed six per chapter** that anchors tone and mechanics. Accepted production ADRs may deliberately freeze a smaller authored roster rather than add filler: ADR-143 does so for Chapter 8 at four regulars plus Paper Dragon, and ADR-144 freezes Chapter 9 at five regulars plus Count Hoaxula.
 
-Per-chapter expansion mix: 6 seed enemies listed below, 4 road/field roamers, 3 dungeon specialists, 2 social/urban oddities, 2 rare/high-value enemies, 2 late-chapter pressure enemies, and 1 one-off set-piece enemy. Each chapter's manifest must name all 20 before the chapter is considered content-complete.
+Historical per-chapter expansion mix: 6 seed enemies listed below, 4 road/field roamers, 3 dungeon specialists, 2 social/urban oddities, 2 rare/high-value enemies, 2 late-chapter pressure enemies, and 1 one-off set-piece enemy. A chapter without a newer accepted focused-roster ADR must name all 20 before it is considered content-complete; Chapters 8 and 9 use their frozen production exceptions.
 
 | Ch | Enemies (HP / quirk) |
 |---|---|
@@ -670,7 +699,7 @@ Per-chapter expansion mix: 6 seed enemies listed below, 4 road/field roamers, 3 
 | 6 | Cackling Hyena (180), Mirage Vendor (160/sells fake items mid-battle), Scarab Sergeant (210), Dust Devilkin (190/blinds), Riddling Head (170/asks mini-riddles), Sun-Stroked Statue (240/Sunburn aura) |
 | 7 | Bazaar Bull (260/charges), Monkey Magnate (220/steals equipped hat), Hypno Flautist (240/Asleep), Palace Peacock (280/Flash), Spice Spirit (230/random element), Rail Bandit (300) |
 | 8 | **Production roster (ADR-143):** Paper Lantern Wisp (5,500/floating fire tell), Spore Puffer (6,500/Mushroomized), Origami Warrior (8,000/four-turn physical shield plus FIRE↔FREEZE profile refold; VOLT stays weak), Porcelain Warlord (11,000/breaks into smaller problems) |
-| 9 | Haystack Mimic (360), Moss Strigoi (400/HP drain), Castle Bat Choir (5×60/Crying), Animated Armor of Hoaxula (450), Mămăligă Blob (380/splits), Wolf of the Old Road (470/calls pack) |
+| 9 | **Production roster (ADR-144):** Haystack Mimic (12,000/FIRE, burst-feint), Ribcage Rattler (15,000/HOLY, self-mend), Moss Strigoi (17,000/life drain + Crying), Animated Armor (20,000/VOLT, shield stance), Wolf of the Old Road (24,000/HOLY, fast pressure) |
 | 10 | Frost Wraith (480), Hush Static (520/Hushed), Null Walker (560/"cannot be grasped" 25% of hits), Ember Mimic (500/disguised as the pickup), Gravity Gremlin (450/reverses turn order), Silent Choirboy (3×180/heals Hush enemies) |
 
 Every enemy has: sprite, 2–4 moves, weakness tag, EXP/cash/drop-table, and one **flavor death line** ("The Cranky Mailbox returned to sender."). The 200-type target excludes the 10 chapter bosses, minibosses, sports teams, arcade foes, and scripted hazards.
@@ -695,7 +724,8 @@ Every enemy has: sprite, 2–4 moves, weakness tag, EXP/cash/drop-table, and one
 
 Every standard enemy is a tiny interactive scene, not a stat block. Before the player ever sees a battle menu, the enemy must do something readable on the map: pace, hide, bargain, chase, run away, pretend to be furniture, block a shortcut, guard a picnic table, or make the party wonder whether touching it is wise. The battle then pays that behavior off with a mechanical gag, and the victory text lands the final little joke. The loop is always **see the bit -> touch the bit -> play the bit -> remember the bit**.
 
-The 20 enemies in each chapter are built as a local ecosystem:
+The historical twenty-enemy plan—and every smaller roster frozen by a newer
+production ADR—is built as a local ecosystem:
 
 - **Four road/field roamers** teach the chapter's everyday rules. In Otterbrook, the first roamers are annoyed suburbia: mailboxes, yard tools, itchy hill bugs. In Norway, the roamers are scale comedy: berries that are too big to fit in your inventory and weather-sized nuisances that drift across paths like moving walls.
 - **Three dungeon specialists** make the dungeon's gimmick fight back. Wintermoor's school enemies enforce sight lines and schedule bells. Mt. Shu's paper enemies fold, unfold, and reveal false weak points unless Pippa reads the crease first.
@@ -714,7 +744,7 @@ Chapter-by-chapter enemy identity:
 - **Ch.6 Zanzibel / Laughing Ruins:** the world tests attention. Mirage vendors sell fake items mid-battle, riddle heads punish button-mashing, dust enemies hide their real position. Teleport alpha arrives after the player has learned to read place and direction.
 - **Ch.7 Chandrapore:** motion, crowds, and rhythm. Enemies steal hats, interrupt trains, call for backup from off-screen rooftops, and use market noise as cover. The best fights feel like trying to keep your party together in a festival crowd.
 - **Ch.8 Lotus Harbor / Mt. Shu:** shape is unstable. Paper enemies change weakness when folded; Mushroomized controls make even a familiar enemy feel wrong; porcelain enemies break into smaller, more embarrassing problems. Pippa gets special reads here because she understands scale, paper, and ceremony.
-- **Ch.9 Valea Stelelor:** theater, hunger, and mercy. The enemies are props that forgot they were props, old-road dangers, pantry jokes, and quiet tests before Dorin's chapter. The closer the party gets to the monastery, the fewer cheap jokes the enemies get; the Hush is near, so the writing breathes.
+- **Ch.9 Valea Stelelor:** theater, hunger, and mercy. The exact five regulars are props that forgot they were props and dangers with readable road/castle tells. The closer the party gets to Dorin's homecoming and awakening at the monastery, the fewer cheap jokes the enemies get; the Hush is near, so the writing breathes.
 - **Ch.10 Alaska / Hawaii / Mars:** survival turns strange. Earth enemies are severe but still local: cold, generators, volcanic pressure. Mars enemies attack interface comfort itself: missing sound cues, scrambled turn order, attacks that "cannot be grasped." They must be fair, but they should feel like the game is becoming lonely.
 
 Enemy data must include a **map tell**, a **battle hook**, a **drop with identity**, and a **death line**. If any of those four are generic, the enemy is not done. Acceptable: "The Mirage Vendor refunded your confidence." Not acceptable: "Enemy defeated." If an enemy could be moved to another chapter without rewriting its joke, silhouette, and moves, it is not specific enough yet.
@@ -980,7 +1010,7 @@ Every quest leaves a footprint after completion:
 > an existing peak, each a binary flag gating later content, party fate, end-game powers,
 > and one of nine endings:
 > - **TRUST · Ch.6 "The Ruins That Laugh"** — *Pull the string* to save Pippa (Puppet, control) **vs** *Open your hand* (trust, let her find her own feet). STRINGS can drive Pippa to leave at Ch.8.
-> - **COMPASSION · Ch.9 Count Hoaxula** — *The Open Hand* (the canon mercy, untouched; Vlad becomes a finale caller) **vs** *The Iron* (Milo's Vibe Siphon banks the **Stolen Light**, a finale edge, but empties Vlad and disturbs **Dorin**, who withholds Comet Ω or leaves).
+> - **COMPASSION · Ch.9 Count Hoaxula** — *The Open Hand* (the canon mercy, untouched; Vlad becomes a finale caller) **vs** *The Iron* (Milo's Vibe Siphon banks the **Stolen Light**, a finale edge, but empties Vlad and disturbs **Dorin**, who withholds Comet Ω).
 > - **FINALE · Ch.10 THE CALLING** — *Silence it* (the canon damage-race) **vs** *Forgive it* (a give-Vibe "Answer" phase, achievable only if you arrive warm enough). Both END the Hush; they differ in what the Homesong *does*.
 >
 > **THE NINE ENDINGS (composed, not bespoke).** The epilogue is a sequence of ~28
@@ -1795,16 +1825,21 @@ obsolete twenty-enemy package quota.
 
 ```
 [Same template — this is the heart chapter, write it with full sincerity
-where the Bible demands it.] Maps: Valea Stelelor village (painted gates,
-haystack fields w/ Haystack Mimics, Buni's house — her cooking scene
-overheals HP visibly), Old Road through wolf country, Castle Hoaxula (gothic
-theme-park-gone-wrong props: gift shop, queue ropes), Stone Brow Monastery +
-the Trial of the Mute Mountain as a PLAYABLE solo Dorin sequence per §A6:
-senses stripped one by one — darken screen, then mute audio, then hide UI —
-finish on text alone. Dorin joins at L46 w/ canon kit. Boss: COUNT HOAXULA
-two-phase + the Pray-mercy ending hook. Five Ch.9 quests (#18 plus four new regional slots) incl. Buni's Table → Feast
-recipe). Buni's send-off line is the chapter button: "Du-te, puiul meu.
-The stars were always yours."
+where the Bible demands it.] Implement ADR-144 and
+docs/chapters/ch9/blueprint.md. The Orient Less-Express owns arrival. Rebuild
+only the stable four ids at 80×64 / 96×72 / 72×96 / 64×88: Valea's crescent
+village and rail apron, Old Road's broad switchback, Castle Hoaxula's
+queue→fake-scare→backstage→throne→choice route, and Stone Brow's separate
+trial/name/bell courts. Dorin has travelled since Chapter 5; the shared solo
+Trial panel leads into staged trial, birth-name, and Comet Ω awakening beats
+without removing the serialized party or normal UI. Implement exactly one
+regional quest, Buni's Table, with its five flag-backed ingredients and
+full-bag-safe Feast Basket/recipe/Caller reward. The regular roster is exactly
+Haystack Mimic, Ribcage Rattler, Moss Strigoi, Animated Armor, and Wolf of the
+Old Road. COUNT HOAXULA is 95,000 HP with exact-slot theft restoration,
+inclusive-50% unmask, good-or-better PRAY mercy, and the separate COMPASSION
+choice. Runtime uses Dorin-correct Pippa-present/departed contextual panels;
+the full gallery is never the arrival reel.
 ```
 
 ### Prompt 36 — Chapter 10: "The Long Shot" (Alaska → Hawaii → Mars)

@@ -683,6 +683,7 @@ export function occupyCity(map: MapDef, opts: OccupyOpts): Record<string, MapDef
   // DOORLESS catalog facades only — occupyCity never overrides a hand-authored door.
   const facades = map.props.filter(
     (p) => p.sprite.startsWith('bldg_') && p.solid && !p.door && !p.ifFlag && !p.unlessFlag
+      && p.facadeUse !== 'outdoor-court'
       && !NON_TENANTED_FACADE_SPRITES.has(p.sprite),
   );
   const requestedPrefix = opts.pinnedUnlockedPrefix ?? 0;

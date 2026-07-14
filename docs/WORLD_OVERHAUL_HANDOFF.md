@@ -707,3 +707,60 @@ temple, boss, postBoss, and complete. Exact final editor, test, audit, render,
 original-resolution, and live-QA evidence belongs in
 `docs/CH8_PRODUCTION_VERIFICATION.md`; do not infer those passes from this
 implementation handoff.
+
+## Chapter 9 production close
+
+The save-facing roster is exactly `valea_stelelor`, `old_road`,
+`castle_hoaxula`, and `stone_brow_monastery`, at 80×64, 96×72, 72×96, and
+64×88. `CH9_WORLD` owns dimensions, route mouths, body-safe landings, story and
+quest rectangles, recoveries, safe pockets, migration, parking, and developer
+spawns. The four spatial signatures are an inhabited crescent village, a broad
+five-wide climbing switchback, a fake attraction collapsing into bankrupt
+backstage and separate boss/choice spaces, and a quiet three-court monastery
+climb.
+
+The Orient Less-Express owns arrival. Valea's nine live villagers reuse four
+strict-clean sheet identities; its Buni, provisioner, homes, church, mill,
+well, civic seams, and train apron are authored rather than generated tenancy.
+Five visible ingredient cues retire with their pickup flags. Buni's planner
+persists partial progress, keeps a full-bag reward retry open, and grants the
+Feast Basket, recipe, done flag, and Caller exactly once. All routes and Buni
+work remain available after the boss. Castle adds a clear picnic recovery and
+retires its attraction encounters into calm backtracking.
+
+The five-enemy roster is Haystack Mimic, Ribcage Rattler, Moss Strigoi,
+Animated Armor, and Wolf of the Old Road. Each has a visible world tell, useful
+drop, battle decision, specific death line, and aligned base/wear/mini family.
+Count Hoaxula stays exactly 95,000 HP at level 46: THEATRICAL turn-two theft
+escrows a valid exact equipment slot, declared counters answer the windup, the
+50% UNMASKED change occurs once, and good-or-better PRAY mercy is form-gated.
+Mercy, HP victory, defeat/retry, and teardown all restore escrow before an
+overworld save.
+
+OPEN HAND and IRON are atomic sibling transactions. Held Breath restores the
+exact pre-choice party/Pippa, equipment, quest, Caller, Trust/Clicker/army,
+choice, and Ember state before re-decision. Dorin's name, Comet Ω awakening,
+Heartlight, Ember 9, and completion are independently resumable. Fourteen
+contextual panels cover seven Pippa-present/departed beats with fourteen
+masters; eleven wear corrections and masters close Haystack, Moss, Armor,
+Wolf, and both Count forms.
+
+Save v26 relocates only invalid Chapter 9 player/parking geometry, walks nested
+Held Breath snapshots, rejects future versions, and does not infer choice,
+Count defeat, or Buni progress. The developer matrix has 25 level-46 states and
+ten present/departed pairs, including full-bag retry, direct THEATRICAL and
+UNMASKED battles, both choices, awakening resume, complete, and calm
+backtracking.
+
+Final evidence is **PASS**: focused 17/17 files and 462/462 tests; full 133/133
+files and 2,177/2,177 tests; 273 generated maps; strict visual 144/144 authored
+and 0 legacy; 147/147 hi-res enemy frames; strict animation 84/100 clean with
+0 errors, 0 warnings, and 58 inherited reviewed hints; Count TTK 5 conservative
+/ 4 read; 1,082-module build; `output/maps_ch9.png` at 1186×1088 with four
+reviewed panels; and 271/273 encounter-pressure clear with only two documented
+frozen-rotor waivers. Desktop and phone live QA covered the critical path, both
+choices, departed-Pippa state, full-bag retry, touch combat, and calm
+backtracking; a fresh settled console reported 0 warnings and 0 errors. Physical
+controller hardware was unavailable, so no live hardware pass is claimed.
+
+The authoritative close record is `docs/CH9_PRODUCTION_VERIFICATION.md`.

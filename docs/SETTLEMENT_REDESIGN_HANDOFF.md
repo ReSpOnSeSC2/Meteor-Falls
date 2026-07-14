@@ -1,5 +1,14 @@
 # AI HANDOFF PROMPT — Settlement Redesign + Vibrancy Program (Meteor Falls)
 
+> **Chapter 9 status (ADR-144, 2026-07-14):** Valea Stelelor now has a frozen
+> 80×64 production contract: a warm crescent village around Buni's table, green
+> and well, with the Orient Less-Express rail apron below and Old Road mouth
+> above-east. The contract places all eight authored Valea facade identities
+> deliberately across painted-home, civic, church, and mill/barn lanes; furnished outdoor
+> courts replace invented generic interiors. Valea is no longer a future-layout
+> prompt. The completed implementation and measured evidence are recorded in
+> the Chapter 9 blueprint and production-verification record rather than this handoff.
+
 > **Chapter 8 status (2026-07-13):** Lotus Harbor is a 112×80 production city
 > with a fan-shaped terraced river crescent, twenty-four facade placements,
 > twenty-two live units, and eight explicit authored city-scale facade
@@ -115,8 +124,8 @@ Every area draws ONLY from its own `AREA_SKINS` roster (validator-pinned ⇄ `CA
 
 1. **Valle Dorado** (`buildValleDorado`, `maps_ch2.ts`) — full rebuild like everywhere else, BUT `valle_shop`/`valle_clinic`/`valle_chapel` are FIXED POINTS (exact positions — their `door.ox` values are hand-measured against authored art; re-verify current state via `git log` — the user actively edits this map). Redesign the village around them: lanes, yards/fences, flower beds, well/plaza detail, furniture.
 2. **Full re-layout + vibrancy passes, roughly in play order (2–3 per session; art-heavy = 1–2):**
-   `minimus_major` (ch5) · `valea_stelelor` (ch9) · `aurora_station` + `mauna_lani` (ch10) · ch1–2 stragglers `costa_estrella` + `golf_resort` (`maps.ts`) · **RE-DO to the §0 bar: `brickton` + `puerto_sol`** (their 2026-07-02 passes predate the full-rebuild directive — same timid style the user rejected on Otterbrook) · route maps per chapter (ch1: hill_road, hickory_trail, whisperwood_rise, hickory_hill, the four meadow legs — currently bare snake-paths). Foggybottom, Kvisthavn/Lilleby, Zanzibel, Chandrapore, and Lotus Harbor are production closes, not entries in this queue.
-3. **Design hooks per remaining map** (expand into blueprints at execution time): minimus = 1/100 jewel-box miniature (dainty grid, hedge-maze motifs, DAINTY traffic); valea_stelelor = painted folk village (yards, well, church green, mill lane); aurora_station = utilitarian arctic outpost (boardwalk `:` paths, crate depots, huddled habitats); mauna_lani = launch resort (sand `n` beach band, palm lines, surf-shop row); costa_estrella/golf_resort = links villages (fairway `m`, mansion drives, gatehouse). The production identities for Foggybottom, Kvisthavn/Lilleby, Zanzibel, Chandrapore, and Lotus Harbor are recorded in their ADRs and verification documents; treat them as compatibility contracts rather than fresh design prompts.
+   `minimus_major` (ch5) · `aurora_station` + `mauna_lani` (ch10) · ch1–2 stragglers `costa_estrella` + `golf_resort` (`maps.ts`) · **RE-DO to the §0 bar: `brickton` + `puerto_sol`** (their 2026-07-02 passes predate the full-rebuild directive — same timid style the user rejected on Otterbrook) · route maps per chapter (ch1: hill_road, hickory_trail, whisperwood_rise, hickory_hill, the four meadow legs — currently bare snake-paths). Foggybottom, Kvisthavn/Lilleby, Zanzibel, Chandrapore, Lotus Harbor, and frozen-contract Valea are not entries in this queue.
+3. **Design hooks per remaining map** (expand into blueprints at execution time): minimus = 1/100 jewel-box miniature (dainty grid, hedge-maze motifs, DAINTY traffic); aurora_station = utilitarian arctic outpost (boardwalk `:` paths, crate depots, huddled habitats); mauna_lani = launch resort (sand `n` beach band, palm lines, surf-shop row); costa_estrella/golf_resort = links villages (fairway `m`, mansion drives, gatehouse). The production identities for Foggybottom, Kvisthavn/Lilleby, Zanzibel, Chandrapore, Lotus Harbor, and Valea are recorded in their ADRs/blueprints and verification documents; treat them as compatibility contracts rather than fresh design prompts.
 
 ## THE PER-MAP WORKFLOW (proven on Otterbrook/Brickton/Puerto Sol — follow it exactly)
 

@@ -107,6 +107,12 @@
  * to the marked Lotus bay. Mushroomized and the exact departed-hero bench join
  * the schema, earned post-Mt.-Shu saves retain Teleport Beta, and every supported
  * full-save JSON in the Held Breath stack walks the same migration chain.
+ *
+ * v25 to v26 (2026-07 Chapter 9 rollout): all four Romania maps recover through
+ * CH9_WORLD anchors and every Chapter 9 parked vehicle moves to Valea's marked
+ * apron. Only irreversible `ember9` / `ch9_complete` proof backfills Comet Omega
+ * and Heartlight; coordinates never infer Buni, Count, or COMPASSION state. Full
+ * supported saves in Held Breath snapshots walk the same deterministic step.
  */
 import { ITEMS, BAG_MAX } from '../data/items';
 import { MGR_ROW } from '../data/arcade';
@@ -119,8 +125,9 @@ import { s } from '../spritegen/scale';
 import { CH6_WORLD } from '../data/maps_ch6';
 import { CH7_MAP_IDS, CH7_WORLD } from '../data/maps_ch7';
 import { CH8_MAP_IDS, CH8_WORLD, LOTUS_HARBOR_UNIT_IDS, nativeFeet as chapter8NativeFeet } from '../data/maps_ch8';
+import { CH9_MAP_IDS, CH9_WORLD, nativeFeet as chapter9NativeFeet } from '../data/maps_ch9';
 
-export const CURRENT_SAVE_VERSION = 25;
+export const CURRENT_SAVE_VERSION = 26;
 
 const KNOWN_VEHICLE_TITLES = new Set(Object.values(DEALERSHIP).map((car) => car.title));
 
@@ -276,6 +283,39 @@ export const CHAPTER8_PARKING_RECOVERY = Object.fromEntries([
   [CH8_MAP_IDS[0], chapter8VehicleBay],
   [CH8_MAP_IDS[1], chapter8VehicleBay],
 ]) as Readonly<Record<string, { x: number; y: number; facing: 'right' }>>;
+
+const chapter9Feet = (point: CardinalPoint): {
+  x: number;
+  y: number;
+  facing: 'up' | 'down' | 'left' | 'right';
+} => {
+  const feet = chapter9NativeFeet(point);
+  return { x: feet.tx, y: feet.ty, facing: point.facing };
+};
+
+/** The four published Chapter 9 ids remain stable while their compact scaffold
+ * geometry is replaced. Every recovery point is owned by CH9_WORLD. */
+export const CHAPTER9_LAYOUT_RECOVERY: Readonly<Record<
+  string,
+  { x: number; y: number; facing: 'up' | 'down' | 'left' | 'right' }
+>> = Object.fromEntries([
+  [CH9_MAP_IDS[0], chapter9Feet(CH9_WORLD.valea.migration)],
+  [CH9_MAP_IDS[1], chapter9Feet(CH9_WORLD.oldRoad.migration)],
+  [CH9_MAP_IDS[2], chapter9Feet(CH9_WORLD.castle.migration)],
+  [CH9_MAP_IDS[3], chapter9Feet(CH9_WORLD.monastery.migration)],
+]);
+
+const chapter9VehicleApron = chapter9Feet({
+  x: CH9_WORLD.valea.vehicleApron.x + Math.floor(CH9_WORLD.valea.vehicleApron.w / 2),
+  y: CH9_WORLD.valea.vehicleApron.y + Math.floor(CH9_WORLD.valea.vehicleApron.h / 2),
+  facing: 'right',
+});
+
+/** A legacy vehicle parked anywhere on rebuilt Chapter 9 geometry recovers to
+ * Valea's apron. Multiple titles fan out deterministically from this base. */
+export const CHAPTER9_PARKING_RECOVERY = Object.fromEntries(
+  CH9_MAP_IDS.map((id) => [id, chapter9VehicleApron]),
+) as Readonly<Record<string, { x: number; y: number; facing: 'right' }>>;
 
 /** the v5 hoops field's clean slate — newGameData and the v4→v5 step share
  *  it (lives here, not state.ts, so the import graph stays acyclic) */
@@ -454,6 +494,29 @@ function recoverChapter8VehicleParking(raw: Raw): void {
   }
 }
 
+function recoverChapter9VehicleParking(raw: Raw): void {
+  if (!isObj(raw.vehicleParking)) return;
+  const parking = raw.vehicleParking;
+  const recovered: Record<string, VehicleParkingState> = {};
+  for (const [title, value] of Object.entries(parking)) {
+    if (!isVehicleParkingState(value) || hasOwn(CHAPTER9_PARKING_RECOVERY, value.area)) continue;
+    recovered[title] = value;
+  }
+  const pending = Object.entries(parking)
+    .filter((entry): entry is [string, VehicleParkingState] =>
+      isVehicleParkingState(entry[1]) && hasOwn(CHAPTER9_PARKING_RECOVERY, entry[1].area))
+    .sort(([a], [b]) => a.localeCompare(b));
+  for (const [title, value] of pending) {
+    const base = CHAPTER9_PARKING_RECOVERY[value.area];
+    const next = allocateVehicleDeliverySlot(
+      { vehicleParking: recovered }, title,
+      { area: CH9_MAP_IDS[0], x: s(base.x), y: s(base.y), facing: base.facing },
+    );
+    parking[title] = next;
+    recovered[title] = next;
+  }
+}
+
 /** A prerelease Ch8 save may prove the elder lesson through the lesson flag
  * itself or through later irreversible story beats. Level and map position are
  * deliberately absent: neither is evidence that Jay heard the elder. */
@@ -468,6 +531,18 @@ function backfillChapter8TeleportBeta(raw: Raw): void {
     || flags.ch8_heartlight_seen === true
     || flags.ch8_complete === true;
   if (elderOrLater) flags.awake_teleport_b = true;
+}
+
+/** The old compact monastery could mark Chapter 9 complete without the new
+ * name/awakening/Heartlight chronology. Only irreversible completion proof may
+ * repair those earned powers; location, level, and intermediate flags prove
+ * nothing. The name flag intentionally remains untouched for catch-up copy. */
+function backfillChapter9Completion(raw: Raw): void {
+  if (!isObj(raw.flags)) return;
+  const flags = raw.flags;
+  if (flags.ember9 !== true && flags.ch9_complete !== true) return;
+  flags.awake_comet_o = true;
+  flags.ch9_heartlight_seen = true;
 }
 
 function addChapter8StateFields(raw: Raw): void {
@@ -1008,6 +1083,24 @@ export const MIGRATIONS: MigrationStep[] = [
       addChapter8StateFields(raw);
       backfillChapter8TeleportBeta(raw);
       raw.version = 25;
+      return raw;
+    },
+  },
+  {
+    to: 26,
+    migrate(raw) {
+      const map = typeof raw.map === 'string' ? raw.map : '';
+      const target = hasOwn(CHAPTER9_LAYOUT_RECOVERY, map)
+        ? CHAPTER9_LAYOUT_RECOVERY[map]
+        : undefined;
+      if (target) {
+        raw.x = s(target.x);
+        raw.y = s(target.y);
+        raw.facing = target.facing;
+      }
+      recoverChapter9VehicleParking(raw);
+      backfillChapter9Completion(raw);
+      raw.version = 26;
       return raw;
     },
   },

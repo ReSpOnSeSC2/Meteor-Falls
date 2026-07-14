@@ -340,6 +340,13 @@ const SETS: Record<string, { title: string; ids: string[]; cellW: number; cellH:
     ],
     cellW: 560, cellH: 460,
   },
+  ch9: {
+    title: 'METEOR FALLS - CHAPTER 9: THE COUNT OF VALEA STELELOR (ROMANIA)',
+    // The production contract intentionally remains four maps: the Orient
+    // Less-Express is a Valea landmark and the village courts are exterior.
+    ids: ['valea_stelelor', 'old_road', 'castle_hoaxula', 'stone_brow_monastery'],
+    cellW: 560, cellH: 460,
+  },
   formal_cities: {
     title: 'FORMAL CITIES - PRODUCTION FACADE SCALE QA',
     ids: ['brickton', 'puerto_sol', 'valle_dorado', 'minimus_major', 'zanzibel', 'chandrapore', 'lotus_harbor'],

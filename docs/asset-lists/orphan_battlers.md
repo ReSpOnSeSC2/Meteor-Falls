@@ -1,17 +1,23 @@
 # Orphan Battler Reserve — intentional inventory, not noise
 
-**What this is.** 32 fully-authored enemy battlers live on disk under
+**What this is.** 31 fully-authored enemy battlers live on disk under
 `assets/art/enemies/` but are **not wired into any roster** (`src/data/enemies.ts`)
 or runtime loader (`src/spritegen/authored.ts`). The visual-identity audit
-(`npm run visuals:audit` → [`visual_identity.md`](visual_identity.md)) reports them
-as *"Authored battle PNGs on disk but not registered for current runtime: 97"*
-— that count is **these 32 battlers × 3 wear tiers = 96, plus the 1
+(`npm run visuals:audit` → [`visual_identity.md`](visual_identity.md)) reports the
+current disk/runtime difference as **94 authored battle PNGs** — these **31
+battlers × 3 wear tiers = 93, plus the 1
 `whiskerzilla_knighted` cutscene panel** (see Exclusions below).
 
 They are **kept on purpose** as a reserve bank, **not deleted**. This file records
 each one's theme and the chapter it could be adopted into, so the audit's "97
 unregistered" reads as *tracked reserve inventory* rather than drift. Decision
 ratified 2026-06-28 (track: canon/design cleanup — "keep + catalog").
+
+> **Current supersession (ADR-144, 2026-07-14):** the original catalogue had
+> 32 battlers / 97 PNG-shaped files because it included `ribcage_rattler`.
+> Chapter 9 adopted Ribcage as one of its exact five regular encounters, with
+> battle art, mini, data, loader, and map use. The historical count remains
+> explained here, but Ribcage is no longer reserve inventory.
 
 **Status of every entry below (verified 2026-06-28):** complete `battle_<id>` +
 `_w1` + `_w2` set, all **112×144** (uniform — adoptable as-is, no wear-frame
@@ -86,19 +92,22 @@ Bell). These are extra tiny-duchy flavor — reserve for a future Ch.5 expansion
 | `thimble_drummer` | a drummer on a thimble (cf. `tin_parade`) |
 | `tin_soldier_squad` | a squad of tin soldiers (group enemy, cf. `halberd_column`) |
 
-## Ambiguous (3) — the realistic adoption candidates
+## Ambiguous (2) — the remaining realistic adoption candidates
 
 | id | theme | reserved for |
 |---|---|---|
-| `ribcage_rattler` | skeletal / gothic | **Ch.9 (Romania — `count_hoaxula`, gothic)** — strong fit when Ch.9 lands |
 | `ballot_box_brawler` | civic / bureaucracy | Ch.1 (USA Dept.-of-Smiles) or Ch.5 (Minimus tax/toll/census) bureaucracy — both currently full |
 | `acorn_catapult` | woodland / forest | no clean landed home (Ch.3 England woodland is full); generic forest reserve |
+
+`ribcage_rattler` occupied the first row of this table in the 2026-06-28
+snapshot. ADR-144 records its completed Chapter 9 adoption; keep its three
+already-distinct wear stages and do not regenerate them.
 
 ---
 
 ## Exclusions — confirmed IN USE, do NOT treat as orphans
 
-These three share the `battle_`/disk-asset shape but are **wired and active**.
+These four share the `battle_`/disk-asset shape but are **wired and active**.
 Re-flagging them as orphans (or deleting them) would break shipped content:
 
 | id | what it actually is | wired via |
@@ -106,6 +115,7 @@ Re-flagging them as orphans (or deleting them) would break shipped content:
 | `gilded_grin_hollow` | Ch.1 boss **Idol of the Gilded Grin** `formSwap` hollow form (Mia's-awakening beat) | `authored.ts` + `spritegen/enemies.ts` |
 | `the_whisperwig_exposed` | Ch.4 boss **The Whisperwig** phase-2 exposed form | `authored.ts` + `spritegen/enemies.ts` |
 | `whiskerzilla_knighted` | Ch.5 **cutscene panel** (not an enemy at all) | `src/data/cutscenes.ts` |
+| `ribcage_rattler` | Ch.9 regular enemy; the adopted gothic reserve identity | `enemies.ts` + `authored.ts` + `spritegen/enemies.ts` + `maps_ch9.ts` |
 
 ---
 

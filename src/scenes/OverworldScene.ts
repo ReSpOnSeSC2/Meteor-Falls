@@ -88,6 +88,7 @@ import { MINIMUS_LANDING } from '../data/maps_ch5';
 import { ZANZIBEL_LANDING } from '../data/maps_ch6';
 import { CH7_WORLD } from '../data/maps_ch7';
 import { CH8_MAP_IDS, CH8_WORLD } from '../data/maps_ch8';
+import { CH9_MAP_IDS, CH9_WORLD, nativeFeet as ch9NativeFeet } from '../data/maps_ch9';
 import { ENEMIES, MAX_BATTLE_ENEMIES, type EnemyDef } from '../data/enemies';
 import { DIALOGUE } from '../data/dialogue';
 import { ITEMS, BAG_MAX } from '../data/items';
@@ -163,7 +164,7 @@ import {
 import { AWAKENINGS } from '../data/awakenings';
 // S21 (ADR-126/127/128): the Held Breath rewind, the three Axes, the composed ending
 import { playCutscene } from '../engine/cutscene';
-import { ch8PartyCutsceneId } from '../data/cutscenes';
+import { ch8PartyCutsceneId, ch9PartyCutsceneId } from '../data/cutscenes';
 import { CHOICES, type ChoiceId } from '../data/choices';
 import { recordChoice } from '../engine/choice';
 import { captureEcho, isRewindable, clearPuppetLock, puppetLocked } from '../engine/echo';
@@ -175,7 +176,7 @@ import {
   type Caster as ControlCaster,
 } from '../engine/control';
 import { composeEnding, endingContext, forgiveViable } from '../engine/ending';
-import { departHero, rejoinHero, withholdUltimate, isPresent } from '../engine/party';
+import { departHero, rejoinHero, isPresent } from '../engine/party';
 import {
   applyMushroomize,
   cureMushroomize,
@@ -197,6 +198,22 @@ import {
   reconcileCh8ClickerCaller,
   type Ch8StoryFrontier,
 } from '../engine/ch8Story';
+import {
+  CH9_BUNI_FLAGS,
+  CH9_BUNI_PICKUP_INTERACTIONS,
+  buniProgress,
+  planCh9BuniInteraction,
+  planCh9BuniPanel,
+  planCh9BuniRewardCommit,
+  type Ch9BuniInteraction,
+} from '../engine/ch9Quests';
+import {
+  CH9_STORY_FLAGS,
+  planCh9ArrivalStory,
+  planCh9MonasteryStory,
+  planCh9TrainStory,
+  type Ch9MonasteryFrontier,
+} from '../engine/ch9Story';
 import { resolveTeleportAttempt } from '../engine/teleport';
 import {
   TELEPORT_REQUEST_REGISTRY_KEY,
@@ -880,11 +897,18 @@ const ROMANIA_SKIN_MAPS: ReadonlySet<string> = new Set([
   'castle_hoaxula',
   'stone_brow_monastery',
 ]);
+/** Reuse committed interior tiles to keep the two destination maps distinct:
+ * Hoaxula's shabby attraction is built over a stage-like plank deck, while
+ * Stone Brow keeps the cut-slab floor of a mountain monastery. Both remaps
+ * preserve the non-solid `office_floor` contract. */
+const ROMANIA_INTERIOR_TILE_SKINS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
+  castle_hoaxula: { office_floor: 'floor_wood' },
+  stone_brow_monastery: { office_floor: 'pyramid_floor' },
+};
 const ROMANIA_TILE_SKIN: Readonly<Record<string, string>> = {
   grass_a: 'romania_ground', // village earth / verge / castle floor (`.`)
   grass_b: 'romania_ground', // decorative grass (`,`)
   grass_tuft: 'romania_ground', // decorative grass (`~`)
-  office_floor: 'romania_ground', // castle/monastery way-gaps (`o`) blend into the ground
   road: 'romania_path', // the village lane / district streets (`R`) → packed dirt road
   sidewalk: 'romania_path', // the cart-track lanes (`=`) → packed dirt road
   road_dash: 'romania_path', // the centreline (`D`) — a mountain road needs no lane dash
@@ -1530,6 +1554,7 @@ export class OverworldScene extends Phaser.Scene {
     const ruinsSkin = RUINS_SKIN_MAPS.has(this.mapDef.id);
     const chinaSkin = CHINA_SKIN_MAPS.has(this.mapDef.id);
     const romaniaSkin = ROMANIA_SKIN_MAPS.has(this.mapDef.id);
+    const romaniaInteriorSkin = ROMANIA_INTERIOR_TILE_SKINS[this.mapDef.id];
     const auroraSkin = AURORA_SKIN_MAPS.has(this.mapDef.id);
     const laniSkin = LANI_SKIN_MAPS.has(this.mapDef.id);
     const marsSkin = MARS_SKIN_MAPS.has(this.mapDef.id);
@@ -1622,6 +1647,8 @@ export class OverworldScene extends Phaser.Scene {
             // render as jade river-dust ground / stone flagstone / temple masonry. Same
             // solidity as the base it replaces, so collision below is unchanged.
             name = CHINA_TILE_SKIN[name];
+          } else if (romaniaInteriorSkin?.[name]) {
+            name = romaniaInteriorSkin[name];
           } else if (romaniaSkin && ROMANIA_TILE_SKIN[name]) {
             // Ch.9 — the Valea Stelelor reskin (Ch.9 maps only): the shared grid chars render
             // as mountain-meadow grass / packed-dirt road / mossy castle stone. Same solidity
@@ -6032,6 +6059,9 @@ export class OverworldScene extends Phaser.Scene {
       case 'mt_shu_elder':
         await this.ch8ElderBetaScene();
         return true;
+      case 'vs_buni':
+        await this.ch9BuniBeat();
+        return true;
       case 'mrs_pemmel':
         // The crisis gets one concise beat; the full side quest opens only when
         // restoring the town has actually restored ordinary life.
@@ -6423,6 +6453,105 @@ export class OverworldScene extends Phaser.Scene {
     }
     this.cut = false;
     this.fadeRestart();
+  }
+
+  /** Apply one pure Buni transition. Quest reward acceptance stays delegated to
+   * completeQuest(); the recipe patch follows synchronously from its durable
+   * done flag so a full bag cannot consume or pre-unlock anything. */
+  private applyCh9BuniInteraction(interaction: Ch9BuniInteraction): {
+    changed: boolean;
+    completion: 'none' | 'ok' | 'hands-full' | 'already';
+    progress: ReturnType<typeof buniProgress>;
+  } {
+    const plan = planCh9BuniInteraction(interaction, (flag) => GS.flag(flag) === true);
+    if (plan.status !== 'ready') {
+      return { changed: false, completion: 'none', progress: plan.progress };
+    }
+    for (const flag of plan.setFlags) GS.setFlag(flag);
+    const completion = plan.completeQuest ? completeQuest(plan.completeQuest) : 'none';
+    if (completion !== 'none') {
+      for (const flag of planCh9BuniRewardCommit(completion, (name) => GS.flag(name) === true)) {
+        GS.setFlag(flag);
+      }
+    }
+    return {
+      changed: plan.setFlags.length > 0 || completion === 'ok',
+      completion,
+      progress: plan.progress,
+    };
+  }
+
+  /** Buni is a real quest giver, not a repeating static paragraph. */
+  private async ch9BuniBeat(): Promise<void> {
+    if (GS.flag(CH9_BUNI_FLAGS.done)) {
+      // Repair the one possible old seam: durable quest success without the
+      // newly formalized recipe flag.
+      for (const flag of planCh9BuniRewardCommit('already', (name) => GS.flag(name) === true)) {
+        GS.setFlag(flag);
+      }
+      await this.dlg.say(...DIALOGUE.q_buni_post);
+      return;
+    }
+
+    if (!GS.flag(CH9_BUNI_FLAGS.start)) {
+      this.applyCh9BuniInteraction('start');
+      AUDIO.sfx('confirm');
+      await this.dlg.say(...DIALOGUE.q_buni_start);
+      return;
+    }
+
+    const progress = buniProgress((flag) => GS.flag(flag) === true);
+    if (!progress.allCollected) {
+      await this.dlg.say(
+        ...DIALOGUE.q_buni_active,
+        `(${progress.count}/${progress.total} pantry things found. ${progress.missing.length} still wait up the valley.)`,
+      );
+      return;
+    }
+
+    const result = this.applyCh9BuniInteraction('return');
+    if (!GS.flag(CH9_BUNI_FLAGS.panelSeen)) {
+      for (const flag of planCh9BuniPanel((name) => GS.flag(name) === true)) GS.setFlag(flag);
+      await playCutscene(this, ch9PartyCutsceneId('buni', isPresent('pippa')));
+    }
+    await this.dlg.say(...DIALOGUE.q_buni_ready);
+    if (result.completion === 'hands-full') {
+      await this.dlg.say(...DIALOGUE.q_buni_full);
+      return;
+    }
+    if (result.completion === 'ok' || GS.flag(CH9_BUNI_FLAGS.done)) {
+      AUDIO.sfx('confirm');
+      await this.dlg.say(...DIALOGUE.q_buni_done);
+      toast(this, 'Feast Basket and Buni Caller received.');
+      return;
+    }
+    await this.dlg.say(...DIALOGUE.q_buni_active);
+  }
+
+  /** Flag-only pantry pickup: independent, serializable, and never bag-limited. */
+  private async ch9BuniPickup(id: keyof typeof CH9_BUNI_PICKUP_INTERACTIONS): Promise<void> {
+    this.cut = true;
+    try {
+      if (!GS.flag(CH9_BUNI_FLAGS.start) || GS.flag(CH9_BUNI_FLAGS.done)) {
+        if (!GS.flag(CH9_BUNI_FLAGS.start)) await this.dlg.say(...DIALOGUE.q_buni_pickup_locked);
+        return;
+      }
+      const interaction = CH9_BUNI_PICKUP_INTERACTIONS[id];
+      const result = this.applyCh9BuniInteraction(interaction);
+      if (!result.changed) return;
+      const dialogueKey = ({
+        q_buni_smantana: 'q_buni_pickup_smantana',
+        q_buni_branza: 'q_buni_pickup_branza',
+        q_buni_mushrooms: 'q_buni_pickup_mushrooms',
+        q_buni_cabbage: 'q_buni_pickup_cabbage',
+        q_buni_plums: 'q_buni_pickup_plums',
+      } as const)[id];
+      AUDIO.sfx('confirm');
+      await this.dlg.say(...DIALOGUE[dialogueKey]);
+      if (result.progress.allCollected) await this.dlg.say(...DIALOGUE.q_buni_pickups_complete);
+    } finally {
+      this.cut = false;
+    }
   }
 
   private async travelerBeat(): Promise<void> {
@@ -8256,7 +8385,10 @@ export class OverworldScene extends Phaser.Scene {
       // edge-trigger: fire on entry, not every frame while standing in it
       if (this.insideTriggers.has(t.id)) continue;
       this.insideTriggers.add(t.id);
-      if (CH8_MAP_IDS.some((mapId) => mapId === this.mapDef.id)) {
+      if (
+        CH8_MAP_IDS.some((mapId) => mapId === this.mapDef.id)
+        || CH9_MAP_IDS.some((mapId) => mapId === this.mapDef.id)
+      ) {
         this.queueCh8Trigger(t.id);
       } else {
         void this.runTrigger(t.id);
@@ -8264,9 +8396,9 @@ export class OverworldScene extends Phaser.Scene {
     }
   }
 
-  /** The frozen Chapter 8 layout intentionally has four overlapping trigger
-   * rectangles. Drain entries in authored map order so a story beat finishes
-   * before its overlapping quest/hazard beat begins. */
+  /** Late-chapter production maps may contain adjacent or overlapping async
+   * story/quest rectangles. Drain entries in authored order so one durable
+   * transaction finishes before the next begins. */
   private queueCh8Trigger(id: string): void {
     if (!this.ch8TriggerQueue.includes(id)) this.ch8TriggerQueue.push(id);
     if (!this.ch8TriggerRunnerActive) void this.drainCh8TriggerQueue();
@@ -8836,11 +8968,25 @@ export class OverworldScene extends Phaser.Scene {
       case 'ch9_arrival':
         if (!GS.flag('ch9_arrived')) await this.ch9ArrivalScene();
         break;
+      case 'q_buni_smantana':
+      case 'q_buni_branza':
+      case 'q_buni_mushrooms':
+      case 'q_buni_cabbage':
+      case 'q_buni_plums':
+        await this.ch9BuniPickup(id);
+        break;
       case 'count_hoaxula_boss':
         if (!GS.flag('count_hoaxula_defeated')) await this.countHoaxulaBossScene();
+        else if (!GS.flag(CH9_STORY_FLAGS.candelabraClaimed)) await this.giveCountCandelabraAndRestart();
+        break;
+      case 'ch9_trial_mute_mountain':
+        await this.ch9MonasteryScene('trial');
+        break;
+      case 'ch9_dorin_awakening':
+        await this.ch9MonasteryScene('awakening');
         break;
       case 'stone_brow_monastery_resonance':
-        if (!GS.flag('ch9_complete')) await this.stoneBrowMonasteryScene();
+        await this.ch9MonasteryScene('bell');
         break;
       /* ---------------- Chapter 10 (§A6 The Long Shot — FINALE) ---------------- */
       case 'ch10_arrival':
@@ -9247,19 +9393,53 @@ export class OverworldScene extends Phaser.Scene {
       this.goThroughDoor('aurora_station', 8 * 16, 19 * 16, 'down');
       return;
     }
-    // the §A5 NEXT leg: once Lotus Harbor (Ch.8) is done, Bert flies the party to VALEA
-    // STELELOR (the newest frontier takes priority — the earlier legs below stay for the backtrack)
+    // The Chapter 9 frontier begins at the western railhead. Once the player
+    // accepts, every durable train stage resumes without asking again: ticket,
+    // contextual panel, then the fixed Valea platform landing.
     if (GS.flag('ch8_complete') && !GS.flag('ch9_arrived')) {
-      await this.dlg.say(...DIALOGUE.bert_romania_ask);
-      const pick = await this.dlg.ask(['Fly to VALEA STELELOR', 'Not yet'], { cancelIndex: 1 });
-      if (pick !== 0) {
-        this.cut = false;
-        return;
+      let accepted = GS.flag(CH9_STORY_FLAGS.trainCommitted) === true;
+      let plan = planCh9TrainStory(
+        accepted,
+        (flag) => GS.flag(flag) === true,
+        (itemId) => GS.hasKeyItem(itemId),
+      );
+      if (plan.status === 'offer') {
+        await this.dlg.say(...DIALOGUE.bert_romania_ask);
+        const pick = await this.dlg.ask(['Board the ORIENT LESS-EXPRESS', 'Not yet'], { cancelIndex: 1 });
+        if (pick !== 0) {
+          this.cut = false;
+          return;
+        }
+        accepted = true;
       }
-      AUDIO.stopMusic();
-      await playCutscene(this, 'ch9_journey'); // the authored Romania panels (no-ops if missing)
-      // the hatch drops on the Valea Stelelor village green; ch9_arrival fires the beat
-      this.goThroughDoor('valea_stelelor', 8 * 16, 20 * 16, 'down');
+
+      // Re-plan after every committed stage. If a save is interrupted between
+      // any two awaits, the next interaction continues at the first missing one.
+      for (;;) {
+        plan = planCh9TrainStory(
+          accepted,
+          (flag) => GS.flag(flag) === true,
+          (itemId) => GS.hasKeyItem(itemId),
+        );
+        if (plan.status !== 'ready' || !plan.stage) break;
+        const stage = plan.stage;
+        for (const flag of stage.setFlags) GS.setFlag(flag);
+        if (stage.grantKeyItem && !GS.hasKeyItem(stage.grantKeyItem)) {
+          GS.data.keyItems.push(stage.grantKeyItem);
+        }
+        if (stage.id === 'train_panel') {
+          AUDIO.stopMusic();
+          await playCutscene(this, ch9PartyCutsceneId('train', isPresent('pippa')));
+          for (const flag of stage.setFlagsAfterPresentation) GS.setFlag(flag);
+          continue;
+        }
+        if (stage.id === 'teleport') {
+          const landing = ch9NativeFeet(CH9_WORLD.valea.arrival);
+          this.goThroughDoor('valea_stelelor', landing.tx, landing.ty, CH9_WORLD.valea.arrival.facing);
+          return;
+        }
+      }
+      this.cut = false;
       return;
     }
     // The Chapter 8 leg ends Lucille at the western river connection. The
@@ -10155,73 +10335,186 @@ export class OverworldScene extends Phaser.Scene {
 
   /* ──────────── CHAPTER 9 — the Romania §A6 beats (arrival / boss+choice / resonance) ──────────── */
 
-  /** the §A6 arrival — Bert sets the party down on the Valea Stelelor green; Dorin's homecoming */
+  /** The Less-Express opens onto Valea's platform; Dorin walks home. */
   private async ch9ArrivalScene(): Promise<void> {
+    const plan = planCh9ArrivalStory((flag) => GS.flag(flag) === true);
+    if (plan.status === 'done') return;
     this.cut = true;
-    GS.setFlag('ch9_arrived');
+    for (const flag of plan.setFlags) GS.setFlag(flag);
     AUDIO.sfx('thud');
     this.cameras.main.shake(380, 0.005);
+    await playCutscene(this, ch9PartyCutsceneId('arrival', isPresent('pippa')));
     await this.dlg.say(...DIALOGUE.ch9_arrival);
     AUDIO.playMusic(this.mapDef.music);
     this.cut = false;
   }
 
   /** §A6 BOSS 9 — COUNT HOAXULA (the mercyEnding phase machine: theatrical → steals one
-   *  equipped item on turn 2 → unmasks at 50% into wild AoE → Mia's PRAY at "good"+ ends
-   *  it in mercy). A win on his 95000 HP returns the stolen gear; then the COMPASSION axis
-   *  turns on the spot — THE IRON vs THE OPEN HAND (runChoice('ch9_count')). */
+   *  equipped item on turn 2 → repeatedly telegraphs Command the Night → unmasks once at
+   *  inclusive 50% → Mia's PRAY at "good"+ can end the unmasked fight in mercy). Every
+   *  terminal path restores escrowed gear before control returns; then the separate
+   *  COMPASSION anchor presents THE IRON vs THE OPEN HAND (runChoice('ch9_count')). */
   private async countHoaxulaBossScene(): Promise<void> {
     this.cut = true;
-    await this.dlg.say(...DIALOGUE.count_hoaxula_door);
+    if (!GS.flag('ch9_castle_seen')) {
+      GS.setFlag('ch9_castle_seen');
+      await playCutscene(this, ch9PartyCutsceneId('castle', isPresent('pippa')));
+    }
+    await this.dlg.say(...(
+      isPresent('pippa') ? DIALOGUE.count_hoaxula_door_pippa : DIALOGUE.count_hoaxula_door_departed
+    ));
     AUDIO.sfx('thud');
     this.cameras.main.shake(460, 0.008);
     await this.wait(420);
+    this.cut = false;
     const outcome = await this.startBattle(['count_hoaxula'], 'none', [], { boss: true });
     if (outcome !== 'victory') return;
     this.cut = true;
     GS.setFlag('count_hoaxula_defeated');
+    // The flag prevents future builds, but this scene already owns live bodies.
+    // Retire them synchronously so a full-bag Candelabra retry cannot leave the
+    // post-boss castle hostile until the next reload.
+    this.clearRoamersForQuietWalk();
     AUDIO.sfx('confirm');
     this.cameras.main.flash(420, 248, 232, 160);
-    await this.dlg.say(...DIALOGUE.count_hoaxula_win);
+    await this.dlg.say(...(
+      isPresent('pippa') ? DIALOGUE.count_hoaxula_win_pippa : DIALOGUE.count_hoaxula_win_departed
+    ));
+    this.cut = false;
+    await this.giveCountCandelabraAndRestart();
+  }
+
+  /** Retry-safe signature boss drop. The victory flag is already durable, so a
+   * full Jay bag leaves the prop on the throne and the boss trigger retries only
+   * this transaction; the battle and Compassion choice never replay. */
+  private async giveCountCandelabraAndRestart(): Promise<void> {
+    if (GS.flag(CH9_STORY_FLAGS.candelabraClaimed)) return;
+    this.cut = true;
+    const held = GS.hasItem('candelabra');
+    if (!held && !GS.addItem('candelabra', 'rex')) {
+      await this.dlg.say(...DIALOGUE.count_candelabra_full);
+      this.cut = false;
+      return;
+    }
+    GS.setFlag(CH9_STORY_FLAGS.candelabraClaimed);
+    AUDIO.sfx('confirm');
+    await this.dlg.say(...DIALOGUE.count_candelabra_get);
     AUDIO.jingle('victory', 2200, this.mapDef.music);
     this.cut = false;
-    // the COMPASSION axis (CHOICE 2) turns on the win — THE IRON vs THE OPEN HAND. The
-    // choice_compassion zone past the throne is a backup (it gates on the same flag);
-    // firing here guarantees the dilemma lands the moment the Count is freed.
-    await this.runChoice('ch9_count');
-    this.fadeRestart(); // the way to the monastery is open; the resonance trigger can fire
+    // The choice chamber is a separate authored place. Restart on its approach
+    // so victory and the Compassion decision can each recover independently.
+    this.restartAtCh9PostBossPoint();
+  }
+
+  private restartAtCh9PostBossPoint(): void {
+    if (this.transitioning) return;
+    this.transitioning = true;
+    const safe = CH9_WORLD.castle.profiles.postBoss;
+    this.cameras.main.fadeOut(260, 0, 0, 0);
+    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+      const feet = ch9NativeFeet(safe);
+      this.scene.restart({
+        mapId: 'castle_hoaxula',
+        // Door data is stored in native 16px coordinates; scene restart data
+        // consumes runtime pixels on the 4× framebuffer.
+        x: s(feet.tx),
+        y: s(feet.ty),
+        facing: safe.facing,
+      });
+    });
   }
 
   /** §A6 Resonance Site — the Stone Brow monastery bell tower. Before the Count is unmasked
    *  it keeps its peace; once he is freed the bell rings (HEARTLIGHT 9) and Ember 9 lands,
    *  and Dorin's Trial of the Mute Mountain is honoured. The party is whole (Dorin has
    *  marched since Minimus — ADR-125), so no one joins; ch9_complete opens the §A5 gate to Ch.10. */
-  private async stoneBrowMonasteryScene(): Promise<void> {
-    if (!GS.flag('count_hoaxula_defeated')) {
-      this.cut = true;
-      await this.dlg.say(...DIALOGUE.stone_brow_monastery_early);
-      this.cut = false;
-      return;
-    }
+  private async ch9MonasteryScene(frontier: Ch9MonasteryFrontier): Promise<void> {
     this.cut = true;
-    // HEARTLIGHT 9 — Dorin rings the bell he was once too small to reach (Ember 9)
-    GS.setFlag('ember9');
-    GS.data.embers = 9;
-    const ember = this.add.image(this.player.x, this.player.y - s(44), 'ember').setDepth(9999);
-    AUDIO.sfx('ember');
-    this.sparkleBurst(ember.x, ember.y, 12);
-    this.tweens.add({ targets: ember, y: this.player.y - s(30), x: this.player.x, duration: 1300, ease: 'sine.inout' });
-    AUDIO.playMusic('heartlight');
-    await this.wait(1400);
-    this.sparkleBurst(this.player.x, this.player.y - s(30), 14);
-    ember.destroy();
-    this.cameras.main.flash(300, 248, 232, 160);
-    await this.dlg.say(...DIALOGUE.ember9_get);
-    GS.setFlag('ch9_complete'); // §A6 — the chapter button (the §A5 gate to Ch.10)
-    AUDIO.jingle('victory', 2200, null);
-    await this.dlg.say(...DIALOGUE.ch9_card);
-    AUDIO.playMusic(this.mapDef.music);
-    this.cut = false;
+    try {
+      for (;;) {
+        const plan = planCh9MonasteryStory(
+          frontier,
+          (flag) => GS.flag(flag) === true,
+          (itemId) => GS.hasKeyItem(itemId),
+          GS.data.embers,
+        );
+        if (plan.status === 'done') return;
+        if (plan.status === 'blocked' || !plan.stage) {
+          const needsChoice = GS.flag(CH9_STORY_FLAGS.bossDefeated)
+            && !GS.flag(CH9_STORY_FLAGS.choiceDecided);
+          await this.dlg.say(...(
+            needsChoice ? DIALOGUE.stone_brow_choice_early : DIALOGUE.stone_brow_monastery_early
+          ));
+          return;
+        }
+
+        const stage = plan.stage;
+        for (const flag of stage.setFlags) GS.setFlag(flag);
+        if (stage.minEmbers !== null) {
+          GS.data.embers = Number.isFinite(GS.data.embers)
+            ? Math.max(GS.data.embers, stage.minEmbers)
+            : stage.minEmbers;
+        }
+        if (stage.grantKeyItem && !GS.hasKeyItem(stage.grantKeyItem)) {
+          // Key-item presence is the durable transaction. Commit it before the
+          // awaited presentation so a reload cannot duplicate the keepsake.
+          GS.data.keyItems.push(stage.grantKeyItem);
+        }
+        if (stage.grantItem) {
+          const held = GS.hasItem(stage.grantItem);
+          if (!held && !GS.addItem(stage.grantItem, 'faye')) {
+            await this.dlg.say(...DIALOGUE.ch9_holy_pan_full);
+            return;
+          }
+          GS.setFlag(CH9_STORY_FLAGS.holyPanClaimed);
+        }
+
+        if (stage.id === 'trial') {
+          await playCutscene(this, 'ch9_trial');
+          await this.dlg.say(...DIALOGUE.ch9_trial_court);
+        } else if (stage.id === 'trial_stone') {
+          await this.dlg.say(...DIALOGUE.ch9_trial_stone_get);
+        } else if (stage.id === 'name') {
+          await this.dlg.say(...DIALOGUE.ch9_dorin_birth_name);
+        } else if (stage.id === 'awakening' && stage.awakeningId) {
+          await this.awakeningBeat(stage.awakeningId, true);
+        } else if (stage.id === 'clapper') {
+          await this.dlg.say(...DIALOGUE.ch9_clapper_get);
+        } else if (stage.id === 'heartlight') {
+          await playCutscene(this, ch9PartyCutsceneId('heartlight', isPresent('pippa')));
+          await this.dlg.say(...DIALOGUE.ch9_heartlight);
+        } else if (stage.id === 'ember') {
+          const ember = this.add.image(this.player.x, this.player.y - s(44), 'ember').setDepth(9999);
+          AUDIO.sfx('ember');
+          this.sparkleBurst(ember.x, ember.y, 12);
+          this.tweens.add({
+            targets: ember,
+            y: this.player.y - s(30),
+            x: this.player.x,
+            duration: 1300,
+            ease: 'sine.inout',
+          });
+          AUDIO.playMusic('heartlight');
+          await this.wait(1400);
+          this.sparkleBurst(this.player.x, this.player.y - s(30), 14);
+          ember.destroy();
+          this.cameras.main.flash(300, 248, 232, 160);
+          await this.dlg.say(...DIALOGUE.ember9_get);
+        } else if (stage.id === 'holy_pan') {
+          AUDIO.sfx('confirm');
+          await this.dlg.say(...DIALOGUE.ch9_holy_pan_get);
+        } else if (stage.id === 'complete') {
+          AUDIO.jingle('victory', 2200, null);
+        } else if (stage.id === 'chapter_card') {
+          await this.dlg.say(...DIALOGUE.ch9_card);
+        }
+        // repair_embers is deliberately presentation-free. Every other stage
+        // also loops so later committed-but-unpresented seams can resume here.
+      }
+    } finally {
+      AUDIO.playMusic(this.mapDef.music);
+      this.cut = false;
+    }
   }
 
   /* ──────────── CHAPTER 10 — THE LONG SHOT (§A6 the finale: Alaska → Hawaii → Mars) ──────────── */
@@ -11948,14 +12241,15 @@ export class OverworldScene extends Phaser.Scene {
    * pages, the flag, the jingle, the toast. Battle/menu availability reads
    * the flag forever after (data/awakenings.ts). Played straight, §A11.2.
    */
-  private async awakeningBeat(id: string): Promise<void> {
+  private async awakeningBeat(id: string, commitBeforePresentation = false): Promise<void> {
     const a = AWAKENINGS[id];
     if (!a || GS.flag(a.flag) === true) return;
+    if (commitBeforePresentation) GS.setFlag(a.flag);
     this.cameras.main.flash(420, 248, 232, 160);
     AUDIO.sfx('pray');
     this.sparkleBurst(this.player.x, this.player.y - s(14), 16);
     await this.dlg.say(...DIALOGUE[a.dialogue]);
-    GS.setFlag(a.flag);
+    if (!commitBeforePresentation) GS.setFlag(a.flag);
     AUDIO.jingle('levelup', 1400, this.mapDef.music);
     toast(this, vars(a.toast));
   }
@@ -11988,7 +12282,12 @@ export class OverworldScene extends Phaser.Scene {
     this.cut = true;
     try {
       if (isRewindable(id)) captureEcho(id); // the Locket records the breath BEFORE the choice
-      await playCutscene(this, `${def.band}_choice`); // authored establishing panel (no-ops if unauthored)
+      await playCutscene(
+        this,
+        id === 'ch9_count'
+          ? ch9PartyCutsceneId('choice', isPresent('pippa'))
+          : `${def.band}_choice`,
+      );
       await this.dlg.say(...DIALOGUE[def.intro]);
       for (const o of def.options) await this.dlg.say(`${o.label}  —  ${o.blurb}`);
       const sel = await this.dlg.ask(def.options.map((o) => o.label));
@@ -11996,18 +12295,9 @@ export class OverworldScene extends Phaser.Scene {
       recordChoice(id, chosen.id);
       AUDIO.sfx('confirm');
       await this.dlg.say(...DIALOGUE[chosen.outro]);
-      this.applyChoiceRipple(id, chosen.id);
     } finally {
       this.cut = false;
     }
-  }
-
-  /** the immediate, deterministic loadout fallout of a choice (the staged party-fate
-   *  DEPARTURE scenes are their own chapter beats; this sets the power flags). */
-  private applyChoiceRipple(id: ChoiceId, optionId: string): void {
-    // COMPASSION/IRON: emptying Vlad disturbs Dorin — he withholds Vibe Comet Ω for the finale
-    if (id === 'ch9_count' && optionId === 'iron' && isPresent('dorin')) withholdUltimate('dorin');
-    if (id === 'ch9_count' && optionId === 'mercy') withholdUltimate('dorin', false);
   }
 
   /** Ch.10 finale: after the canon Homesong / walk-home, assemble + play the epilogue

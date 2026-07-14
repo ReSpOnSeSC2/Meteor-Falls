@@ -15,6 +15,8 @@ import {
   CHAPTER7_PARKING_RECOVERY,
   CHAPTER8_LAYOUT_RECOVERY,
   CHAPTER8_PARKING_RECOVERY,
+  CHAPTER9_LAYOUT_RECOVERY,
+  CHAPTER9_PARKING_RECOVERY,
 } from './migrations';
 import { BAG_MAX } from '../data/items';
 import { HEROES, availableAbilities, type HeroId } from '../data/heroes';
@@ -25,6 +27,7 @@ import { buildChapter5Maps } from '../data/maps_ch5';
 import { buildChapter6Maps } from '../data/maps_ch6';
 import { buildChapter7Maps } from '../data/maps_ch7';
 import { buildChapter8Maps, CH8_MAP_IDS, CH8_WORLD, LOTUS_HARBOR_UNIT_IDS, nativeFeet as chapter8NativeFeet } from '../data/maps_ch8';
+import { buildChapter9Maps, CH9_MAP_IDS, CH9_WORLD, nativeFeet as chapter9NativeFeet } from '../data/maps_ch9';
 import { CHAR_LEGEND, MAPS } from '../data/maps';
 import { TILESET } from '../spritegen/tiles';
 import { vehicleParkingSlotsOverlap } from './vehicle-domain';
@@ -1466,7 +1469,7 @@ describe('save migration registry -- v24 to v25: Chapter 8 production rollout', 
     const flagsBefore = JSON.stringify(raw.flags);
     const callersBefore = JSON.stringify(raw.callers);
     const migrated = migrateSave(raw, newGameData());
-    expect(migrated.version).toBe(25);
+    expect(migrated.version).toBe(CURRENT_SAVE_VERSION);
     expect(migrated.map).toBe(mapId);
     expect(migrated.x).toBe(s(feet.tx));
     expect(migrated.y).toBe(s(feet.ty));
@@ -1613,9 +1616,9 @@ describe('save migration registry -- v24 to v25: Chapter 8 production rollout', 
     const migrated = migrateSave(outer, newGameData());
     const childAfter = JSON.parse(migrated.echoes.stack[0].json);
     const grandchildAfter = JSON.parse(childAfter.echoes.stack[0].json);
-    expect(childAfter.version).toBe(25);
+    expect(childAfter.version).toBe(CURRENT_SAVE_VERSION);
     expect(childAfter.mushroomize.active).toBe(false);
-    expect(grandchildAfter.version).toBe(25);
+    expect(grandchildAfter.version).toBe(CURRENT_SAVE_VERSION);
     expect(grandchildAfter.customNested).toEqual({ keep: ['all', 25] });
     expect(grandchildAfter.map).toBe('spore_forest');
   });
@@ -1628,7 +1631,7 @@ describe('save migration registry -- v24 to v25: Chapter 8 production rollout', 
     }];
     const migrated = migrateSave(outer, newGameData());
     const childAfter = JSON.parse(migrated.echoes.stack[0].json);
-    expect(childAfter.version).toBe(25);
+    expect(childAfter.version).toBe(CURRENT_SAVE_VERSION);
     expect(childAfter.mushroomize.active).toBe(false);
     const again = migrateSave(JSON.parse(JSON.stringify(migrated)), newGameData());
     expect(JSON.stringify(again)).toBe(JSON.stringify(migrated));
@@ -1636,7 +1639,7 @@ describe('save migration registry -- v24 to v25: Chapter 8 production rollout', 
 
   it('preserves malformed/current/future echo JSON byte-exact while outer future saves reject', () => {
     const malformed = '{not-json';
-    const current = ' { "version": 25, "custom": true } ';
+    const current = ' { "version": 26, "custom": true } ';
     const future = JSON.stringify({ version: 99, custom: true });
     const raw = v24At('otterbrook');
     raw.echoes = {
@@ -1669,5 +1672,211 @@ describe('save migration registry -- v24 to v25: Chapter 8 production rollout', 
     expect(first.x).toBe(1234);
     expect(first.y).toBe(5678);
     expect(first.facing).toBe('downleft');
+  });
+});
+
+describe('save migration registry -- v25 to v26: Chapter 9 production rollout', () => {
+  const v25At = (map: string): Record<string, unknown> => {
+    const raw = newGameData() as unknown as Record<string, unknown>;
+    raw.version = 25;
+    raw.map = map;
+    raw.x = 99999;
+    raw.y = -1;
+    raw.facing = 'downleft';
+    raw.flags = { ch8_complete: true, custom_story: 9 };
+    raw.callers = [{ id: 'old_friend', name: 'Old Friend', effect: 'heal', power: 77 }];
+    raw.cashOnHand = 8123;
+    raw.banked = 1440;
+    raw.vehicleParking = {};
+    return raw;
+  };
+
+  const stablePoints = [
+    CH9_WORLD.valea.migration,
+    CH9_WORLD.oldRoad.migration,
+    CH9_WORLD.castle.migration,
+    CH9_WORLD.monastery.migration,
+  ] as const;
+
+  it('pins version 26 and every stable Chapter 9 map through CH9_WORLD', () => {
+    expect(CURRENT_SAVE_VERSION).toBe(26);
+    expect(newGameData().version).toBe(26);
+    expect(Object.keys(CHAPTER9_LAYOUT_RECOVERY)).toEqual([...CH9_MAP_IDS]);
+    expect(Object.keys(CHAPTER9_PARKING_RECOVERY)).toEqual([...CH9_MAP_IDS]);
+
+    const built = buildChapter9Maps();
+    const solid = new Map(TILESET.map((tile) => [tile.name, tile.solid]));
+    for (let index = 0; index < CH9_MAP_IDS.length; index += 1) {
+      const mapId = CH9_MAP_IDS[index];
+      const point = stablePoints[index];
+      const feet = chapter9NativeFeet(point);
+      expect(built[mapId], mapId).toBeDefined();
+      expect(CHAPTER9_LAYOUT_RECOVERY[mapId]).toEqual({
+        x: feet.tx, y: feet.ty, facing: point.facing,
+      });
+      const tile = built[mapId]?.grid[point.y]?.[point.x];
+      expect(tile, `${mapId} recovery in bounds`).toBeDefined();
+      const walkable = tile === ':' || tile === 'r'
+        || solid.get(CHAR_LEGEND[tile ?? ''] ?? 'grass_a') !== true;
+      expect(walkable, `${mapId} recovery tile '${tile}' walkable`).toBe(true);
+    }
+  });
+
+  it.each(CH9_MAP_IDS)('recovers %s while preserving every unrelated field exactly', (mapId) => {
+    const raw = v25At(mapId);
+    const before = JSON.parse(JSON.stringify(raw)) as Record<string, unknown>;
+    const point = stablePoints[CH9_MAP_IDS.indexOf(mapId)];
+    const feet = chapter9NativeFeet(point);
+    const migrated = migrateSave(JSON.parse(JSON.stringify(raw)), newGameData());
+    const wanted = {
+      ...before,
+      version: CURRENT_SAVE_VERSION,
+      x: s(feet.tx),
+      y: s(feet.ty),
+      facing: point.facing,
+    };
+    expect(migrated).toEqual(wanted);
+  });
+
+  it('rehomes parking from every Chapter 9 map to deterministic nonstacked Valea apron slots', () => {
+    const raw = v25At('otterbrook');
+    raw.keyItems = ['star_locket', 'title_car_van', 'title_car_sedan'];
+    raw.activeVehicle = 'title_car_van';
+    raw.drivingVehicle = 'title_car_van';
+    raw.carLocation = { title_car_van: 'romania', title_car_sedan: 'romania' };
+    raw.fuel = { title_car_van: 7.25, title_car_sedan: 18 };
+    raw.vehicleParking = {
+      title_car_bmx: { area: 'stone_brow_monastery', x: 100, y: 200, facing: 'up' },
+      title_car_ev: { area: 'old_road', x: 300, y: 400, facing: 'left' },
+      title_car_sedan: { area: 'castle_hoaxula', x: 500, y: 600, facing: 'down' },
+      title_car_van: { area: 'otterbrook', x: 144, y: 288, facing: 'left' },
+      malformed: { area: 'valea_stelelor', note: 'missing coordinates' },
+    };
+    const migrated = migrateSave(raw, newGameData());
+    const base = CHAPTER9_PARKING_RECOVERY.valea_stelelor;
+    expect(migrated.vehicleParking.title_car_bmx).toEqual({
+      area: 'valea_stelelor', x: s(base.x), y: s(base.y), facing: base.facing,
+    });
+    expect(migrated.vehicleParking.title_car_van).toEqual({
+      area: 'otterbrook', x: 144, y: 288, facing: 'left',
+    });
+    expect((migrated.vehicleParking as unknown as Record<string, unknown>).malformed).toEqual({
+      area: 'valea_stelelor', note: 'missing coordinates',
+    });
+    for (const title of ['title_car_bmx', 'title_car_ev', 'title_car_sedan'] as const) {
+      expect(migrated.vehicleParking[title].area).toBe('valea_stelelor');
+    }
+    expect(vehicleParkingSlotsOverlap(
+      'title_car_bmx', migrated.vehicleParking.title_car_bmx,
+      'title_car_ev', migrated.vehicleParking.title_car_ev,
+    )).toBe(false);
+    expect(vehicleParkingSlotsOverlap(
+      'title_car_ev', migrated.vehicleParking.title_car_ev,
+      'title_car_sedan', migrated.vehicleParking.title_car_sedan,
+    )).toBe(false);
+    expect(migrated.keyItems).toEqual(['star_locket', 'title_car_van', 'title_car_sedan']);
+    expect(migrated.activeVehicle).toBe('title_car_van');
+    expect(migrated.drivingVehicle).toBe('title_car_van');
+    expect(migrated.carLocation).toEqual({ title_car_van: 'romania', title_car_sedan: 'romania' });
+    expect(migrated.fuel).toEqual({ title_car_van: 7.25, title_car_sedan: 18 });
+  });
+
+  it.each(['ember9', 'ch9_complete'])('backfills only earned awakening/Heartlight from %s proof', (proof) => {
+    const raw = v25At('otterbrook');
+    raw.flags = {
+      [proof]: true,
+      custom_story: 9,
+      ch9_dorin_name_spoken: false,
+      axis_compassion_iron: true,
+      q_bunis_done: true,
+    };
+    const migrated = migrateSave(raw, newGameData());
+    expect(migrated.flags).toEqual({
+      [proof]: true,
+      custom_story: 9,
+      ch9_dorin_name_spoken: false,
+      axis_compassion_iron: true,
+      q_bunis_done: true,
+      awake_comet_o: true,
+      ch9_heartlight_seen: true,
+    });
+  });
+
+  it('never infers awakening, choice, Count, or Buni state from map, coordinates, level, or Ember scalar', () => {
+    const raw = v25At('stone_brow_monastery');
+    raw.embers = 9;
+    raw.flags = {
+      ch9_arrived: true,
+      count_hoaxula_defeated: true,
+      ch9_count_decided: true,
+      axis_compassion_openhand: true,
+      q_bunis: true,
+      q_buni_smantana: true,
+      custom_story: 9,
+    };
+    const party = raw.party as Array<Record<string, unknown>>;
+    party[0].level = 99;
+    const flagsBefore = JSON.stringify(raw.flags);
+    const migrated = migrateSave(raw, newGameData());
+    expect(JSON.stringify(migrated.flags)).toBe(flagsBefore);
+    expect(migrated.flags.awake_comet_o).toBeUndefined();
+    expect(migrated.flags.ch9_heartlight_seen).toBeUndefined();
+    expect(migrated.flags.ch9_dorin_name_spoken).toBeUndefined();
+  });
+
+  it('migrates nested Held Breath saves recursively with the same proof and recovery rules', () => {
+    const grandchild = v25At('stone_brow_monastery');
+    grandchild.flags = { ember9: true, q_bunis_done: true, axis_compassion_iron: true };
+    grandchild.customNested = { keep: ['all', 26] };
+    const child = v25At('castle_hoaxula');
+    child.echoes = {
+      stack: [{ choice: 'ch9_count', chapter: 9, json: JSON.stringify(grandchild), at: 1 }],
+      breaths: 2,
+      rewindCount: 1,
+    };
+    const outer = v25At('valea_stelelor');
+    outer.echoes = {
+      stack: [{ choice: 'ch9_count', chapter: 9, json: JSON.stringify(child), at: 2 }],
+      breaths: 1,
+      rewindCount: 2,
+    };
+    const migrated = migrateSave(outer, newGameData());
+    const childAfter = JSON.parse(migrated.echoes.stack[0].json);
+    const grandchildAfter = JSON.parse(childAfter.echoes.stack[0].json);
+    expect(migrated.version).toBe(26);
+    expect(childAfter.version).toBe(26);
+    expect(grandchildAfter.version).toBe(26);
+    expect(childAfter.x).toBe(s(CHAPTER9_LAYOUT_RECOVERY.castle_hoaxula.x));
+    expect(grandchildAfter.x).toBe(s(CHAPTER9_LAYOUT_RECOVERY.stone_brow_monastery.x));
+    expect(grandchildAfter.flags).toEqual({
+      ember9: true,
+      q_bunis_done: true,
+      axis_compassion_iron: true,
+      awake_comet_o: true,
+      ch9_heartlight_seen: true,
+    });
+    expect(grandchildAfter.flags.ch9_dorin_name_spoken).toBeUndefined();
+    expect(grandchildAfter.customNested).toEqual({ keep: ['all', 26] });
+  });
+
+  it('is deterministic and idempotent, preserves unrelated bytes, and rejects future saves', () => {
+    const raw = v25At('constructor');
+    raw.x = 1234; raw.y = 5678; raw.facing = 'upright';
+    raw.flags = { custom_story: 9, ember9: false, ch9_complete: false };
+    raw.vehicleParking = {
+      malformed: { area: 'valea_stelelor', note: 'missing coordinates' },
+      unrelated: { area: 'constructor', x: 400, y: 800, facing: 'upright' },
+    };
+    const first = migrateSave(JSON.parse(JSON.stringify(raw)), newGameData());
+    const repeated = migrateSave(JSON.parse(JSON.stringify(raw)), newGameData());
+    const again = migrateSave(JSON.parse(JSON.stringify(first)), newGameData());
+    expect(JSON.stringify(repeated)).toBe(JSON.stringify(first));
+    expect(JSON.stringify(again)).toBe(JSON.stringify(first));
+    expect(first.x).toBe(1234);
+    expect(first.y).toBe(5678);
+    expect(first.facing).toBe('upright');
+    expect(first.flags).toEqual({ custom_story: 9, ember9: false, ch9_complete: false });
+    expect(first.vehicleParking).toEqual(raw.vehicleParking);
+    expect(() => migrateSave({ ...newGameData(), version: 27 }, newGameData())).toThrow(/unknown save version/);
   });
 });

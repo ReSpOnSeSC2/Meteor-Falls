@@ -373,6 +373,42 @@ describe('the OTHER canon triggers (synthetic defs shaped like their chapters)',
     expect(prayTierAtLeast('nothing', 'good')).toBe(false);
   });
 
+  it('the real Hoaxula unmask is inclusive, ordered, once-only, and gates mercy by form', async () => {
+    const { fx, log } = recorder();
+    const r = new PhaseRunner(BOSS_SCRIPTS.count_hoaxula, fx);
+    expect(r.form?.id).toBe('theatrical');
+
+    await r.onPrayTier('miraculous');
+    expect(r.mercy).toBe(false);
+    expect(log).toEqual([]);
+
+    await r.onHpFrac(0.5001);
+    expect(log).toEqual([]);
+    await r.onHpFrac(0.5);
+    expect(log).toEqual(['line:hoaxula_unmask', 'form:unmasked']);
+    expect(r.form?.id).toBe('unmasked');
+    await r.onHpFrac(0.2);
+    expect(log).toEqual(['line:hoaxula_unmask', 'form:unmasked']);
+
+    await r.onPrayTier('strange');
+    expect(r.mercy).toBe(false);
+    await r.onPrayTier('good');
+    expect(r.mercy).toBe(true);
+    expect(log[log.length - 1]).toBe('mercy');
+  });
+
+  it('restores the real Hoaxula post-unmask developer frontier without replaying turn two', async () => {
+    const { fx, log } = recorder();
+    const r = new PhaseRunner(BOSS_SCRIPTS.count_hoaxula, fx);
+    r.restoreDevContext('unmasked', 2);
+
+    expect(r.form?.id).toBe('unmasked');
+    expect(r.spriteFor('battle_count_hoaxula')).toBe('battle_count_hoaxula_unmasked');
+    await r.onBossTurnStart();
+    expect(log).not.toContain('steal');
+    expect(r.pendingWindup?.line).toBe('hoaxula_command');
+  });
+
   it('steal-and-return + setSpeedMul express as data (Hoaxula / Paper Dragon)', async () => {
     const def: BossScriptDef = {
       boss: 'test_theatrics',
@@ -441,5 +477,23 @@ describe('ADR-134 — the boss WIND-UP telegraph (the reusable hook)', () => {
     expect(r.pendingWindup?.line).toBe('hoaxula_command');
     await r.onBossTurnStart(); // 4 — the bat-swarm blow is now DUE
     expect(r.dueWindup()?.amount).toBe(800);
+  });
+
+  it('re-arms the real Hoaxula warning on boss turns three and six', async () => {
+    const { fx, log } = recorder();
+    const r = new PhaseRunner(BOSS_SCRIPTS.count_hoaxula, fx);
+    await r.onBossTurnStart(); // 1
+    await r.onBossTurnStart(); // 2
+    await r.onBossTurnStart(); // 3: first warning
+    expect(log.filter((entry) => entry === 'line:hoaxula_command')).toHaveLength(1);
+    await r.onBossTurnStart(); // 4: first warning is due
+    expect(r.dueWindup()?.amount).toBe(800);
+    r.clearWindup();
+    await r.onBossTurnStart(); // 5
+    expect(r.pendingWindup).toBeNull();
+    await r.onBossTurnStart(); // 6: recurring warning
+    expect(r.pendingWindup?.line).toBe('hoaxula_command');
+    expect(r.dueWindup()).toBeNull();
+    expect(log.filter((entry) => entry === 'line:hoaxula_command')).toHaveLength(2);
   });
 });

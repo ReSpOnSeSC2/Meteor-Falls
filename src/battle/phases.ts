@@ -54,6 +54,7 @@ export interface PhaseEffects {
 export interface WindupSpec {
   line: string;
   amount?: number;
+  element?: Element;
   status?: 'crying' | 'asleep' | 'paralyzed' | 'sunburn' | 'hushed';
   turns?: number;
 }
@@ -104,7 +105,7 @@ export class PhaseRunner {
   /** set by endBattleMercy — the scene resolves victory without a kill */
   mercy = false;
   /** equipment the boss is holding hostage (Hoaxula) — returned on win */
-  stolen: Array<{ heroId: string; itemId: string }> = [];
+  stolen: Array<{ heroId: string; slot: string; itemId: string }> = [];
   /** ADR-134 — a TELEGRAPHED attack armed this turn, due to LAND next turn (the
    *  scene resolves it via dueWindup, or the party cancels it by BREAKing the boss). */
   pendingWindup: WindupSpec | null = null;
@@ -243,7 +244,10 @@ export class PhaseRunner {
   /** boss hp changed — evaluate hpBelow thresholds (each fires once) */
   async onHpFrac(frac: number): Promise<void> {
     for (const p of this.def.phases) {
-      if (p.trigger.kind === 'hpBelow' && frac < p.trigger.frac) await this.firePhase(p);
+      if (p.trigger.kind !== 'hpBelow') continue;
+      if (p.trigger.form && this.form?.id !== p.trigger.form) continue;
+      const crossed = p.trigger.inclusive ? frac <= p.trigger.frac : frac < p.trigger.frac;
+      if (crossed) await this.firePhase(p);
     }
   }
 
@@ -265,10 +269,19 @@ export class PhaseRunner {
   /** a Pray resolved at this tier (Hoaxula's mercy listens here) */
   async onPrayTier(tier: PrayTier): Promise<void> {
     for (const p of this.def.phases) {
-      if (p.trigger.kind === 'prayTierAtLeast' && prayTierAtLeast(tier, p.trigger.tier)) {
-        await this.firePhase(p);
-      }
+      if (p.trigger.kind !== 'prayTierAtLeast') continue;
+      if (p.trigger.form && this.form?.id !== p.trigger.form) continue;
+      if (prayTierAtLeast(tier, p.trigger.tier)) await this.firePhase(p);
     }
+  }
+
+  /** Developer-profile restoration for a real mid-fight launch. This mutates
+   * only phase chronology; callers remain responsible for restoring HP and the
+   * rendered texture. Ordinary battles never call it. */
+  restoreDevContext(formId: string, bossTurns: number): void {
+    const form = this.def.forms?.find((candidate) => candidate.id === formId);
+    if (form) this.form = form;
+    this.bossTurns = Math.max(0, Math.floor(Number.isFinite(bossTurns) ? bossTurns : 0));
   }
 
   /* ---------------- firing ---------------- */
@@ -348,7 +361,13 @@ export class PhaseRunner {
         // ADR-134 — ARM the telegraph this turn; the scene RESOLVES it next turn
         // (dueWindup) unless the party breaks/controls the boss first. The `line`
         // is the printWait warning (HOLD to read) — the same scriptLine channel.
-        this.pendingWindup = { line: a.line, amount: a.amount, status: a.status, turns: a.turns };
+        this.pendingWindup = {
+          line: a.line,
+          amount: a.amount,
+          element: a.element,
+          status: a.status,
+          turns: a.turns,
+        };
         this.windupArmedTurn = this.bossTurns;
         await this.fx.scriptLine(a.line);
         return;

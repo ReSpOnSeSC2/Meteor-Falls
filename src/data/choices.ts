@@ -84,7 +84,7 @@ export const CHOICES: Record<ChoiceId, ChoiceDef> = {
         flag: 'axis_compassion_iron',
         outro: 'choice_ch9_iron',
         // banks the Stolen Light (a finale edge) — and disturbs Dorin (party.ts)
-        alsoSets: ['stolen_light_banked'],
+        alsoSets: ['stolen_light_banked', 'dorin_withholds'],
       },
     ],
   },

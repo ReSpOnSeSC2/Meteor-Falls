@@ -42,11 +42,13 @@ describe('choices — record sets exactly one option flag', () => {
   it('IRON banks its alsoSets flag; OPEN_HAND banks a finale caller', () => {
     recordChoice('ch9_count', 'iron');
     expect(GS.flag('stolen_light_banked')).toBe(true);
+    expect(GS.flag('dorin_withholds')).toBe(true);
     expect(GS.data.callers.some((c) => c.quest === 'choice:ch9_count')).toBe(false);
 
     GS.reset();
     recordChoice('ch9_count', 'mercy');
     expect(GS.flag('stolen_light_banked')).toBe(false);
+    expect(GS.flag('dorin_withholds')).toBe(false);
     const caller = GS.data.callers.find((c) => c.quest === 'choice:ch9_count');
     expect(caller?.name).toBe('Vlad, the Actor');
     expect(caller?.effect.kind).toBe('damage');
@@ -56,6 +58,39 @@ describe('choices — record sets exactly one option flag', () => {
     recordChoice('ch9_count', 'mercy');
     recordChoice('ch9_count', 'mercy');
     expect(GS.data.callers.filter((c) => c.quest === 'choice:ch9_count')).toHaveLength(1);
+  });
+
+  it('validates before mutation, preserving a real answer on an invalid option id', () => {
+    recordChoice('ch9_count', 'mercy');
+    const before = JSON.stringify({ flags: GS.data.flags, callers: GS.data.callers });
+    recordChoice('ch9_count', 'not-an-option');
+    expect(JSON.stringify({ flags: GS.data.flags, callers: GS.data.callers })).toBe(before);
+    expect(recordedOption('ch9_count')?.id).toBe('mercy');
+  });
+
+  it('re-deciding owns Caller cleanup and every immediate branch consequence', () => {
+    const unrelated = {
+      quest: 'side:other', name: 'Other', quote: 'Still here.',
+      effect: { kind: 'damage' as const, power: 1 },
+    };
+    GS.data.callers.push(unrelated);
+    recordChoice('ch9_count', 'mercy');
+    GS.data.callers.push({ ...GS.data.callers.find((c) => c.quest === 'choice:ch9_count')! });
+
+    recordChoice('ch9_count', 'iron');
+    expect(GS.flag('axis_compassion_openhand')).toBe(false);
+    expect(GS.flag('axis_compassion_iron')).toBe(true);
+    expect(GS.flag('stolen_light_banked')).toBe(true);
+    expect(GS.flag('dorin_withholds')).toBe(true);
+    expect(GS.data.callers.filter((c) => c.quest === 'choice:ch9_count')).toEqual([]);
+    expect(GS.data.callers).toContainEqual(unrelated);
+
+    recordChoice('ch9_count', 'mercy');
+    expect(GS.flag('axis_compassion_iron')).toBe(false);
+    expect(GS.flag('stolen_light_banked')).toBe(false);
+    expect(GS.flag('dorin_withholds')).toBe(false);
+    expect(GS.data.callers.filter((c) => c.quest === 'choice:ch9_count')).toHaveLength(1);
+    expect(GS.data.callers).toContainEqual(unrelated);
   });
 });
 
@@ -71,6 +106,7 @@ describe('choices — clearDownstreamChoiceFlags', () => {
     // ch9 (at/after) cleared + caller dropped
     expect(isDecided('ch9_count')).toBe(false);
     expect(GS.flag('axis_compassion_openhand')).toBe(false);
+    expect(GS.flag('dorin_withholds')).toBe(false);
     expect(GS.data.callers.some((c) => c.quest === 'choice:ch9_count')).toBe(false);
   });
 });

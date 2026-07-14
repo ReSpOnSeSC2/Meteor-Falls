@@ -26,25 +26,29 @@ export function isDecided(id: ChoiceId): boolean {
  */
 export function recordChoice(id: ChoiceId, optionId: string): void {
   const def = CHOICES[id];
+  // Validate before touching any save state. A stale/corrupt menu request must
+  // not erase a real answer or leave decidedFlag without an option.
+  const chosen = def.options.find((o) => o.id === optionId);
+  if (!chosen) return;
+
   for (const o of def.options) {
     GS.setFlag(o.flag, false);
     o.alsoSets?.forEach((f) => GS.setFlag(f, false));
   }
-  const chosen = def.options.find((o) => o.id === optionId);
-  if (!chosen) return;
+  // A re-decision owns the complete choice transaction, including its Caller.
+  // Removing first also collapses any legacy duplicate entries.
+  const quest = `choice:${id}`;
+  GS.data.callers = GS.data.callers.filter((c) => c.quest !== quest);
   GS.setFlag(chosen.flag, true);
   chosen.alsoSets?.forEach((f) => GS.setFlag(f, true));
   GS.setFlag(def.decidedFlag, true);
   if (chosen.caller) {
-    const quest = `choice:${id}`;
-    if (!GS.data.callers.some((c) => c.quest === quest)) {
-      GS.data.callers.push({
-        quest,
-        name: chosen.caller.name,
-        quote: chosen.caller.quote,
-        effect: { ...chosen.caller.effect },
-      });
-    }
+    GS.data.callers.push({
+      quest,
+      name: chosen.caller.name,
+      quote: chosen.caller.quote,
+      effect: { ...chosen.caller.effect },
+    });
   }
 }
 

@@ -182,8 +182,8 @@ export const AWAKENINGS: Record<string, AwakeningDef> = Object.fromEntries(
       toast: '{faye} awakened MAGNET Sigma! 🧲',
     }),
     /* ---- DORIN ("The Monk's Full Path"): his single awakening. The Trial of
-       the Mute Mountain is the mastery-earned beat that gates his joining
-       (Ch.9) — passing it, he masters the full Comet. Vibe Comet Ω left his
+       the Mute Mountain is his Ch.9 homecoming and mastery-earned beat — he has
+       travelled with the party since Ch.5. Passing it, he masters the full Comet. Vibe Comet Ω left his
        L52 unlock row in the same commit (one-path rule, §6). */
     W({
       id: 'trial_of_the_mute_mountain',

@@ -13,7 +13,6 @@ Target density band: **1.5–4.5** enemies/screen.
 | aurora_ice_field | 576 | 1.65 | 4 | 2.43 | in-band | 80px | 112px | 96px | 0 | 2 |
 | bamboo_road | 6656 | 19.02 | 7 | 0.37 | cool | 144px | — | 96px | 1 | 3 |
 | bootstep_moor | 8960 | 25.6 | 7 | 0.27 | cool | 144px | 80px | 160px | 0 | 4 |
-| castle_hoaxula | 480 | 1.37 | 5 | 3.65 | in-band | 112px | — | 112px | 0 | 3 |
 | foggy_moor | 12096 | 34.56 | 5 | 0.14 | cool | 528px | 576px | 544px | 0 | 3 |
 | jungle_1 | 1320 | 3.77 | 7 | 1.86 | in-band | 32px | 80px | 48px | 1 | 3 |
 | jungle_2 | 1288 | 3.68 | 7 | 1.9 | in-band | 80px | 96px | 80px | 1 | 3 |
@@ -27,7 +26,7 @@ Target density band: **1.5–4.5** enemies/screen.
 | mt_shu_temple | 9984 | 28.53 | 7 | 0.25 | cool | 512px | 480px | 288px | 0 | 3 |
 | oak_hollow | 780 | 2.23 | 1 | 0.45 | cool | 160px | 240px | 176px | 0 | 1 |
 | oak_roots | 1872 | 5.35 | 6 | 1.12 | cool | 256px | — | 272px | 0 | 3 |
-| old_road | 576 | 1.65 | 6 | 3.65 | in-band | 80px | 112px | 96px | 0 | 3 |
+| old_road | 6912 | 19.75 | 11 | 0.56 | cool | 160px | 32px | 96px | 1 | 5 |
 | procession_way | 6656 | 19.02 | 8 | 0.42 | cool | 320px | 48px | 320px | 0 | 5 |
 | pyramid_ante | 336 | 0.96 | 2 | 2.08 | in-band | 112px | 32px | 128px | 0 | 1 |
 | savanna_run | 6656 | 19.02 | 6 | 0.32 | cool | 64px | 464px | 80px | 1 | 3 |
@@ -43,6 +42,7 @@ Target density band: **1–4** enemies/screen.
 
 | map | tiles | screens | enemies | density | band | grace | exposure | prox | touches | side |
 | --- | ----: | ------: | ------: | ------: | ---- | ----: | -------: | ---: | ------: | ---: |
+| castle_hoaxula | 6912 | 19.75 | 10 | 0.51 | cool | 240px | 288px | 256px | 0 | 5 |
 | dos_f2 | 1536 | 4.39 | 2 | 0.46 | cool | 672px | 928px | 304px | 1 | 2 |
 | grotto | 560 | 1.6 | 1 | 0.63 | cool | 80px | — | 96px | 0 | 1 |
 | night_train | 6144 | 17.55 | 8 | 0.46 | cool | 496px | — | 208px | 0 | 4 |
@@ -94,7 +94,7 @@ Target density band: **0–1.6** enemies/screen.
 | kvisthavn | 3072 | 8.78 | 1 | 0.11 | in-band | 304px | 160px | 144px | 0 | 1 |
 | lilleby | 4032 | 11.52 | 1 | 0.09 | in-band | 1168px | 64px | 912px | 0 | 1 |
 | mauna_lani | 816 | 2.33 | 0 | 0 | — | — | — | — | 0 | 0 |
-| valea_stelelor | 864 | 2.47 | 1 | 0.41 | in-band | 128px | 272px | 144px | 0 | 1 |
+| valea_stelelor | 5120 | 14.63 | 2 | 0.14 | in-band | 416px | 496px | 32px | 0 | 1 |
 
 ## INTERIORS (no ambient pressure)
 
@@ -277,7 +277,7 @@ Target density band: **0–0** enemies/screen.
 | sphinx_chin | 2464 | 7.04 | 0 | 0 | — | — | — | — | 0 | 0 |
 | spire_lobby | 198 | 0.57 | 0 | 0 | — | — | — | — | 0 | 0 |
 | starmart_int | 187 | 0.53 | 0 | 0 | — | — | — | — | 0 | 0 |
-| stone_brow_monastery | 320 | 0.91 | 0 | 0 | — | — | — | — | 0 | 0 |
+| stone_brow_monastery | 5632 | 16.09 | 0 | 0 | — | — | — | — | 0 | 0 |
 | the_cage | 1200 | 3.43 | 0 | 0 | — | — | — | — | 0 | 0 |
 | trail_shed_int | 168 | 0.48 | 0 | 0 | — | — | — | — | 0 | 0 |
 | twoton_bike_shop | 216 | 0.62 | 0 | 0 | — | — | — | — | 0 | 0 |
@@ -288,8 +288,6 @@ Target density band: **0–0** enemies/screen.
 | twoton_hotel_room | 108 | 0.31 | 0 | 0 | — | — | — | — | 0 | 0 |
 | twoton_pizza | 280 | 0.8 | 0 | 0 | — | — | — | — | 0 | 0 |
 | twoton_theater | 384 | 1.1 | 0 | 0 | — | — | — | — | 0 | 0 |
-| valea_stelelor_unit_0 | 121 | 0.35 | 0 | 0 | — | — | — | — | 0 | 0 |
-| valea_stelelor_unit_1 | 121 | 0.35 | 0 | 0 | — | — | — | — | 0 | 0 |
 | valle_dorado_unit_0 | 255 | 0.73 | 0 | 0 | — | — | — | — | 0 | 0 |
 | valle_dorado_unit_1 | 255 | 0.73 | 0 | 0 | — | — | — | — | 0 | 0 |
 | valle_dorado_unit_10 | 195 | 0.56 | 0 | 0 | — | — | — | — | 0 | 0 |
@@ -323,7 +321,7 @@ Target density band: **0–0** enemies/screen.
 
 ## HARD-rule summary
 
-273/275 canon maps clear the hard pressure rules (grace ≥ 16px, prox ≥ 24px).
+271/273 canon maps clear the hard pressure rules (grace ≥ 16px, prox ≥ 24px).
 
 Maps flagged (each is FIXED or carries a reasoned waiver in `tools/content-validate.ts`):
 

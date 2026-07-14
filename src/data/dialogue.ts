@@ -3327,8 +3327,8 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '(His power stops being something he holds and becomes part of who he is — like a whole sky of light, all pouring forward at once.)',
     'No words. There was never going to be a word big enough. Just the light, and the boy, aimed.',
   ],
-  /* ---- DORIN ("The Monk's Full Path"): the Trial of the Mute Mountain. The
-     beat that gates his joining (Ch.9). Voice: formal, calm, faintly baffled by
+  /* ---- DORIN ("The Monk's Full Path"): the Trial of the Mute Mountain. His
+     Ch.9 homecoming and mastery beat, never a join gate. Voice: formal, calm, faintly baffled by
      the modern world; his lines read like sutras (§A11.2, played straight). ---- */
   awake_trial_of_the_mute_mountain: [
     'The elders say the Mute Mountain hasn\'t made a sound in nine hundred years. The test is simple: don\'t ask it anything. Just sit and listen until it answers on its own.',
@@ -4441,22 +4441,52 @@ export const DIALOGUE: Record<string, DialogueScript> = {
 
   /* ════════════════════ CHAPTER 9 — THE COUNT OF VALEA STELELOR (Romania) ════════════════════ */
 
-  // — the §A5 next leg: Bert offers the Romania flight (bertAirBeat, ch8→ch9) —
+  // — the §A5 next leg: Bert hands the party to the Romania rail route —
   bert_romania_ask: [
     '@Uncle Bert folds the locket shut, gentle. "This one\'s close to {dorin}\'s, son. VALEA STELELOR — Valley of the Stars, up in the old mountains. They\'ve got a vampire, the wire says, scaring a whole valley off its own fields. Locket\'s warm as a stove about it. Number nine."',
-    '@"It\'s where {dorin} walked down FROM, you know — the monastery up the brow. Reckon he\'d like to see his Buni." He winks at {dorin}. "Say the word and we fly."',
+    '@"Lucille can get you to the western railhead. After that, it\'s the Orient Less-Express — old train, slow train, goes everywhere the mountain lets it." He presses a ticket for every traveller into {dorin}\'s hand. "Say the word and I\'ll see you onto the platform."',
   ],
 
   // — Valea Stelelor signs —
   sign_valea_stelelor: ['(A painted board on a carved gate, the blue stars on it faded to grey:) VALEA STELELOR — the Valley of the Stars. Population: fewer, lately. Mind the Old Road after dark. Sit at Buni\'s table before you do anything else; she will not take no, and she is right not to.'],
   sign_old_road_gate: ['(A leaning marker at the village edge, a hand carved pointing up the mountain:) ↑ THE OLD ROAD — to the castle and the monastery beyond. Travellers are advised to go by day, in company, and not at all if the Count has been seen.'],
   sign_valea_green: ['(A whittled post by the well:) THE VILLAGE GREEN — weddings here, harvests here, the star-festival here, every August, for four hundred years. We have not held it these two years. We mean to again.'],
+  sign_valea_cottage: ['(A little blue listing plaque hangs on the spare cottage gate:) BUNI\'S SPARE COTTAGE — VALEA COTTAGE. Registered for a future home listing; no offers are being taken while the valley is under threat. Buni has underlined “future” twice.'],
 
   // — Valea Stelelor NPCs —
   npc_vs_buni: [
     "@(A tiny round grandmother takes {rex}'s face in both floury hands before he can speak.) Sit. SIT. You are skin and worry, all of you, and you, draga — (she frowns at {dorin}, then her whole face folds up) ...you came home. You came HOME. Sit, sit, I will not cry, I am chopping onions, sit.",
-    '@I am making the Feast Basket, the TRUE one, the one that fills a person all the way up — but I am five things short and my knees are eighty years old. Sour cream, cheese in the bark, the barrel cabbage, the smoked meat, the autumn plums. Fetch your Buni her five things, and I will send you up that mountain so full nothing can empty you.',
+    '@I am making the Feast Basket, the TRUE one, the one that fills a person all the way up — but I am five things short and my knees are eighty years old. Smântână, brânză in the bark, valley mushrooms, barrel cabbage, and Grandfather\'s autumn plums. Fetch your Buni her five things, and I will send you up that mountain so full nothing can empty you.',
   ],
+  q_buni_start: [
+    "@(Buni takes {rex}'s face in both floury hands, then {dorin}'s, and declares every child present much too thin.) Sit first. Then fetch: smântână, brânză de burduf, valley mushrooms, barrel cabbage, and Grandfather's plums. Five things. No smoked meat — the mountain has taken enough from us already.",
+    '@Bring all five back to this table. I will cook the true Feast Basket, and nobody will go up the Old Road empty.',
+  ],
+  q_buni_active: [
+    '@Buni counts on five floury fingers. "Smântână. Brânză. Valley mushrooms. Barrel cabbage. Grandfather\'s plums. The mountain may hurry. My stew will not."',
+  ],
+  q_buni_ready: [
+    '(All five pantry things cover Buni\'s table. She checks each one, nods once, and sets the whole kitchen moving.)',
+  ],
+  q_buni_full: [
+    '@Buni lifts the finished Feast Basket, tests the weight of every bag in the room, and puts it firmly back on the table. "Hands full. Nothing wasted. Make room and come straight back; dinner waits for family."',
+  ],
+  q_buni_done: [
+    '(Buni folds the Feast Basket into your arms, recipe tucked under the cloth. Then she gives {dorin} a little brass caller worn smooth by decades of use.)',
+    '@"Ring when the road is too quiet," she says. "A Buni always answers."',
+  ],
+  q_buni_post: [
+    '@"You have food, a caller, and each other," Buni says, shooing everyone toward the door. "That is enough for any mountain. It had better be enough for one foolish vampire."',
+  ],
+  q_buni_pickup_locked: [
+    '(It looks like one of Buni\'s pantry things, but taking food from a valley table without asking would earn a lecture longer than the Old Road.)',
+  ],
+  q_buni_pickup_smantana: ['(A stoppered crock of cool smântână, waiting in the work lane shade. Buni will know whose cow made it by the first spoonful.)'],
+  q_buni_pickup_branza: ['(A tight bark pouch of brânză de burduf rests in a shepherd\'s safe pocket beside the road, pungent enough to announce itself before the wolves do.)'],
+  q_buni_pickup_mushrooms: ['(Valley mushrooms bead with rain under the beech bend — brown caps, silver gills, exactly the kind Buni described twice and then described again.)'],
+  q_buni_pickup_cabbage: ['(A small sealed crock of barrel cabbage waits beside Buni\'s pantry door, labelled FOR THE FEAST in handwriting nobody would dare disobey.)'],
+  q_buni_pickup_plums: ['(Grandfather\'s old plum tree has kept five dark fruit out of the wind. They come away warm from the afternoon sun.)'],
+  q_buni_pickups_complete: ['(Five of five. Somewhere down the valley, you can almost hear Buni putting the largest pot on the stove.)'],
   npc_vs_provisioner: [
     '@Off to see the Count, are you? Hah. Buy warm first. A sheepskin against the mountain night, a braid of garlic for the — well. For luck. And the bitters, the pelin, in case you eat something up there you shouldn\'t. Everything fair-priced; we look after travellers here.',
   ],
@@ -4465,6 +4495,21 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   npc_vs_kid: [
     '@(A village child marches up, fearless.) I knocked on the castle door once. On a DARE. The Count answered and did a big swirly cape and said "BEWAAARE" — and then his voice went all flat and tired and he said "...sorry, kid, go home, it\'s not safe," and shut the door soft. Vampires aren\'t supposed to say sorry. I don\'t think he\'s very good at it.',
+  ],
+  npc_vs_orchard_keeper: [
+    '@(The orchard keeper checks the plum trees by name, never by number.) Ileana held the south wind. Petru kept his fruit. Old Nicolae lost one branch and grew two more. Trees are stubborn family; that is why we understand each other.',
+  ],
+  npc_vs_miller: [
+    '@The mill wheel has seven good sounds and one bad one. Today it is making six good sounds and a noise like a spoon in a boot. I will fix the spoon before supper. The mountain can wait its turn.',
+  ],
+  npc_vs_church_neighbor: [
+    '@I time my bread by the church bell: knead at one, fold at two, oven at three. The Count frightened away our bell-ringer, so now we all take turns. Yesterday the baker rang late and every loaf in Valea rose crooked.',
+  ],
+  npc_vs_green_dancer: [
+    '@We still practise the star-festival dance, even without a festival. Left, cross, turn, STOMP. If the Count comes down here, he has to learn the steps before he scares anybody. Village rule.',
+  ],
+  npc_vs_station_cousin: [
+    '@The Less-Express is never late. The timetable is simply optimistic. I bring a second thermos, wave at every carriage, and call that punctual. When you come back down, I will be right here to wave at you too.',
   ],
 
   // — the §A8 Ch.9 shop (the Valea Provisioner shelf) —
@@ -4478,6 +4523,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   // — Castle Hoaxula signs —
   sign_castle_hoaxula: ['(Cobwebbed letters over the great hall, the cobwebs visibly made of spun cotton:) WELCOME, MORTAL, TO YOUR DOOM. (A laminated card cable-tied below:) Doom experience approx. 25 min. Gift shop at exit. We hope you enjoyed your scare!'],
   sign_castle_backstage: ['(A door marked PRIVATE swings open on a wall of paperwork: foreclosure notices, a Cleveland return address, a unionised-actors grievance form, and a single child\'s drawing of a smiling vampire labelled "DAD AT WORK." The Hush hums under all of it, but the paper underneath is only sad.)'],
+  sign_hoaxula_park: ['(A property placard is pinned beneath the foreclosure notices:) CASTLE HOAXULA — AS IS. Future restoration listing: HOAXULA PARK. No sale, tour, or renovation appointment is available while the attraction remains dangerous.'],
 
   // — Stone Brow Monastery sign —
   sign_stone_brow_monastery: ['(Carved deep into the lintel of the bell tower, worn by centuries of weather:) STONE BROW — where the mountain teaches the young to be quiet enough to hear it. (Newer, below, in {dorin}\'s own careful hand from years ago:) "it took everything away, and then it gave me back the part that was always mine. — D.")'],
@@ -4491,12 +4537,53 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   hoaxula_unmasked: ['@(The accent comes apart into flat, exhausted Ohio.) "...okay. OKAY. You wanna know the truth? The truth is the castle went under in \'19, and a guy in a gray suit offered me a — a BATTERY, he called it, to keep the lights on, and I didn\'t ASK what was in it—" (the Vibe lashes out, wild now, grief-shaped, catching everyone) "—and now I can\'t put it DOWN!"'],
 
   // — the boss-trigger approach + the win (OverworldScene countHoaxulaBossScene) —
-  count_hoaxula_door: ['(The great hall is all crimson and cobweb and theatrical thunder — and under it, if you look the way {pippa} is looking, the cobwebs are cotton and the thunder is a sound-effects pedal. "It\'s a SET," she whispers. "All of it\'s a set. But—" {faye} closes her eyes, and her face goes soft and sad. "—but the hurt under it is real. Be ready. And {milo}... be gentle if you can.")'],
+  count_hoaxula_door: ['(The great hall is crimson, cotton cobweb, and theatrical thunder. The set is false. The hurt underneath it is not.)'],
+  count_hoaxula_door_pippa: ['(The great hall is all crimson and cobweb and theatrical thunder — and under it, if you look the way {pippa} is looking, the cobwebs are cotton and the thunder is a sound-effects pedal. "It\'s a SET," she whispers. "All of it\'s a set. But—" {faye} closes her eyes, and her face goes soft and sad. "—but the hurt under it is real. Be ready. And {milo}... be gentle if you can.")'],
+  count_hoaxula_door_departed: ['(The great hall is all crimson and cobweb and theatrical thunder. {milo} follows one cable with his eyes to a sound-effects pedal behind the drape. "It\'s a set," he says. {faye} closes her eyes, and her face goes soft and sad. "The set is false. The hurt under it is real. Be ready — and gentle, if he lets us be.")'],
   count_hoaxula_win: [
-    '(The stolen Vibe finally lets go of him, all at once, and the Count folds down onto the flagstones — and the cape is just a cape, and the man inside it is just a man, blinking up at five children who came all this way and chose, at the end, to look at him kindly.)',
+    '(The stolen Vibe finally lets go of him. The cape is just a cape, and the man inside it is just a man, blinking up at the children who crossed a mountain to see him clearly.)',
     '@"...I scared a whole valley," he says, very quietly. "I didn\'t mean to. I just needed the lights to stay on." {dorin} crouches and puts a hand on his shoulder, and says nothing, the way the mountain taught him. It is enough. It is more than enough.',
   ],
+  count_hoaxula_win_pippa: [
+    '(The stolen Vibe finally lets go of him, all at once, and the Count folds down onto the flagstones — cape only cloth now, the man inside it blinking up at five children who crossed a mountain to see him clearly.)',
+    '@"...I scared a whole valley," he says, very quietly. "I just needed the lights to stay on." {pippa} lowers her red pen. {dorin} crouches and puts a hand on his shoulder, saying nothing the way the mountain taught him. For now, it is enough.',
+  ],
+  count_hoaxula_win_departed: [
+    '(The stolen Vibe finally lets go of him, all at once, and the Count folds down onto the flagstones — cape only cloth now, the man inside it blinking up at four children who crossed a mountain to see him clearly.)',
+    '@"...I scared a whole valley," he says, very quietly. "I just needed the lights to stay on." {dorin} crouches and puts a hand on his shoulder, saying nothing the way the mountain taught him. For now, it is enough.',
+  ],
+  count_candelabra_get: [
+    '(The Count unhooks the heavy brass candelabra from his cape and offers it to {rex}, flames finally ordinary.) "Take the prop. If I ever need it again, I am doing matinees in Cleveland — without the cursed lighting package." Got the Candelabra!',
+  ],
+  count_candelabra_full: [
+    '@The Count tries to pass {rex} the candelabra, finds no room, and props it safely against the throne. "It stays here. Clear one space and come back — no encore required."',
+  ],
   stone_brow_monastery_early: ['(The bell tower stands silent above the castle, the rope still. The mountain keeps its peace until the thing wearing the Count\'s cape has been faced and freed — the resonance will not ring over a valley still afraid.)'],
+  stone_brow_choice_early: ['(The path to Stone Brow opens above the castle, but {dorin} does not take it. The Count\'s stolen warmth is still waiting in the choice chamber below. "The mountain will ask what we carried here," he says. "We should decide before we answer.")'],
+  ch9_trial_court: [
+    '(The first court takes the party\'s footsteps one by one until even breathing sounds borrowed. {dorin} kneels where the elders once sent him out as a Walker.)',
+    '@"I chose silence here," he says. "The Hush steals it. Those are not the same. I came home to remember the difference." The mountain gives back one clear footfall, then another. The trial has begun.',
+  ],
+  ch9_trial_stone_get: [
+    '(A river stone waits in the old trial niche, worn smooth by the hand that carried it through the dark. {dorin} closes his fingers around it. The Trial Stone came home too.)',
+  ],
+  ch9_dorin_birth_name: [
+    '(In the second court, the wind stops. For years the vow allowed titles — novice, Walker, friend — but not the name he carried before the road.)',
+    '@He draws one breath and gives the mountain the word it could never take: "{dorin}. My name is {dorin}. I earned it by carrying it home."',
+  ],
+  ch9_clapper_get: [
+    '(Behind the bell stair, the great iron clapper rests where the sisters hid it from the Hush. Together, the children lift it back into the waiting bell. Got the Bell Clapper!)',
+  ],
+  ch9_heartlight: [
+    '(At the highest court, {dorin} takes the bell-rope he was once too small to reach. The note that returns is not loud at first. It is true — and truth travels farther.)',
+    '(The bell rolls over Castle Hoaxula, the Old Road, Buni\'s table, and every dark star carved above Valea\'s doors. The valley answers with pots, hammers, laughter, and one festival tune remembered all at once.)',
+  ],
+  ch9_holy_pan_get: [
+    '(Three Stone Brow sisters take Mia\'s old skillet, speak one quiet blessing over it, and hand it back ringing clear as the valley bell. Mia received The Holy Pan!)',
+  ],
+  ch9_holy_pan_full: [
+    '@The sisters wrap the blessed skillet and leave it beside the bell. "A kindness should not become a burden. Make room, then return; it will wait."',
+  ],
 
   // — the COMPASSION axis (CHOICE 2) — runChoice('ch9_count') reads these —
   choice_ch9_intro: [
@@ -4519,14 +4606,14 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   // — the §A6 chapter card (ch9_complete) —
   ch9_card: [
-    'You come down the Old Road in the morning with a valley behind you that is holding its star-festival again — you can hear them setting up the green. Buni stood at her gate and fed every one of you until the buttons strained, and pressed the Feast Basket into {dorin}\'s hands, and did not cry, because she was chopping onions, she said, the whole time, all of it, every onion in Romania.',
+    'You come down the Old Road in the morning with a valley behind you that is holding its star-festival again — you can hear them setting up the green. Buni stands at her gate with a wooden spoon raised like a sceptre and does not cry, because she is chopping onions, she says, the whole time, all of it, every onion in Romania.',
     '* CHAPTER 9 — THE COUNT OF VALEA STELELOR — complete. Nine embers carried. One to go.',
   ],
 
   // — the §A6 arrival (OverworldScene ch9ArrivalScene) —
   ch9_arrival: [
-    '(Lucille comes down through cold bright mountain air onto the green at VALEA STELELOR — painted gates, haystacks, woodsmoke, the smell of something simmering all day somewhere close. A whole valley of stars is carved over every doorway, and above it all, far up the brow, a monastery bell tower catches the last of the light.)',
-    '@(For once {dorin} is off the plane before anyone.) "...This is the road I walked down," he says, very quietly, looking up the mountain. "All the way down to find you. ...It\'s strange, walking back UP it with my whole family."',
+    '(The Orient Less-Express sighs to a stop at VALEA STELELOR — painted gates, haystacks, woodsmoke, and the smell of something simmering all day somewhere close. Blue stars are carved over every doorway; far up the brow, a monastery bell catches the last light.)',
+    '@{dorin} steps off before the conductor can lower the stool. "This is the road I walked down," he says, looking up the mountain. "All the way down to find you. It is strange, walking back up it with my whole family."',
   ],
 
   // ════════════════════════════════════════════════════════════════════════════

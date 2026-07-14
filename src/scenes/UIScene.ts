@@ -16,6 +16,17 @@ import { gameInsets } from '../engine/native';
 import { toast } from '../ui/windows';
 import { s } from '../spritegen/scale';
 
+/** Browser QA can expose the real touch overlay on a fine-pointer desktop
+ * without pretending the browser is physical phone hardware. The seam is
+ * development-only; production still trusts Phaser's device capability. */
+export function touchControlsEnabled(
+  deviceTouch: boolean,
+  search: string,
+  dev = import.meta.env.DEV,
+): boolean {
+  return deviceTouch || (dev && new URLSearchParams(search).get('devTouch') === '1');
+}
+
 export class UIScene extends Phaser.Scene {
   private controls: Phaser.GameObjects.Container | null = null;
   private dpad: Phaser.GameObjects.Image | null = null;
@@ -41,13 +52,15 @@ export class UIScene extends Phaser.Scene {
   }
 
   create(): void {
-    const isTouch = this.sys.game.device.input.touch;
+    const deviceTouch = this.sys.game.device.input.touch;
+    const search = typeof window === 'undefined' ? '' : window.location.search;
+    const isTouch = touchControlsEnabled(deviceTouch, search);
 
     // first gesture: unlock audio (+ fullscreen on touch devices). On the
     // phone this fires from the FIRST TOUCH — the §B4/ADR-006 unlock path.
     const unlock = (): void => {
       AUDIO.unlock();
-      if (isTouch && !this.scale.isFullscreen) {
+      if (deviceTouch && !this.scale.isFullscreen) {
         try {
           this.scale.startFullscreen();
         } catch {

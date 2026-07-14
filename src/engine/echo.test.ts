@@ -9,6 +9,7 @@ import { GS, newGameData } from './state';
 import { migrateSave, CURRENT_SAVE_VERSION } from './migrations';
 import { MAX_BREATHS } from '../data/echoes';
 import { recordChoice, isDecided } from './choice';
+import { departHero, rejoinHero } from './party';
 import {
   captureEcho,
   rewindTo,
@@ -56,6 +57,106 @@ describe('the Held Breath — capture + rewind round-trips state exactly', () =>
     // …but the cost rides the restored timeline
     expect(breathsLeft()).toBe(MAX_BREATHS - 1);
     expect(rewindCount()).toBe(1);
+  });
+
+  it('restores the exact departed-Pippa Chapter 9 save, rolls back both branches, and permits re-decision', () => {
+    rejoinHero('pippa', 46);
+    const rex = GS.hero('rex')!;
+    rex.name = 'Rex QA';
+    rex.hp = 17;
+    rex.bag = ['hall_of_famer_bat', 'candelabra', 'baozi'];
+    rex.equip = { weapon: 'hall_of_famer_bat' };
+    rex.boosts = { offense: 3 };
+    const pippa = GS.hero('pippa')!;
+    pippa.name = 'Pippa QA';
+    pippa.hp = 9;
+    pippa.pp = 4;
+    pippa.bag = ['paper_fan', 'scroll_of_calm'];
+    pippa.equip = { weapon: 'paper_fan' };
+    pippa.boosts = { speed: 2 };
+    expect(departHero('pippa')).toBe(true);
+
+    GS.data.keyItems.push('orient_express_ticket');
+    GS.data.cashOnHand = 2468;
+    GS.data.banked = 1357;
+    GS.data.map = 'castle_hoaxula';
+    GS.data.x = 36 * 64 + 32;
+    GS.data.y = 16 * 64 + 48;
+    GS.data.facing = 'up';
+    GS.setFlag('unrelated_keepsake_state', 7);
+    GS.data.callers.push({
+      quest: 'thread:army',
+      name: 'General Buckle',
+      quote: 'Still standing by.',
+      effect: { kind: 'damage', power: 1200 },
+    });
+    GS.data.echoes.rewindCount = 3;
+
+    const exactRex = JSON.parse(JSON.stringify(rex));
+    const exactPippa = JSON.parse(JSON.stringify(GS.data.departedHeroes.pippa));
+    const exactKeyItems = [...GS.data.keyItems];
+    const exactUnrelatedCallers = JSON.parse(JSON.stringify(GS.data.callers));
+    const exactUnrelated = {
+      cashOnHand: GS.data.cashOnHand,
+      banked: GS.data.banked,
+      map: GS.data.map,
+      x: GS.data.x,
+      y: GS.data.y,
+      facing: GS.data.facing,
+    };
+    captureEcho('ch9_count');
+
+    // First take the valid OPEN HAND transaction so rewind must remove its Caller.
+    recordChoice('ch9_count', 'mercy');
+    expect(GS.data.callers.filter((caller) => caller.quest === 'choice:ch9_count')).toHaveLength(1);
+    rex.bag = ['corn_dog'];
+    rex.equip = {};
+    GS.data.departedHeroes.pippa!.bag = ['corn_dog'];
+    GS.data.departedHeroes.pippa!.equip = {};
+    GS.data.cashOnHand = 1;
+    GS.data.banked = 2;
+    GS.data.map = 'stone_brow_monastery';
+    GS.setFlag('unrelated_keepsake_state', false);
+
+    expect(rewindTo('ch9_count')).toBe(true);
+    expect(GS.hero('rex')).toEqual(exactRex);
+    expect(GS.data.party.map((hero) => hero.id)).not.toContain('pippa');
+    expect(GS.data.departedHeroes.pippa).toEqual(exactPippa);
+    expect(GS.data.keyItems).toEqual(exactKeyItems);
+    expect(GS.data).toMatchObject(exactUnrelated);
+    expect(GS.flag('unrelated_keepsake_state')).toBe(7);
+    expect(GS.data.callers).toEqual(exactUnrelatedCallers);
+    expect(isDecided('ch9_count')).toBe(false);
+    expect(GS.flag('axis_compassion_openhand')).toBe(false);
+    expect(GS.flag('axis_compassion_iron')).toBe(false);
+    expect(GS.flag('stolen_light_banked')).toBe(false);
+    expect(GS.flag('dorin_withholds')).toBe(false);
+    expect(breathsLeft()).toBe(MAX_BREATHS - 1);
+    expect(rewindCount()).toBe(4);
+
+    // Re-anchor and take the valid IRON transaction so its withhold is likewise
+    // proven temporal, then make a fresh decision on the restored timeline.
+    captureEcho('ch9_count');
+    recordChoice('ch9_count', 'iron');
+    expect(GS.flag('dorin_withholds')).toBe(true);
+    expect(GS.flag('stolen_light_banked')).toBe(true);
+    expect(rewindTo('ch9_count')).toBe(true);
+    expect(GS.hero('rex')).toEqual(exactRex);
+    expect(GS.data.departedHeroes.pippa).toEqual(exactPippa);
+    expect(GS.flag('dorin_withholds')).toBe(false);
+    expect(GS.flag('stolen_light_banked')).toBe(false);
+    expect(isDecided('ch9_count')).toBe(false);
+    expect(breathsLeft()).toBe(MAX_BREATHS - 2);
+    expect(rewindCount()).toBe(5);
+
+    recordChoice('ch9_count', 'mercy');
+    expect(isDecided('ch9_count')).toBe(true);
+    expect(GS.flag('axis_compassion_openhand')).toBe(true);
+    expect(GS.flag('axis_compassion_iron')).toBe(false);
+    expect(GS.flag('dorin_withholds')).toBe(false);
+    expect(GS.data.callers.filter((caller) => caller.quest === 'choice:ch9_count')).toEqual([
+      expect.objectContaining({ name: 'Vlad, the Actor' }),
+    ]);
   });
 });
 

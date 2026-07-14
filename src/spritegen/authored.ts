@@ -1770,8 +1770,8 @@ const ENEMY_BATTLE_ART = [
   { key: 'battle_paper_dragon_burning', url: new URL('../../assets/art/enemies/battle_paper_dragon_burning.png', import.meta.url).href },
   { key: 'battle_paper_dragon_burning_w1', url: new URL('../../assets/art/enemies/battle_paper_dragon_burning_w1.png', import.meta.url).href },
   { key: 'battle_paper_dragon_burning_w2', url: new URL('../../assets/art/enemies/battle_paper_dragon_burning_w2.png', import.meta.url).href },
-  // CHAPTER 9 (Romania) — the four fresh regulars (placeholder clones until the art pass),
-  // the ADOPTED ribcage_rattler (its own authored battler, the reserve bank), and BOSS 9.
+  // CHAPTER 9 (Romania) — the focused five-regular authored roster and BOSS 9.
+  // Ribcage's retained stages and the remediated wear families share the three-tier contract.
   { key: 'battle_haystack_mimic', url: new URL('../../assets/art/enemies/battle_haystack_mimic.png', import.meta.url).href },
   { key: 'battle_haystack_mimic_w1', url: new URL('../../assets/art/enemies/battle_haystack_mimic_w1.png', import.meta.url).href },
   { key: 'battle_haystack_mimic_w2', url: new URL('../../assets/art/enemies/battle_haystack_mimic_w2.png', import.meta.url).href },

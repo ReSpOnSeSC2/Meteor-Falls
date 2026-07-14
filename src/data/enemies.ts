@@ -2830,15 +2830,12 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
     /* ══════════════ CHAPTER 9 — THE COUNT OF VALEA STELELOR (Romania) ══════════════ *
      * §A7 the Ch.9 roster (chapter level window 42-46, band ch9). The emotional-heart
      * chapter: props that forgot they were props, old-road dangers, and quiet gothic
-     * tests before Dorin's homecoming. Four art-matched regulars + an ADOPTED gothic
-     * orphan (ribcage_rattler, the §4-B catalog) work Valea Stelelor, the Old Road, and
-     * Castle Hoaxula, and BOSS 9 (COUNT HOAXULA) holds the throne. On-curve (band ch9:
+     * tests on Dorin's road home. Five authored gothic regulars work Valea Stelelor,
+     * the Old Road, and Castle Hoaxula, and BOSS 9 (COUNT HOAXULA) holds the throne. On-curve (band ch9:
      * trash HP 11k-26k; village RED/GOLD/GRASS warmth giving way to crypt NIGHT/PURPLE up
      * the road). Region affinity leans FIRE-weak (the props are straw, paper, greasepaint
      * — they BURN) + a HOLY thread (the valley's vampire-ward items bite the undead) and a
-     * VOLT shatter on the iron armour. The Moss Strigoi DRAINS (the bible's HP-drain hook).
-     * Dev-art: the four fresh battlers/minis are placeholder clones until the Romania art
-     * pass; ribcage_rattler ships its existing authored battler (the reserve bank). */
+     * VOLT shatter on the iron armour. The Moss Strigoi DRAINS (the bible's HP-drain hook). */
     E({
       id: 'haystack_mimic',
       name: 'Haystack Mimic',
@@ -2849,10 +2846,11 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       moves: [
         { name: 'pitchfork jab', kind: 'attack', mult: 1.1, text: '{e} stabbed up out of the straw with a rusted pitchfork and caught {t} clean.', weight: 5 },
         { name: 'hay burst', kind: 'strong', mult: 1.6, text: '{e} exploded in a smothering cloud of chaff and field-dust that buried {t}!', weight: 3 },
-        { name: 'play dead', kind: 'taunt', text: '{e} slumped back into an ordinary haystack and waited, smug, for {t} to drop their guard.', weight: 2 },
+        { name: 'play dead', kind: 'status', status: 'paralyzed', text: '{e} slumped into an ordinary haystack, held its breath, then twitched. {t} froze at the feint and could not trust the next rustle.', weight: 2 },
       ],
       deathLine: 'The Haystack Mimic came apart in a soft heap of straw, and a startled field-mouse ran out of it and away.',
-      drops: [{ item: 'grandfather_plums', chance: 0.12 }],
+      // A forgotten field lunch, not one of Buni's flag-backed quest ingredients.
+      drops: [{ item: 'placinta', chance: 0.12 }],
       sprite: 'battle_haystack_mimic', mini: 'mini_haystack_mimic',
       bg: [RAMP.GOLD, RAMP.GRASS],
     }),
@@ -2929,7 +2927,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
      * Hushed theme-park actor from Cleveland whose haunted-castle attraction went bankrupt
      * — now armed with very real STOLEN VIBE. THEATRICAL phase: fake spells, real damage,
      * steals one equipped item (returned on win). UNMASKED at 50%: the cape comes off, the
-     * Cleveland accent comes out sobbing, the attacks go wild AoE. Mia's PRAY at "good" tier
+     * Cleveland accent comes out sobbing and the attacks become desperate. Mia's PRAY at "good" tier
      * or better ends his second phase in MERCY — the game's quietest victory (bosses.ts
      * `count_hoaxula`, the mercyEnding template). Weak to FIRE (he is paper, wax, and
      * greasepaint); mind_immune like every boss. Money > combat: 95000 HP sits far under
@@ -2945,7 +2943,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'theatrical curse', kind: 'strong', mult: 1.7, text: '{e} flung up its cape and intoned a DOOM in cod-Latin — and the fake spell hit {t} with very real, very stolen Vibe!', weight: 4 },
         { name: 'bat swarm', kind: 'attack', mult: 1.2, text: '{e} loosed a clattering swarm of cardboard-and-wire bats that battered {t} all the same.', weight: 4 },
         { name: 'command the night', kind: 'taunt', text: '{e} swept low into a stage bow and held the pose, daring {t} to look away from the show.', weight: 2 },
-        { name: 'wild lament', kind: 'strong', mult: 1.9, text: '{e} threw both arms wide and wailed, and the grief came off it in a wide messy wave that caught everyone!', weight: 2 },
+        { name: 'wild lament', kind: 'strong', mult: 1.9, text: '{e} threw both arms wide and wailed, and one messy wave of grief caught {t} full-on!', weight: 2 },
       ],
       deathLine: 'Count Hoaxula sank to the flagstones, the stolen Vibe guttering out of him — and underneath the greasepaint was only a tired man from Cleveland, blinking, who quietly said he was sorry.',
       sprite: 'battle_count_hoaxula', mini: 'mini_count_hoaxula',

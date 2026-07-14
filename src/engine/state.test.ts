@@ -23,7 +23,7 @@ describe('GameState serialization (Prompt 2: round-trip)', () => {
   });
 
   it('starts v25 with an inactive field status and an empty departed-hero bench', () => {
-    expect(GS.data.version).toBe(25);
+    expect(GS.data.version).toBe(26);
     expect(GS.data.mushroomize).toEqual({ active: false, phase: 0, source: null, recovery: null });
     expect(GS.data.departedHeroes).toEqual({});
   });

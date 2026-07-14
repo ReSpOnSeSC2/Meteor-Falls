@@ -9,14 +9,17 @@ CH5  Minimus      boss=whiskerzilla (2150)       towns=minimus_major            
 CH6  SHIPPED      boss=laughing_sphinx (9000)    maps=zanzibel,savanna_run,laughing_ruins,sphinx_chin  travel=biplane
 CH7  SHIPPED      boss=cobra_raja (20000)        maps=chandrapore,monsoon_road,night_train,palace_throne  travel=Tilak_Mail/night_train
 CH8  IMPLEMENTED (PRODUCTION VERIFIED)  boss=paper_dragon (45000)  maps=lotus_harbor,bamboo_road,spore_forest,mt_shu_temple  travel=riverboat/yak
-CH9  Romania      boss=count_hoaxula (5300)      towns=valea_stelelor            travel=train       dungeon=castle_hoaxula
+CH9  CONTRACT FROZEN (ADR-144; production implementation)  boss=count_hoaxula (95000)  maps=valea_stelelor,old_road,castle_hoaxula,stone_brow_monastery  travel=Orient_Less-Express
 CH10 Alaska/Hawaii/Mars  bosses=frost_sentinel, tiki_magma_golem, the_hush (6000)  towns=aurora_station, mauna_lani  travel=snowcat->rocket  dungeon=sea_of_silence
 
 # Historical §A7 planning ecosystem (20 each unless a newer accepted production
-# ADR freezes a focused roster; ADR-143 freezes Ch8 at four regulars + boss):
+# ADR freezes a focused roster; ADR-143 freezes Ch8 at four regulars + boss,
+# and ADR-144 freezes Ch9 at five regulars + Count Hoaxula):
 #   4 road/field roamers, 3 dungeon specialists, 2 social/urban oddities,
 #   2 rare/high-value, 2 late-chapter pressure, 1 set-piece.
 # 35 of 200 built (Ch.1-3) -> ~165 enemies remain -> ~495 images with wear.
+# That final line is a historical planning snapshot, not a current release quota
+# or asset count for focused-production Chapters 8 and 9.
 
 # Mars finale extras (Ch.10): ~30+ caller portraits (every helped quest NPC:
 #   Mom, Dad, Buni, Pemberton, Chad + one per completed side quest),

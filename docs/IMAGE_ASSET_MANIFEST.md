@@ -14,6 +14,17 @@
 > PKG-15 claims are superseded; see
 > [`asset-packages/PKG-15-ch8-China.md`](asset-packages/PKG-15-ch8-China.md).
 
+> **Chapter 9 production amendment (ADR-144, 2026-07-14):** Romania is no
+> longer a blank/unbuilt art package. Its four-map production contract retains
+> the Romania strip, eight Valea facades, four strict-clean NPC sheets, Castle
+> background, focused five-regular-enemy/minis package, both Count forms, train,
+> and existing compositions. Nine live villagers reuse the four sheet
+> identities, and Count is **95,000 HP**. The closed remediation ships fourteen
+> Dorin-correct, branch-truthful contextual runtime panels with fourteen source
+> masters plus eleven distinct wear corrections with eleven generated masters;
+> see
+> [`asset-packages/PKG-16-ch9-Romania.md`](asset-packages/PKG-16-ch9-Romania.md).
+
 This is the complete, start-to-finish list of every image METEOR FALLS needs if
 we drop the procedural-only rule (ADR-002, "zero binary assets") and ship
 authored art for **everything** — opening screen, cutscenes, characters,
@@ -54,11 +65,11 @@ rows not touched by a chapter close remain historical planning snapshots.
 | Category | In code today | Full-game target | Notes |
 |---|---:|---:|---|
 | Opening / title / framing screens | ~12 | ~12 | logo, title, app icon, name entry, save slots, boot |
-| Cutscene panels | ~8 (Ch.1) | **~80** | §A6 beats + travel set-pieces, ~8/chapter ×10 |
-| Overworld characters (8-dir) | **100** | **~140** | 100 registered authored 46-frame sheets after the three Chapter 8 additions; ~10–15 new NPCs per still-unbuilt chapter |
+| Cutscene panels | live multi-chapter registry through Ch.9 | **~80** historical target | chapter amendments supersede the old Ch.1-only snapshot; Ch.9 alone closes 14 contextual outputs plus retained gallery/reference art |
+| Overworld characters (8-dir) | **100** | **~140** | historical target; current registry includes four strict-clean Valea sheets, and ADR-144 rejects a 10–15-NPC Chapter 9 quota |
 | Hero battle busts | 5 × 18 frames | 5 × 18 | all 5 heroes already exist |
 | Hero battle-stage battlers | 5 × 14 frames | 5 × 14 (× weapon) | all 5 heroes exist; weapon variants optional |
-| **Enemies** (× 3 wear each) | **35** (=105 imgs) | **200** (=600 imgs) | §A7 law: 20/chapter ×10 — see §18 |
+| **Enemies** (× 3 wear each) | **35** (=105 imgs) | **200** (=600 imgs) | historical baseline/target; accepted focused rosters override per-chapter quotas — see §18 |
 | Bosses (bespoke) | **3** | **13** | one per chapter + 3 in the Ch.10 finale |
 | World tiles | **53** | **~120** | each region adds its own ground/wall/floor set |
 | Props / furniture / set pieces | **~70** | **~130** | region-specific props per chapter |
@@ -83,8 +94,8 @@ rows not touched by a chapter close remain historical planning snapshots.
 **Built today: ~1,400–1,600 images. Full "author everything" game:
 ~3,000–3,500 individual images** (every frame + wear variant). The growth is
 mostly in remaining future chapter/finale work — see **§18**. Chapters 4, 6,
-7, and 8 now have production-world art records and must not be counted as blank
-packages. Item and
+7, 8, and 9 now have production-world art records and must not be counted as
+blank packages. Item and
 ability icons are the exception: the registries already anticipate all ten
 regions, so that 469/92 work mostly stands for the whole game.
 
@@ -330,8 +341,8 @@ placeholder bitmap was introduced.
 | 5 | Minimus — Minimus Major | **unbuilt** | Whiskerzilla (2150) | minimus_major | biplane |
 | 6 | Africa — Zanzibel | **production world shipped** | The Laughing Sphinx (9000) | zanzibel, savanna_run, laughing_ruins, sphinx_chin | biplane |
 | 7 | India — Chandrapore | **production world shipped** | Cobra Raja (**20000**) | chandrapore, monsoon_road, night_train, palace_throne | biplane + night train |
-| 8 | China — Lotus Harbor | **implemented on production branch; final close pending** | The Paper Dragon (**45000**) | lotus_harbor, bamboo_road, spore_forest, mt_shu_temple | riverboat + yak |
-| 9 | Romania — Valea Stelelor | **unbuilt** | Count Hoaxula (5300) | valea_stelelor | Orient Less-Express |
+| 8 | China — Lotus Harbor | **production world shipped** | The Paper Dragon (**45000**) | lotus_harbor, bamboo_road, spore_forest, mt_shu_temple | riverboat + yak |
+| 9 | Romania — Valea Stelelor | **production world and art remediation shipped** | Count Hoaxula (**95000**) | valea_stelelor, old_road, castle_hoaxula, stone_brow_monastery | Orient Less-Express |
 | 10 | Alaska → Hawaii → Mars | **unbuilt** | **The Hush (6000)** + Frost Sentinel + Tiki Magma Golem | aurora_station, mauna_lani | snowcat → rocket |
 
 Chapter 6’s production rollout reuses the registered Africa tile strip, supported
@@ -353,6 +364,19 @@ Lotus Bargeman, Mt. Shu Elder), corrected seven-panel party compositions, two
 departed-Pippa panel variants, and distinct Paper Dragon BURNING wear. See
 `docs/asset-packages/PKG-15-ch8-China.md` for the exact inventory.
 
+Chapter 9 retains the Romania strip, all eight Valea facade identities, four
+strict-clean named NPC sheets, Castle background, five regular-enemy bases and
+minis, both Count form bases, the Orient Less-Express, and seven journey plus
+one choice compositions. Its nine live villagers reuse the four strict-clean
+sheet identities. Production remediation is complete: fourteen
+Pippa-present/departed contextual runtime outputs for train, arrival, Buni,
+Castle, unmask, monastery, and choice have fourteen source masters; eleven
+byte-distinct wear corrections have eleven generated masters. Every new result
+and both choice variants retain named source masters; the legacy train and
+Ribcage families retain their Git provenance rather than invented master files.
+The solo Trial panel remains shared. See
+`docs/asset-packages/PKG-16-ch9-Romania.md`.
+
 ### Per-chapter art set (historical planning checklist)
 
 Each unbuilt chapter needs, at minimum:
@@ -363,12 +387,16 @@ Each unbuilt chapter needs, at minimum:
       Laughing Ruins", "Castle Hoaxula") — walls, props, set dressing.
 - [ ] **Settlement(s)** — landmark facades + generic buildings in the region
       style (`spire-canton`, `bazaar-port`, `painted-gates`, `fog-stone`).
-- [ ] **NPC roster (8-dir)** — townsfolk, shopkeepers, quest-givers. ~10–15 per
-      chapter, same 96×128 runtime (24×32 native) / 8-direction contract as §3.
+- [ ] **NPC roster (8-dir)** — townsfolk, shopkeepers, quest-givers. The
+      historical ~10–15 target applies only where a newer production ADR has not
+      frozen a focused cast; ADR-144 retains Chapter 9's four strict-clean Valea
+      sheets for its nine live villagers. Same 96×128 runtime (24×32 native) /
+      8-direction contract as §3.
 - [ ] **Enemy roster — chapter-approved authored roster with complete wear and
       minis.** The twenty-enemy figure is a historical full-game planning target,
       not a per-chapter production gate when a newer ADR freezes a focused set;
-      ADR-143 freezes Chapter 8 at four regulars plus Paper Dragon.
+      ADR-143 freezes Chapter 8 at four regulars plus Paper Dragon, and ADR-144
+      freezes Chapter 9 at five regulars plus Count Hoaxula.
 - [ ] **Boss(es)** — bespoke multi-frame sheet, larger than enemies.
 - [ ] **Battle background** — the region's arena backdrop.
 - [ ] **Cutscene panels** — the chapter's §A6 story beats + the travel-in
@@ -393,8 +421,10 @@ chapter by chapter.
 Those counts are a historical planning snapshot, not the current registry
 audit. ADR-143 explicitly supersedes the per-Chapter-8 twenty-id expansion and
 nonexistent Chapter 8 draft-path assumption: its accepted production set is
-four authored regular enemies plus Paper Dragon. Use live registries and the
-enemy-frame audit for current totals.
+four authored regular enemies plus Paper Dragon. ADR-144 does the same for
+Chapter 9: five authored regulars plus Count Hoaxula, with no `drafts/ch9`
+roster requirement. Use live registries and the enemy-frame audit for current
+totals.
 
 ### Travel set-pieces
 
@@ -465,7 +495,7 @@ sheet is expected reads as a frozen pose (and can crash if frames are missing).
 
 Swept every authored asset on disk against the contract above:
 
-- **Characters:** 100 registered sheets are 384×1536 runtime — full walk + run + idle. The inherited 97-sheet gate was remediated before Chapter 8; the final 100-sheet Ch8 strict result is pending its close run.
+- **Characters:** 100 registered sheets are 384×1536 runtime — full walk + run + idle. The inherited 97-sheet gate was remediated before Chapter 8, and the 100-sheet Chapter 8 strict close completed successfully.
 - **Busts:** 5/5 at 128×160 (18 frames). **Battlers:** 5/5 at 112×144 (14 frames).
 - **Enemies:** 108 single-frame images — correct (engine-tweened).
 
@@ -502,11 +532,13 @@ For each remaining region, deliver the §18 per-chapter set together — tileset
 town facades, NPCs, its accepted authored enemy roster and wear, boss, battle
 background, cutscene panels, regional home + vehicle. Do them in play order so
 the game becomes playable region by region. Do not reopen Chapters 4, 6, 7, or
-8 as blank art packages. **Save the Mars finale (Ch.10) for last** —
+8 or 9 as blank art packages. Chapter 9's narrow ADR-144 panel/wear/provenance
+remediation is complete. **Save the Mars finale (Ch.10) for last** —
 its three bosses, caller portraits, and Homesong UI are the art centerpiece.
 
-> The single biggest line item across everything is the **§A7 enemy roster:
-> ~165 unbuilt enemies × 3 wear ≈ 495 images.** Plan capacity around it.
+> The historical **~165 unbuilt enemies × 3 wear ≈ 495 images** estimate is not
+> a current production count or a release quota for focused-roster Chapters 8
+> and 9. Re-run live registry/enemy-frame audits before capacity planning.
 
 ## How art gets wired in
 

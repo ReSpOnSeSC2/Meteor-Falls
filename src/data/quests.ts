@@ -772,7 +772,7 @@ export const QUESTS: Record<string, QuestDef> = Object.fromEntries(
       giver: 'vs_buni',
       startFlag: 'q_bunis',
       objectives: [
-        { id: 'gather', text: 'Buni needs five things for the true Feast Basket — the sour cream, the cheese in the bark, the barrel cabbage, the smoked meat, the autumn plums — scattered up the valley. Bring them home.', flag: 'q_bunis_gather' },
+        { id: 'gather', text: 'Buni needs five things for the true Feast Basket — the sour cream, the cheese in the bark, the valley mushrooms, the barrel cabbage, and the autumn plums — scattered up the valley. Bring them home.', flag: 'q_bunis_gather' },
         { id: 'cook', text: 'Carry the five back to Buni and sit at her table while she cooks the Feast Basket the way only she can.', flag: 'q_bunis_cook' },
       ],
       rewardItem: 'basket_feast',

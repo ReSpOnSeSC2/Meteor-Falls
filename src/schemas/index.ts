@@ -489,6 +489,11 @@ export const PropDefSchema = z.strictObject({
    * Each part uses the same native-pixel, top-left-relative contract as
    * `solid`. Direct-authored props use either `solid` or `solidParts`. */
   solidParts: z.array(SolidRectSchema).min(1).optional(),
+  /** A catalog facade whose playable purpose is an authored exterior court
+   * (porch, table, yard, counter), not an anonymous generated tenant unit.
+   * The living-settlement pass leaves these identities and the stable map
+   * roster intact; map authors must provide the outdoor use themselves. */
+  facadeUse: z.literal('outdoor-court').optional(),
   /** per-instance SIZE multiplier (default 1). A single number scales uniformly; `{x,y}` scales width
    *  and height independently (a building made only wider / only taller). Grows from the drawn TOP-LEFT
    *  (its lot corner); for facades the texture-derived collision + door box scale with it per-axis
@@ -1118,7 +1123,14 @@ export type GolferDef = z.infer<typeof GolferDefSchema>;
  *    (Hoaxula's mercy end — the game's quietest victory).
  */
 export const PhaseTriggerSchema = z.discriminatedUnion('kind', [
-  z.strictObject({ kind: z.literal('hpBelow'), frac: z.number().gt(0).lt(1) }),
+  z.strictObject({
+    kind: z.literal('hpBelow'),
+    frac: z.number().gt(0).lt(1),
+    /** Opt-in exact-threshold behavior; older bosses remain strict-below. */
+    inclusive: z.boolean().optional(),
+    /** Optional form gate for transitions such as Hoaxula's unmask. */
+    form: z.string().min(1).optional(),
+  }),
   z.strictObject({
     kind: z.literal('turnCount'),
     n: z.number().int().min(1),
@@ -1126,7 +1138,12 @@ export const PhaseTriggerSchema = z.discriminatedUnion('kind', [
   }),
   z.strictObject({ kind: z.literal('bothSummonsDead') }),
   z.strictObject({ kind: z.literal('riddleAnswered'), ok: z.boolean() }),
-  z.strictObject({ kind: z.literal('prayTierAtLeast'), tier: PrayTierSchema }),
+  z.strictObject({
+    kind: z.literal('prayTierAtLeast'),
+    tier: PrayTierSchema,
+    /** Mercy can be constrained to the intended revealed form. */
+    form: z.string().min(1).optional(),
+  }),
 ]);
 export type PhaseTrigger = z.infer<typeof PhaseTriggerSchema>;
 
@@ -1178,6 +1195,8 @@ export const PhaseActionSchema = z.discriminatedUnion('kind', [
     kind: z.literal('windup'),
     line: z.string().min(1),
     amount: z.number().int().positive().optional(),
+    /** Incoming class used by the layered ward/shield mitigation seam. */
+    element: ElementSchema.optional(),
     status: z.enum(['crying', 'asleep', 'paralyzed', 'sunburn', 'hushed']).optional(),
     turns: z.number().int().min(1).optional(),
   }),
@@ -1281,6 +1300,12 @@ export const BossScriptDefSchema = z
       }
     }
     for (const p of s.phases) {
+      const triggerForm = p.trigger.kind === 'hpBelow' || p.trigger.kind === 'prayTierAtLeast'
+        ? p.trigger.form
+        : undefined;
+      if (triggerForm && !s.forms?.some((f) => f.id === triggerForm)) {
+        ctx.addIssue({ code: 'custom', message: `phase '${p.id}' trigger aims at unknown form '${triggerForm}'` });
+      }
       for (const a of p.actions) {
         if (a.kind === 'setForm' && a.form !== 'cycle' && !s.forms?.some((f) => f.id === a.form)) {
           ctx.addIssue({ code: 'custom', message: `phase '${p.id}' setForm aims at unknown form '${a.form}'` });

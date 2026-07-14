@@ -90,18 +90,20 @@ import {
   type EnemyMove,
 } from '../data/enemies';
 import { ABILITIES, groupAbilityFamilies, rollPray, PRAY_TEXT, type AbilityDef, type PrayTier } from '../data/abilities';
-import { ITEMS, consumesOnUse, spiceFoodHeal } from '../data/items';
+import { ITEMS, consumesOnUse, spiceFoodHeal, slotOf, type EquipSlot } from '../data/items';
 import { BATTLE_TEXT, DIALOGUE } from '../data/dialogue';
 import { BOSS_SCRIPTS } from '../data/bosses';
 import { AWAKENINGS } from '../data/awakenings';
 import { CH8_WORLD } from '../data/maps_ch8';
+import { ch9PartyCutsceneId } from '../data/cutscenes';
 import { GS, expForLevel, type HeroState } from '../engine/state';
+import { playCutscene } from '../engine/cutscene';
 // S21 (ADR-126): Mia's high-tier PRAY refuels Jay's Held Breath (faith owns the rewind's supply)
 import { breathsLeft, refillBreath, puppetLocked } from '../engine/echo';
 import { locketAvailable } from '../engine/ch7';
 import { applyMushroomize, cureMushroomize } from '../engine/mushroomize';
 // S21 (ADR-130): the IRON path can WITHHOLD a hero's awakened ultimate (Dorin's Comet Ω)
-import { isWithheldAbility } from '../engine/party';
+import { isPresent, isWithheldAbility } from '../engine/party';
 import { MAX_BREATHS } from '../data/echoes';
 import { statsAtLevel, maxHpAtLevel, maxPpAtLevel, unlockedAbilities, availableAbilities, HEROES } from '../data/heroes';
 import { INPUT } from '../engine/input';
@@ -205,6 +207,14 @@ import { colorOf, rgbOf, RAMP, px } from '../palette';
 import { ODO_CELL_W, ODO_CELL_H } from '../spritegen/ui';
 import { s } from '../spritegen/scale';
 
+export interface BattleDevContext {
+  form: 'theatrical' | 'unmasked';
+  hp: number;
+  bossTurns: number;
+  introSeen: boolean;
+  stolen?: Readonly<{ heroId: HeroState['id']; slot: EquipSlot }>;
+}
+
 interface BattleConfig {
   enemyIds: string[];
   advantage: 'player' | 'enemy' | 'none';
@@ -219,6 +229,8 @@ interface BattleConfig {
   area?: string;
   /** S2: the Manager fight teaches Mia's first Pray with a one-time hint */
   prayTutorial?: boolean;
+  /** Title-screen QA profiles may resume Hoaxula at a real phase frontier. */
+  devContext?: BattleDevContext;
 }
 
 interface EnemyUnit {
@@ -405,6 +417,9 @@ class OdoDisplay {
  *  to fill — long enough that the grief tide (every 3rd turn) is a real "outlast it" clock. */
 const WARMTH_MAX = 100;
 const WARMTH_GIVE = 16;
+/** Chapter 9's Ribcage Rattler reassembles its own 15k-HP body. This is
+ * intentionally enemy-scoped: legacy `mend` users keep their ally-heal identity. */
+const RIBCAGE_REASSEMBLE_FRAC = 0.12;
 
 const PLASMA_FRAG = `
 precision mediump float;
@@ -545,6 +560,16 @@ export class BattleScene extends Phaser.Scene {
       setForm: async (form) => {
         await this.fx.play('phase_swap', { targets: [this.foeTarget(bossUnit)] });
         bossUnit.spr.setTexture(wearSpriteKey(this.phase?.spriteFor(bossUnit.def.sprite) ?? bossUnit.def.sprite, bossUnit.wear));
+        if (
+          bossUnit.def.id === 'count_hoaxula'
+          && form.id === 'unmasked'
+          && GS.flag('ch9_unmasked_panel_seen') !== true
+        ) {
+          // Commit before presentation so an interrupted cutscene never replays
+          // the reveal or fabricates Pippa on the next load.
+          GS.setFlag('ch9_unmasked_panel_seen');
+          await playCutscene(this, ch9PartyCutsceneId('unmasked', isPresent('pippa')));
+        }
         if (form.line) {
           for (const page of DIALOGUE[form.line] ?? []) await this.printWait(vars(page));
         }
@@ -560,23 +585,35 @@ export class BattleScene extends Phaser.Scene {
         await this.print(`${amount} HP came BACK. That's the wrong direction!`);
       },
       stealEquipped: async () => {
-        const marks = this.aliveHeroes().filter((h) => Object.keys(h.hero.equip).length > 0);
+        const marks = this.aliveHeroes()
+          .map((unit) => ({
+            unit,
+            slots: (Object.entries(unit.hero.equip) as Array<[EquipSlot, string | undefined]>)
+              .filter((entry): entry is [EquipSlot, string] => {
+                const [, itemId] = entry;
+                return !!itemId
+                  && !!ITEMS[itemId]
+                  && slotOf(ITEMS[itemId]) === entry[0]
+                  && unit.hero.bag.includes(itemId);
+              }),
+          }))
+          .filter((mark) => mark.slots.length > 0);
         if (marks.length === 0) return;
         const mark = marks[Math.floor(Math.random() * marks.length)];
-        const slots = Object.keys(mark.hero.equip) as Array<keyof typeof mark.hero.equip>;
-        const slot = slots[Math.floor(Math.random() * slots.length)];
-        const itemId = mark.hero.equip[slot];
-        if (!itemId) return;
-        GS.unequip(mark.hero.id, slot);
-        GS.removeItem(itemId, mark.hero.id);
-        this.phase?.stolen.push({ heroId: mark.hero.id, itemId });
-        await this.print(`${mark.hero.name}'s ${ITEMS[itemId]?.name ?? itemId} was STOLEN!!`);
+        const [slot, itemId] = mark.slots[Math.floor(Math.random() * mark.slots.length)];
+        GS.unequip(mark.unit.hero.id, slot);
+        this.phase?.stolen.push({ heroId: mark.unit.hero.id, slot, itemId });
+        await this.print(`${mark.unit.hero.name}'s ${ITEMS[itemId].name} was STOLEN!!`);
       },
       returnStolen: () => this.returnStolenGear(),
       endBattleMercy: async () => {
-        if (this.ended) return;
+        // Mercy is terminal before any awaited copy or equipment presentation.
+        // Otherwise a rolling mortal meter can finish during the return caption
+        // and race the ordinary defeat watcher.
+        if (!this.latchTerminal(true)) return;
+        if (this.phase?.stolen.length) await this.returnStolenGear();
         await this.print(BATTLE_TEXT.mercy_end);
-        await this.victory();
+        await this.victory(true);
       },
       partyStatus: async (status, turns) => {
         for (const h of this.aliveHeroes()) h.status[status] = turns;
@@ -600,19 +637,44 @@ export class BattleScene extends Phaser.Scene {
       // Grin's half-dead blow awakens Jay's POWER SHIELD Σ (the_wall_that_answers)
       awaken: (id) => this.battleAwakening(id),
     });
+    if (bossUnit.def.id === 'count_hoaxula' && this.cfg?.devContext) {
+      const dev = this.cfg.devContext;
+      this.phase.restoreDevContext(dev.form, dev.bossTurns);
+      bossUnit.hp = Math.max(1, Math.min(bossUnit.def.hp, Math.floor(dev.hp)));
+      bossUnit.wear = wearTier(bossUnit.hp, bossUnit.def.hp);
+      if (dev.stolen) {
+        const hero = GS.data.party.find((candidate) => candidate.id === dev.stolen?.heroId);
+        const itemId = hero?.equip[dev.stolen.slot];
+        if (hero && itemId && ITEMS[itemId] && hero.bag.includes(itemId)) {
+          GS.unequip(hero.id, dev.stolen.slot);
+          this.phase.stolen.push({ heroId: hero.id, slot: dev.stolen.slot, itemId });
+        }
+      }
+    }
     // the initial form's texture (the Grin opens SOLID GOLD)
-    bossUnit.spr.setTexture(wearSpriteKey(this.phase.spriteFor(bossUnit.def.sprite), 0));
+    bossUnit.spr.setTexture(wearSpriteKey(this.phase.spriteFor(bossUnit.def.sprite), bossUnit.wear));
   }
 
   /** Hoaxula's hostages come home (and victory() calls this too) */
   private async returnStolenGear(): Promise<void> {
     if (!this.phase) return;
+    const unresolved: typeof this.phase.stolen = [];
     for (const s of this.phase.stolen) {
       const heroId = s.heroId as HeroState['id'];
-      const ok = GS.addItem(s.itemId, heroId) || GS.addItem(s.itemId);
-      if (ok) await this.print(`The ${ITEMS[s.itemId]?.name ?? s.itemId} came back!`);
+      const slot = s.slot as EquipSlot;
+      const hero = GS.data.party.find((candidate) => candidate.id === heroId);
+      if (!hero || !ITEMS[s.itemId] || !hero.bag.includes(s.itemId)) {
+        unresolved.push(s);
+        continue;
+      }
+      const ok = GS.equipItem(heroId, s.itemId) === 'ok' && hero.equip[slot] === s.itemId;
+      if (!ok) {
+        unresolved.push(s);
+        continue;
+      }
+      await this.print(`The ${ITEMS[s.itemId].name} came back to ${hero.name}!`);
     }
-    this.phase.stolen = [];
+    this.phase.stolen = unresolved;
   }
 
   /** S14: phase-machine summons — new units flash in beside the boss */
@@ -1299,6 +1361,16 @@ export class BattleScene extends Phaser.Scene {
     if (this.cfg.advantage === 'player') await this.print('You caught it off guard! You move first!');
     if (this.cfg.advantage === 'enemy') await this.print('It snuck up on you!');
 
+    // Hoaxula's THEATRICAL form is an opening story beat, not only a texture.
+    // Keep it explicit so historical phase scripts do not gain new intro pages.
+    if (
+      this.phase?.def.boss === 'count_hoaxula'
+      && this.phase.form?.line
+      && this.cfg.devContext?.introSeen !== true
+    ) {
+      for (const page of DIALOGUE[this.phase.form.line] ?? []) await this.printWait(vars(page));
+    }
+
     // S14 (Prompt 15): a scripted boss may OPEN ON A RIDDLE — the N-way
     // choice on the existing ask widget, pool-driven; consequences are
     // phase actions (§A6 Ch.4 — built now, the Sphinx consumes it later)
@@ -1465,7 +1537,9 @@ export class BattleScene extends Phaser.Scene {
       if (options[pick] === 'Run') {
         const maxSpd = Math.max(...this.enemies.filter((e) => e.alive).map((e) => e.def.speed));
         if (Math.random() < runChance(this.heroSpeedS(h), maxSpd)) {
+          if (!this.latchTerminal(false)) return false;
           await this.print(BATTLE_TEXT.run_ok);
+          if (this.phase?.stolen.length) await this.returnStolenGear();
           this.finish('ran');
           return false;
         }
@@ -2839,6 +2913,10 @@ export class BattleScene extends Phaser.Scene {
     // §A6 Ch.10 — THE HUSH is never KILLED, only REACHED: clamp it to a sliver so the 12%
     // mercy-end (its 'falls' phase, endBattleMercy) always resolves the finale, not a kill.
     if (e.def.id === 'the_hush' && e.hp <= 0) e.hp = 1;
+    const fell = e.hp <= 0;
+    if (fell) e.alive = false;
+    const battleWon = fell && this.enemies.every((unit) => !unit.alive);
+    if (battleWon && !this.latchTerminal(true)) return;
     // floating damage popup (the S10 popFoe idiom) + the printed line —
     // a SMAAAASH combo hands in its one assembled EB line instead (S11b)
     this.fx.popup(e.spr.x, e.spr.y - e.spr.displayHeight / 2 - s(2), `${dmg}`, weak ? RAMP.GOLD : RAMP.PAPER);
@@ -2847,8 +2925,7 @@ export class BattleScene extends Phaser.Scene {
       e.asleep = 0;
       await this.print(this.fill(BATTLE_TEXT.enemy_woke, '', e));
     }
-    if (e.hp <= 0) {
-      e.alive = false;
+    if (fell) {
       // the Tick dies still latched? the tether goes with it
       if (e.def.boss && this.fx.tethered) this.breakLatch();
       await this.fx.play('enemy_dissolve', { targets: [this.foeTarget(e)] });
@@ -2863,8 +2940,8 @@ export class BattleScene extends Phaser.Scene {
         await this.print(this.fill(BATTLE_TEXT.parrot_drop, '', e, `$${e.stolenCash}`));
         e.stolenCash = 0;
       }
-      if (this.enemies.every((x) => !x.alive)) {
-        await this.victory();
+      if (battleWon) {
+        await this.victory(true);
       } else if (e.summoned && this.phase && this.enemies.filter((x) => x.summoned).every((x) => !x.alive)) {
         // the phase machine hears every summons-wipe (the Mainframe refill)
         await this.phase.onAllSummonsDead();
@@ -3046,6 +3123,10 @@ export class BattleScene extends Phaser.Scene {
       if (e.frozen > 0) {
         e.frozen = 0;
         await this.print(this.fill(BATTLE_TEXT.frozen_skip, '', e));
+        if (e.def.boss && this.phase?.pendingWindup) {
+          this.phase.clearWindup();
+          await this.windupCancel(e);
+        }
         continue;
       }
       // S-Mia VOLT: a paralyzed foe rolls to skip (the hero-side paralyzed mirror)
@@ -3145,7 +3226,7 @@ export class BattleScene extends Phaser.Scene {
       await this.fx.play('impact_physical', { targets: this.aliveHeroes().map((h) => this.cardTarget(h)) });
       for (const h of this.aliveHeroes()) {
         const st = h.status;
-        const mit = mitigateIncoming(wind.amount, 'physical', {
+        const mit = mitigateIncoming(wind.amount, wind.element ?? 'physical', {
           shield: st.shield > 0,
           ward: st.ward > 0,
           reflect: st.reflect > 0,
@@ -3404,6 +3485,16 @@ export class BattleScene extends Phaser.Scene {
           break;
         }
         case 'mend': {
+          if (e.def.id === 'ribcage_rattler') {
+            const missing = Math.max(0, e.def.hp - e.hp);
+            const restored = Math.min(missing, Math.max(1, Math.floor(e.def.hp * RIBCAGE_REASSEMBLE_FRAC)));
+            if (restored > 0) {
+              e.hp += restored;
+              this.fx.popup(e.spr.x, e.spr.y - e.spr.displayHeight / 2 - s(2), `+${restored}`, RAMP.GRASS);
+              AUDIO.sfx('heal');
+            }
+            break;
+          }
           // §A7 Ch.3 (ADR-099) — the Tea Poltergeist tops up the OTHER side's cups:
           // hospitality, misfiled. It heals every STANDING ally enemy a little (never
           // itself); alone, there is no one to pour for, so it does nothing.
@@ -3607,22 +3698,30 @@ export class BattleScene extends Phaser.Scene {
 
   /* ---------------- outcomes ---------------- */
 
-  private async victory(): Promise<void> {
-    if (this.ended) return;
+  /** Claim a terminal outcome synchronously, before any caption can yield while
+   * mortal HP/PP drums and the defeat watcher are still live. */
+  private latchTerminal(won: boolean): boolean {
+    if (this.ended) return false;
     this.ended = true;
-    this.won = true; // every standing bust breaks into the cheer loop
-    // §A4.1: victory freezes every drum where it stands
+    this.won = won;
     this.heroes.forEach((h) => {
       h.odoHp.freeze();
       h.odoPp.freeze();
       h.latched = false;
     });
+    return true;
+  }
+
+  private async victory(terminalLatched = false): Promise<void> {
+    if (terminalLatched) {
+      if (!this.ended || !this.won) return;
+    } else if (!this.latchTerminal(true)) return;
+    if (this.phase?.stolen.length) await this.returnStolenGear();
+    // §A4.1: the synchronous terminal latch already froze every drum where it stood.
     if (this.fx.tethered) this.fx.severTether();
     AUDIO.sfx('fx_cheer');
     AUDIO.jingle('victory', 2200, null);
     await this.print(BATTLE_TEXT.win);
-    // S14: a thieving boss hands everything back on its way down (Hoaxula)
-    if (this.phase && this.phase.stolen.length > 0) await this.returnStolenGear();
     const totalExp = this.enemies.reduce((a, e) => a + e.def.exp, 0);
     const totalCash = this.enemies.reduce((a, e) => a + e.def.cash, 0);
     const alive = this.aliveHeroes();
@@ -3716,7 +3815,8 @@ export class BattleScene extends Phaser.Scene {
       await this.print(BATTLE_TEXT.feast_revive);
       return;
     }
-    this.ended = true;
+    if (!this.latchTerminal(false)) return;
+    if (this.phase?.stolen.length) await this.returnStolenGear();
     AUDIO.stopMusic();
     if (this.fx.tethered) this.fx.severTether();
     await this.print(`${GS.data.party[0].name}... it all goes quiet for a second...`);
