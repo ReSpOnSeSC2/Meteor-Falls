@@ -101,6 +101,12 @@
  * generated city unit recover to stable production anchors. Chapter 7 parking
  * moves to real Chandrapore bays, while completed saves normalize the stolen
  * Locket back into its recovered state. Mid-heist flags remain exactly mid-heist.
+ *
+ * v24 to v25 (2026-07 Chapter 8 rollout): all four China maps and generated
+ * Lotus Harbor units recover through CH8_WORLD anchors; outdoor parking moves
+ * to the marked Lotus bay. Mushroomized and the exact departed-hero bench join
+ * the schema, earned post-Mt.-Shu saves retain Teleport Beta, and every supported
+ * full-save JSON in the Held Breath stack walks the same migration chain.
  */
 import { ITEMS, BAG_MAX } from '../data/items';
 import { MGR_ROW } from '../data/arcade';
@@ -112,8 +118,9 @@ import type { HoopsState } from '../schemas';
 import { s } from '../spritegen/scale';
 import { CH6_WORLD } from '../data/maps_ch6';
 import { CH7_MAP_IDS, CH7_WORLD } from '../data/maps_ch7';
+import { CH8_MAP_IDS, CH8_WORLD, LOTUS_HARBOR_UNIT_IDS, nativeFeet as chapter8NativeFeet } from '../data/maps_ch8';
 
-export const CURRENT_SAVE_VERSION = 24;
+export const CURRENT_SAVE_VERSION = 25;
 
 const KNOWN_VEHICLE_TITLES = new Set(Object.values(DEALERSHIP).map((car) => car.title));
 
@@ -226,6 +233,49 @@ export const CHAPTER7_PARKING_RECOVERY = {
   chandrapore: nativeFeet(CH7_WORLD.chandrapore.vehicleBay, 'right'),
   monsoon_road: nativeFeet(CH7_WORLD.chandrapore.vehicleBay, 'right'),
 } as const satisfies Record<string, { x: number; y: number; facing: 'up' | 'down' | 'left' | 'right' }>;
+
+type CardinalPoint = Readonly<{
+  x: number;
+  y: number;
+  facing: 'up' | 'down' | 'left' | 'right';
+}>;
+
+const chapter8Feet = (point: CardinalPoint): {
+  x: number;
+  y: number;
+  facing: 'up' | 'down' | 'left' | 'right';
+} => {
+  const feet = chapter8NativeFeet(point);
+  return { x: feet.tx, y: feet.ty, facing: point.facing };
+};
+
+/** Stable-map ids, generated unit ids, and their points all come from the
+ * Chapter 8 world registry. Appending a Lotus tenancy only requires extending
+ * that registry's deterministic unit tuple. */
+export const CHAPTER8_LAYOUT_RECOVERY: Readonly<Record<
+  string,
+  { x: number; y: number; facing: 'up' | 'down' | 'left' | 'right' }
+>> = Object.fromEntries([
+  [CH8_MAP_IDS[0], chapter8Feet(CH8_WORLD.lotusHarbor.migration)],
+  [CH8_MAP_IDS[1], chapter8Feet(CH8_WORLD.bambooRoad.migration)],
+  [CH8_MAP_IDS[2], chapter8Feet(CH8_WORLD.sporeForest.migration)],
+  [CH8_MAP_IDS[3], chapter8Feet(CH8_WORLD.mtShuTemple.migration)],
+  ...LOTUS_HARBOR_UNIT_IDS.map((id) => [id, chapter8Feet(CH8_WORLD.lotusHarbor.unitMigration)] as const),
+  [CH8_WORLD.lotusHarbor.hotelRoom.id, chapter8Feet(CH8_WORLD.lotusHarbor.hotelRoom.migration)],
+]);
+
+const chapter8VehicleBay = chapter8Feet({
+  x: CH8_WORLD.lotusHarbor.vehicleBay.x + Math.floor(CH8_WORLD.lotusHarbor.vehicleBay.w / 2),
+  y: CH8_WORLD.lotusHarbor.vehicleBay.y + Math.floor(CH8_WORLD.lotusHarbor.vehicleBay.h / 2),
+  facing: 'right',
+});
+
+/** Both Ch8 outdoor road saves rehome to the production city's marked bay;
+ * allocation fans multiple titles out deterministically from this shared base. */
+export const CHAPTER8_PARKING_RECOVERY = Object.fromEntries([
+  [CH8_MAP_IDS[0], chapter8VehicleBay],
+  [CH8_MAP_IDS[1], chapter8VehicleBay],
+]) as Readonly<Record<string, { x: number; y: number; facing: 'right' }>>;
 
 /** the v5 hoops field's clean slate — newGameData and the v4→v5 step share
  *  it (lives here, not state.ts, so the import graph stays acyclic) */
@@ -377,6 +427,77 @@ function recoverChapter7VehicleParking(raw: Raw): void {
     );
     parking[title] = next;
     recovered[title] = next;
+  }
+}
+
+function recoverChapter8VehicleParking(raw: Raw): void {
+  if (!isObj(raw.vehicleParking)) return;
+  const parking = raw.vehicleParking;
+  const recovered: Record<string, VehicleParkingState> = {};
+  for (const [title, value] of Object.entries(parking)) {
+    if (!isVehicleParkingState(value) || hasOwn(CHAPTER8_PARKING_RECOVERY, value.area)) continue;
+    recovered[title] = value;
+  }
+  const pending = Object.entries(parking)
+    .filter((entry): entry is [string, VehicleParkingState] =>
+      isVehicleParkingState(entry[1]) && hasOwn(CHAPTER8_PARKING_RECOVERY, entry[1].area))
+    .sort(([a], [b]) => a.localeCompare(b));
+  for (const [title, value] of pending) {
+    const sourceArea = value.area;
+    const base = CHAPTER8_PARKING_RECOVERY[sourceArea];
+    const next = allocateVehicleDeliverySlot(
+      { vehicleParking: recovered }, title,
+      { area: CH8_MAP_IDS[0], x: s(base.x), y: s(base.y), facing: base.facing },
+    );
+    parking[title] = next;
+    recovered[title] = next;
+  }
+}
+
+/** A prerelease Ch8 save may prove the elder lesson through the lesson flag
+ * itself or through later irreversible story beats. Level and map position are
+ * deliberately absent: neither is evidence that Jay heard the elder. */
+function backfillChapter8TeleportBeta(raw: Raw): void {
+  if (!isObj(raw.flags)) return;
+  const flags = raw.flags;
+  const elderOrLater = flags.awake_teleport_b === true
+    || flags.ch8_elder_beta === true
+    || flags.ch8_elder_beta_seen === true
+    || flags.ch8_beta_lesson === true
+    || flags.paper_dragon_defeated === true
+    || flags.ch8_heartlight_seen === true
+    || flags.ch8_complete === true;
+  if (elderOrLater) flags.awake_teleport_b = true;
+}
+
+function addChapter8StateFields(raw: Raw): void {
+  // Preserve any prerelease/malformed value that actually exists. Migration
+  // only supplies fields a supported v24 save could not have authored.
+  if (!hasOwn(raw, 'mushroomize') || raw.mushroomize === undefined) {
+    raw.mushroomize = { active: false, phase: 0, source: null, recovery: null };
+  }
+  if (!hasOwn(raw, 'departedHeroes') || raw.departedHeroes === undefined) {
+    raw.departedHeroes = {};
+  }
+}
+
+/** Echo snapshots are full serialized saves. Upgrade supported older JSON with
+ * the same registry, but leave malformed, current, and future blobs byte-exact. */
+function migrateNestedEchoSnapshots(raw: Raw, fresh: GameStateData): void {
+  if (!isObj(raw.echoes) || !Array.isArray(raw.echoes.stack)) return;
+  for (const candidate of raw.echoes.stack) {
+    if (!isObj(candidate) || typeof candidate.json !== 'string') continue;
+    const original = candidate.json;
+    try {
+      const parsed: unknown = JSON.parse(original);
+      if (!isObj(parsed)) continue;
+      const version = typeof parsed.version === 'number' ? parsed.version : NaN;
+      if (!Number.isInteger(version) || version < 1 || version >= CURRENT_SAVE_VERSION) continue;
+      candidate.json = JSON.stringify(migrateSaveRecord(parsed, fresh));
+    } catch {
+      // A bad historical snapshot must not make the playable outer save fail.
+      candidate.json = original;
+    }
   }
 }
 
@@ -871,13 +992,32 @@ export const MIGRATIONS: MigrationStep[] = [
       return raw;
     },
   },
+  {
+    to: 25,
+    migrate(raw) {
+      const map = typeof raw.map === 'string' ? raw.map : '';
+      const target = hasOwn(CHAPTER8_LAYOUT_RECOVERY, map)
+        ? CHAPTER8_LAYOUT_RECOVERY[map]
+        : undefined;
+      if (target) {
+        raw.x = s(target.x);
+        raw.y = s(target.y);
+        raw.facing = target.facing;
+      }
+      recoverChapter8VehicleParking(raw);
+      addChapter8StateFields(raw);
+      backfillChapter8TeleportBeta(raw);
+      raw.version = 25;
+      return raw;
+    },
+  },
 ];
 
 /**
  * Lift a parsed save to the current version. Throws on shapes we can't
  * vouch for (non-objects, unknown/future versions) — callers fall back.
  */
-export function migrateSave(parsed: unknown, fresh: GameStateData): GameStateData {
+function migrateSaveRecord(parsed: unknown, fresh: GameStateData): GameStateData {
   if (!isObj(parsed)) throw new Error('save is not an object');
   const v = typeof parsed.version === 'number' ? parsed.version : NaN;
   if (!Number.isInteger(v) || v < 1 || v > CURRENT_SAVE_VERSION) {
@@ -887,5 +1027,12 @@ export function migrateSave(parsed: unknown, fresh: GameStateData): GameStateDat
   for (const step of MIGRATIONS) {
     if (v < step.to) raw = step.migrate(raw, fresh);
   }
+  // A current outer save may still contain an older full-save snapshot (for
+  // example after importing a Held Breath ring). Normalize those too.
+  migrateNestedEchoSnapshots(raw, fresh);
   return raw as unknown as GameStateData;
+}
+
+export function migrateSave(parsed: unknown, fresh: GameStateData): GameStateData {
+  return migrateSaveRecord(parsed, fresh);
 }

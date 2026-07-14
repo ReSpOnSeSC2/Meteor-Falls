@@ -260,3 +260,105 @@ describe('Otterbrooke Chapter 1 population policy', () => {
     expect(runtime.otterbrookTrafficPolicy('brickton', undefined, fleet, 7)).toEqual({ types: fleet, max: 7 });
   });
 });
+
+describe('Chapter 8 production runtime integration', () => {
+  const source = readFileSync(fileURLToPath(new URL('./OverworldScene.ts', import.meta.url)), 'utf8');
+
+  it('handles every authored Chapter 8 story, hazard, quest, encounter, boss, and bell trigger', () => {
+    const ids = [
+      'ch8_arrival', 'ch8_orientation', 'ch8_trust_setup', 'ch8_clicker_setup',
+      'ch8_barge_crisis', 'ch8_clicker_clearing', 'ch8_trust_escalation',
+      'spore_forest_scramble', 'ch8_spore_trust', 'ch8_pippa_creases',
+      'mushroomize_0', 'mushroomize_1', 'mushroomize_2',
+      'q_brush_river', 'q_brush_kiln', 'q_brush_cloud',
+      'q_false_fold_lantern_1', 'q_false_fold_lantern_2', 'q_false_fold_lantern_3',
+      'q_harbor_balance_weight_1', 'q_harbor_balance_weight_2',
+      'q_yak_waits_feed', 'q_yak_waits_route', 'q_empty_chair',
+      'porcelain_warlord_encounter', 'ch8_false_folds', 'ch8_trust_climax',
+      'ch8_elder_beta', 'paper_dragon_boss', 'mt_shu_temple_resonance',
+    ];
+    for (const id of ids) expect(source, id).toContain(`case '${id}':`);
+  });
+
+  it('keeps the seven contextual panels spoiler-safe and the full journey gallery-only', () => {
+    for (const id of ['ch8_riverboat', 'ch8_arrival', 'ch8_spore', 'ch8_yak', 'ch8_false_folds']) {
+      expect(source, id).toContain(`playCutscene(this, '${id}')`);
+    }
+    expect(source).toContain("ch8PartyCutsceneId('dragon', isPresent('pippa'))");
+    expect(source).toContain("ch8PartyCutsceneId('heartlight', isPresent('pippa'))");
+    expect(source).not.toContain("playCutscene(this, 'ch8_journey')");
+  });
+
+  it('commits the boss reward and Heartlight in the frozen retry-safe order', () => {
+    const defeated = source.indexOf("GS.setFlag('paper_dragon_defeated')");
+    const fan = source.indexOf("GS.setFlag('paper_fan_claimed')");
+    const restart = source.indexOf('this.restartAtCh8BossSafePoint()');
+    const heartlight = source.indexOf("GS.setFlag('ch8_heartlight_seen')");
+    const panel = source.indexOf("ch8PartyCutsceneId('heartlight', isPresent('pippa'))");
+    const emberFlag = source.indexOf("GS.setFlag('ember8')");
+    const emberCount = source.indexOf('GS.data.embers = 8');
+    const complete = source.indexOf("GS.setFlag('ch8_complete')");
+    expect([defeated, fan, restart, heartlight, panel, emberFlag, emberCount, complete].every((i) => i >= 0)).toBe(true);
+    expect(defeated).toBeLessThan(fan);
+    expect(fan).toBeLessThan(restart);
+    expect(heartlight).toBeLessThan(panel);
+    expect(panel).toBeLessThan(emberFlag);
+    expect(emberFlag).toBeLessThan(emberCount);
+    expect(emberCount).toBeLessThan(complete);
+  });
+
+  it('serializes frozen overlapping triggers and resumes Heartlight without replay', () => {
+    const triggerQueue = source.slice(
+      source.indexOf('private queueCh8Trigger'),
+      source.indexOf('/* ---------------- cutscenes'),
+    );
+    expect(triggerQueue).toContain('await this.runTrigger(id)');
+    expect(triggerQueue).toContain('this.ch8TriggerRunnerActive');
+
+    const heartlight = source.slice(
+      source.indexOf('private async mtShuTempleScene'),
+      source.indexOf('/* ──────────── CHAPTER 9'),
+    );
+    expect(heartlight).toContain("if (GS.flag('ch8_complete')) return");
+    expect(source).toContain("if (GS.flag('ch8_yak_arrival_pending')) return");
+    expect(source).toContain("if (GS.flag('ch8_yak_departed')) {");
+    expect(heartlight).toContain("if (!GS.flag('ch8_heartlight_seen'))");
+    expect(heartlight).toContain("if (!GS.flag('ember8'))");
+    expect(heartlight).toContain('GS.data.embers = 8');
+  });
+
+  it('stages the pending Yak transfer at the distinct CH8_WORLD arrival anchor', () => {
+    const onEnter = source.slice(
+      source.indexOf('private async onEnterCutscenes'),
+      source.indexOf('private async runTrigger'),
+    );
+    const anchor = onEnter.indexOf('const arrival = CH8_WORLD.mtShuTemple.yakArrival');
+    const arrived = onEnter.indexOf("GS.setFlag('ch8_yak_arrived')");
+    expect(anchor).toBeGreaterThanOrEqual(0);
+    expect(anchor).toBeLessThan(arrived);
+    expect(onEnter).toContain('this.followers.forEach((follower) => follower.spr.setPosition(x, y))');
+  });
+
+  it('uses a distinct forest crease beat before the temple false-fold reveal', () => {
+    const forest = source.slice(
+      source.indexOf('private async ch8PippaCreasesScene'),
+      source.indexOf('private async ch8MushroomizeHazard'),
+    );
+    const temple = source.slice(
+      source.indexOf('private async ch8FalseFoldsScene'),
+      source.indexOf('private async ch8ElderBetaScene'),
+    );
+    expect(forest).toContain('DIALOGUE.ch8_pippa_creases');
+    expect(forest).not.toContain('DIALOGUE.ch8_false_folds_pippa');
+    expect(temple).toContain('DIALOGUE.ch8_false_folds_pippa');
+  });
+
+  it('runs both field systems through common input and canonical pure-domain seams', () => {
+    const teleport = source.slice(source.indexOf('private async executeTeleportRequest'), source.indexOf('/* ---------------- §A4.5'));
+    expect(teleport).toContain('const direction = INPUT.dir()');
+    expect(teleport).toContain('resolveTeleportAttempt({');
+    expect(teleport).toContain('caster.pp = result.ppAfter');
+    expect(source).toContain('transformDirection(rawDirection, GS.data.mushroomize)');
+    expect(source).toContain('phase: hazard.phase');
+  });
+});

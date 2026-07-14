@@ -33,6 +33,53 @@ const copyCell = (from, to) => {
 copyCell(s, d);
 if (BREATH != null) copyCell(s, cell(BREATH));
 
+// New generated faces can have dense brows, moustaches, or beard pixels that
+// make heuristic eye-cluster detection ambiguous. An explicitly reviewed pair
+// of eye centres keeps the edit surgical: --manual=leftX,leftY,rightX,rightY.
+const manual = opt('manual', '');
+if (manual) {
+  const coords = manual.split(',').map(Number);
+  if (coords.length !== 4 || coords.some((value) => !Number.isInteger(value))) {
+    throw new Error('--manual needs leftX,leftY,rightX,rightY');
+  }
+  const skinAt = (cx, cy) => {
+    const samples = [];
+    for (let radius = 1; radius <= 5; radius++) {
+      for (let yy = cy - radius; yy <= cy + radius; yy++) {
+        for (let xx = cx - radius; xx <= cx + radius; xx++) {
+          if (xx < 0 || xx >= FW || yy < 0 || yy >= FH) continue;
+          const i = at(s, xx, yy);
+          const r = p.data[i], g = p.data[i + 1], b = p.data[i + 2], a = p.data[i + 3];
+          if (a > 16 && r > 135 && r >= g && g >= b && r - b > 18 && r - b < 165) {
+            samples.push([r, g, b]);
+          }
+        }
+      }
+      if (samples.length >= 8) break;
+    }
+    if (!samples.length) return [226, 182, 152];
+    return [0, 1, 2].map((channel) => Math.round(
+      samples.reduce((sum, sample) => sum + sample[channel], 0) / samples.length,
+    ));
+  };
+  for (const [cx, cy] of [[coords[0], coords[1]], [coords[2], coords[3]]]) {
+    const skin = skinAt(cx, cy);
+    for (let yy = cy; yy <= cy + 1; yy++) {
+      for (let xx = cx - 1; xx <= cx + 1; xx++) {
+        const i = at(d, xx, yy);
+        p.data[i] = skin[0]; p.data[i + 1] = skin[1]; p.data[i + 2] = skin[2]; p.data[i + 3] = 255;
+      }
+    }
+    for (let xx = cx - 1; xx <= cx + 1; xx++) {
+      const i = at(d, xx, cy + 1);
+      p.data[i] = 70; p.data[i + 1] = 52; p.data[i + 2] = 46; p.data[i + 3] = 255;
+    }
+  }
+  fs.writeFileSync(sheet, PNG.sync.write(p));
+  console.log(`blink ${sheet.split(/[\\/]/).pop()}: manual eyes ${manual}`);
+  process.exit(0);
+}
+
 // figure bbox in src
 let x0 = FW, y0 = FH, x1 = 0, y1 = 0;
 for (let y = 0; y < FH; y++) for (let x = 0; x < FW; x++) {

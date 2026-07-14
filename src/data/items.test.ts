@@ -227,19 +227,18 @@ describe('S17 M20 (ADR-065) — THE FAR-WORLD CATALOG pours Ch.6/7/8', () => {
     expect(ITEMS.jade_salamander_charm.resists).toEqual([{ element: 'fire', pct: 25 }]);
   });
 
-  it('the Spice Box + Scroll of Calm ship per the three M20 DECISIONS (data-only)', () => {
+  it('the Chapter 8 field cures use the real Mushroomized token and correct consumption rules', () => {
     // #15 Spice Box: a KEY with the "cooked foods heal +50%" flavor, NOT wired
     expect(ITEMS.spice_box.kind).toBe('key');
-    // #17 Scroll of Calm: cures the Spore Forest's spore-daze — the standalone
-    // Mushroomize status is deferred, so these cure the asleep/crying stand-in
-    // the Spore Puffer actually inflicts (a real dispatch arm; see the
-    // content-validate item-effect gate). Canonically REUSABLE.
-    expect(ITEMS.scroll_of_calm.cures).toEqual(['asleep', 'crying']);
+    // #17 Scroll of Calm: the reusable field cure for the real status.
+    expect(ITEMS.scroll_of_calm.cures).toEqual(['mushroomize']);
     expect(ITEMS.scroll_of_calm.reusable).toBe(true);
-    // a consumable antidote ships the same spore-daze cure tier (§A4.8)
-    expect(ITEMS.spore_antidote.cures).toEqual(['asleep', 'crying']);
-    // the unmodeled Mushroomize status is referenced by no item
-    expect(ITEMS.scroll_of_calm.cures).not.toContain('mushroomize');
+    expect(consumesOnUse(ITEMS.scroll_of_calm)).toBe(false);
+    // The antidote cures the same status and remains a one-use medicine.
+    expect(ITEMS.spore_antidote.cures).toEqual(['mushroomize']);
+    expect(consumesOnUse(ITEMS.spore_antidote)).toBe(true);
+    expect(itemEffectLine(ITEMS.scroll_of_calm)).toBe('Cures Mushroomized');
+    expect(itemEffectLine(ITEMS.spore_antidote)).toBe('Cures Mushroomized');
   });
 
   it('the M20 tonics permanently raise their stat, filling the §A4.12 Defense slot', () => {

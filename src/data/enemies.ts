@@ -11,6 +11,29 @@ export type { EnemyDef, EnemyMove, MoveKind } from '../schemas';
 
 const E = (e: EnemyDef): EnemyDef => (ENEMY_OVERWORLD_SHEET_ID_SET.has(e.id) ? { ...e, overworld: `ow_enemy_${e.id}` } : e);
 
+type EnemyWeakness = EnemyDef['weakness'][number];
+type EnemyResistance = NonNullable<EnemyDef['resists']>[number];
+
+export const ORIGAMI_REFOLD_TURNS = 4;
+
+/** Chapter 8's Origami Warrior reverses its elemental read while Refold holds:
+ * FIRE folds inward, FREEZE becomes the exposed seam, and VOLT remains weak.
+ * Keeping this pure lets damage, scouting, and tests consume one live profile
+ * without mutating the shared enemy catalog between battles. */
+export function enemyElementProfile(
+  enemy: Pick<EnemyDef, 'id' | 'weakness' | 'resists'>,
+  refolded = false,
+): { weakness: readonly EnemyWeakness[]; resists: readonly EnemyResistance[] } {
+  if (enemy.id !== 'origami_warrior' || !refolded) {
+    return { weakness: enemy.weakness, resists: enemy.resists ?? [] };
+  }
+  const weakness = enemy.weakness.filter((element) => element !== 'fire');
+  if (!weakness.includes('freeze')) weakness.push('freeze');
+  const resists = (enemy.resists ?? []).filter((element) => element !== 'freeze');
+  if (!resists.includes('fire')) resists.push('fire');
+  return { weakness, resists };
+}
+
 export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
   [
     E({
@@ -2704,9 +2727,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
      * (Ch.8 band: trash HP 5k-12k; temple RED/GOLD + jade GRASS + harbor CYAN
      * ramps). Region affinity leans FIRE-weak (the paper guardians burn) + a VOLT
      * shatter on the porcelain — the chapter's "shape is unstable" read (§A7). The
-     * Spore Puffer carries the spore-daze (the Mushroomize stand-in, an existing
-     * 'asleep'/'crying' status until the §A4.8 control-scramble mechanic lands).
-     * Dev-art: the battlers/minis are placeholder clones until the China art pass. */
+     * Spore Puffer carries the production Mushroomized control transform. Every
+     * regular and boss uses its authored China battler, wear tiers, and mini. */
     E({
       id: 'paper_lantern_wisp',
       name: 'Paper Lantern Wisp',
@@ -2732,9 +2754,9 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       weakness: ['fire', 'salt'],
       resists: ['volt'],
       moves: [
-        { name: 'spore cloud', kind: 'status', status: 'asleep', text: '{e} breathed out a sweet drift of spores, and {t}\'s eyelids went heavy as the colours swam.', weight: 3 },
+        { name: 'spore cloud', kind: 'status', status: 'mushroomize', text: '{e} breathed out a sweet drift of spores. The colours swam and every direction in {t}\'s head folded sideways. (MUSHROOMIZED)', weight: 3 },
         { name: 'cap slam', kind: 'attack', mult: 1.1, text: '{e} reared on its stem and slammed its whole soft cap down onto {t}.', weight: 4 },
-        { name: 'stinging puff', kind: 'status', status: 'crying', text: '{e} popped a puff of bitter spores that stung {t}\'s eyes to streaming tears.', weight: 2 },
+        { name: 'stinging puff', kind: 'strong', mult: 1.35, text: '{e} popped a hard bitter puff that struck {t} like a sack of wet flour.', weight: 2 },
       ],
       deathLine: 'The Spore Puffer sagged into a soft heap of caps and went quietly back to rotting.',
       drops: [{ item: 'congee', chance: 0.12 }],
@@ -2750,7 +2772,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       resists: ['freeze'],
       moves: [
         { name: 'crease strike', kind: 'attack', mult: 1.2, text: '{e} snapped a razor-creased edge across {t} — a papercut the length of an arm.', weight: 4 },
-        { name: 'refold', kind: 'mend', text: '{e} folded itself back along its old creases and smoothed every dent away.', weight: 2 },
+        { name: 'refold', kind: 'refold', text: '{e} reversed every visible crease. Its FIRE fold vanished under a hard guard, exposing a brittle FREEZE seam until the paper relaxes.', weight: 2 },
         { name: 'paper storm', kind: 'strong', mult: 1.6, text: '{e} burst into a whirling storm of folded blades and buried {t} in them!', weight: 3 },
       ],
       deathLine: 'The Origami Warrior came unfolded all at once — one flat blank sheet, drifting down.',
@@ -2769,6 +2791,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'lacquer smash', kind: 'strong', mult: 1.7, text: '{e} brought a glazed fist down on {t} with the weight of two dynasties.', weight: 3 },
         { name: 'glaze guard', kind: 'shield', text: '{e} drew a hard cobalt glaze over itself and braced behind it.', weight: 2 },
         { name: 'kiln charge', kind: 'attack', mult: 1.2, text: '{e} lowered its helmet and charged {t}, still kiln-hot at the seams.', weight: 4 },
+        { name: 'smaller problems', kind: 'split', summon: 'paper_lantern_wisp', count: 2, text: '{e} cracked along two painted seams. Two hot little lantern problems climbed out of the pieces!', weight: 2 },
       ],
       deathLine: 'The Porcelain Warlord cracked once down the middle and burst into a thousand collectible shards.',
       drops: [{ item: 'jade_tea', chance: 0.1 }],

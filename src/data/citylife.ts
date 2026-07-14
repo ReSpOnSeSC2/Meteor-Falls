@@ -604,6 +604,11 @@ export interface OccupyOpts {
   /** Optional save-stable id for one city's generated units. All callers that
    * omit it retain the historical sequential `<map>_unit_N` contract. */
   unitId?: (facade: Pick<PropDef, 'sprite' | 'x' | 'y'>, sequence: number) => string;
+  /** Save-facing unlocked candidates at the front of the facade walk. These
+   * candidates can never enter the seeded lock pool, so appending later lots
+   * cannot renumber historical unit ids. The option is deliberately opt-in;
+   * callers that omit it retain the byte-identical legacy lock shuffle. */
+  pinnedUnlockedPrefix?: number;
 }
 
 /** Choose service facades by semantic source-name hints while consuming the
@@ -680,6 +685,11 @@ export function occupyCity(map: MapDef, opts: OccupyOpts): Record<string, MapDef
     (p) => p.sprite.startsWith('bldg_') && p.solid && !p.door && !p.ifFlag && !p.unlessFlag
       && !NON_TENANTED_FACADE_SPRITES.has(p.sprite),
   );
+  const requestedPrefix = opts.pinnedUnlockedPrefix ?? 0;
+  if (!Number.isInteger(requestedPrefix) || requestedPrefix < 0 || requestedPrefix > facades.length) {
+    throw new Error(`${map.id}: pinnedUnlockedPrefix ${requestedPrefix} must be an integer between 0 and ${facades.length}`);
+  }
+  const pinnedUnlockedPrefix = requestedPrefix;
   // THE LAW IS GUARANTEED, NOT GAMBLED. Lock a fixed ~10% COUNT, never a per-facade
   // coin flip: an independent Bernoulli lock can, on an unlucky seed, roll >25% of a
   // small city's facades shut and push it under the 75% Living-City Law — which is
@@ -692,14 +702,20 @@ export function occupyCity(map: MapDef, opts: OccupyOpts): Record<string, MapDef
   // ATM, not an apartment, so occupy gives it a knock — never an auto-door that would
   // overwrite the hand-sealed canon (e.g. the Brickton SAVINGS & LOAN stays shut).
   const isSealed = (i: number): boolean => SEALED_FACADE_SPRITES.has(facades[i].sprite);
+  for (let i = 0; i < pinnedUnlockedPrefix; i++) {
+    if (isSealed(i)) {
+      throw new Error(`${map.id}: pinned unlocked facade ${i} (${facades[i].sprite}) is canonically sealed`);
+    }
+  }
   const order = facades.map((_p, i) => i);
   for (let i = order.length - 1; i > 0; i--) {
     const j = Math.floor(rnd() * (i + 1));
     [order[i], order[j]] = [order[j], order[i]];
   }
   const lockCount = Math.round(facades.length * 0.1);
-  const sealed = order.filter(isSealed);
-  const open = order.filter((i) => !isSealed(i));
+  const lockEligible = order.filter((i) => i >= pinnedUnlockedPrefix);
+  const sealed = lockEligible.filter(isSealed);
+  const open = lockEligible.filter((i) => !isSealed(i));
   const locked = new Set<number>([...sealed, ...open.slice(0, Math.max(0, lockCount - sealed.length))]);
 
   // Formal-city services CLAIM existing generated units; they never add or

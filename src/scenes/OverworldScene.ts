@@ -87,6 +87,7 @@ import { CH4_MAP_IDS, KVISTHAVN_LANDING, SPINE_MELTFALL_CROSSING } from '../data
 import { MINIMUS_LANDING } from '../data/maps_ch5';
 import { ZANZIBEL_LANDING } from '../data/maps_ch6';
 import { CH7_WORLD } from '../data/maps_ch7';
+import { CH8_MAP_IDS, CH8_WORLD } from '../data/maps_ch8';
 import { ENEMIES, MAX_BATTLE_ENEMIES, type EnemyDef } from '../data/enemies';
 import { DIALOGUE } from '../data/dialogue';
 import { ITEMS, BAG_MAX } from '../data/items';
@@ -162,6 +163,7 @@ import {
 import { AWAKENINGS } from '../data/awakenings';
 // S21 (ADR-126/127/128): the Held Breath rewind, the three Axes, the composed ending
 import { playCutscene } from '../engine/cutscene';
+import { ch8PartyCutsceneId } from '../data/cutscenes';
 import { CHOICES, type ChoiceId } from '../data/choices';
 import { recordChoice } from '../engine/choice';
 import { captureEcho, isRewindable, clearPuppetLock, puppetLocked } from '../engine/echo';
@@ -173,7 +175,33 @@ import {
   type Caster as ControlCaster,
 } from '../engine/control';
 import { composeEnding, endingContext, forgiveViable } from '../engine/ending';
-import { withholdUltimate, isPresent } from '../engine/party';
+import { departHero, rejoinHero, withholdUltimate, isPresent } from '../engine/party';
+import {
+  applyMushroomize,
+  cureMushroomize,
+  recordMushroomizeRecovery,
+  recoverMushroomizedParty,
+  transformDirection,
+} from '../engine/mushroomize';
+import {
+  CH8_QUEST_FLOWS,
+  CH8_QUEST_ITEM_FLOW,
+  CH8_QUEST_TRIGGER_INTERACTIONS,
+  planCh8QuestInteraction,
+  type Ch8QuestId,
+  type Ch8QuestInteraction,
+} from '../engine/ch8Quests';
+import {
+  decidePippaOutcomeFromFlags,
+  planCh8Story,
+  reconcileCh8ClickerCaller,
+  type Ch8StoryFrontier,
+} from '../engine/ch8Story';
+import { resolveTeleportAttempt } from '../engine/teleport';
+import {
+  TELEPORT_REQUEST_REGISTRY_KEY,
+  type TeleportMenuRequest,
+} from '../engine/teleport-menu';
 import { LINKS_FLAGS, LINKS_TEXT, SUNDAY_SET, linksSeed } from '../data/links';
 import type { HoopsLaunch } from './HoopsScene';
 import type { LinksLaunch } from './LinksScene';
@@ -1172,6 +1200,8 @@ export class OverworldScene extends Phaser.Scene {
   private fieldClicker: FieldClicker | null = null;
   private facing: Facing = 'down';
   private followers: Array<{ spr: Phaser.GameObjects.Sprite; id: string; angel: boolean; flit: boolean }> = [];
+  /** Presentation latch for the save-backed Chapter 8 field scramble. */
+  private mushroomTinted = false;
   /** ADR-097: a pooled contact shadow per walking actor (grounding = 3D read) */
   private shadows: Phaser.GameObjects.Image[] = [];
   private trail: Array<{ x: number; y: number; f: Facing }> = [];
@@ -3812,6 +3842,7 @@ export class OverworldScene extends Phaser.Scene {
       this.parallaxSky.tilePositionY = cam.scrollY * 0.35;
     }
     if (this.doorCooldown > 0) this.doorCooldown = Math.max(0, this.doorCooldown - dtMs);
+    this.updateMushroomizedFieldState();
     if (!this.cut && !this.dlg.busy && !this.transitioning) {
       this.updatePlayer(dt);
       this.updateRoamers(dt);
@@ -4072,8 +4103,14 @@ export class OverworldScene extends Phaser.Scene {
       this.updateDrivingVehicle(dt);
       return;
     }
-    const d = INPUT.dir();
     const biking = this.isRidingBmx();
+    const rawDirection = INPUT.dir();
+    // All keyboard, touch, and controller inputs have already converged in
+    // INPUT.dir(). Mushroomized alters only walking direction; buttons and
+    // vehicles remain exact, and an entered phase stays latched until cured.
+    const d = biking
+      ? rawDirection
+      : transformDirection(rawDirection, GS.data.mushroomize);
     const running = biking || INPUT.held('B');
     const sp = biking ? BMX_RIDE : running ? RUN : WALK;
     let moved = false;
@@ -4200,6 +4237,51 @@ export class OverworldScene extends Phaser.Scene {
           f.spr.setFrame(standFrame(crumb.f));
         }
       }
+    });
+  }
+
+  /** Keep the persistent field status legible and remember clean, authored
+   * retreat points. Recovery coordinates use the same runtime-pixel space as
+   * GameStateData.x/y, so defeat can restore the exact safe foothold. */
+  private updateMushroomizedFieldState(): void {
+    const status = GS.data.mushroomize;
+    if (status.active) {
+      const tint = status.phase === 0 ? 0xbdeca8 : status.phase === 1 ? 0xdab9f2 : 0xf0c88c;
+      this.player.setTint(tint);
+      for (const follower of this.followers) if (!follower.angel) follower.spr.setTint(tint);
+      this.mushroomTinted = true;
+      return;
+    }
+
+    if (this.mushroomTinted) {
+      this.player.clearTint();
+      for (const follower of this.followers) if (!follower.angel) follower.spr.clearTint();
+      this.mushroomTinted = false;
+    }
+    if (this.mapDef.id !== 'spore_forest') return;
+
+    const safe = [
+      CH8_WORLD.sporeForest.recovery,
+      ...CH8_WORLD.sporeForest.safePockets.map((point) => ({ ...point, facing: 'up' as const })),
+      ...CH8_WORLD.sporeForest.safeExits.map((point) => ({ ...point, facing: 'up' as const })),
+    ];
+    let nearest = safe[0];
+    let nearestDistance = Number.POSITIVE_INFINITY;
+    for (const point of safe) {
+      const x = (point.x + 0.5) * TILE_PX;
+      const y = (point.y + 0.75) * TILE_PX;
+      const distance = Math.hypot(this.player.x - x, this.player.y - y);
+      if (distance < nearestDistance) {
+        nearest = point;
+        nearestDistance = distance;
+      }
+    }
+    if (nearestDistance > TILE_PX * 4.5) return;
+    GS.data.mushroomize = recordMushroomizeRecovery(status, {
+      map: 'spore_forest',
+      x: (nearest.x + 0.5) * TILE_PX,
+      y: (nearest.y + 0.75) * TILE_PX,
+      facing: nearest.facing,
     });
   }
 
@@ -5053,8 +5135,21 @@ export class OverworldScene extends Phaser.Scene {
     lead.down = false;
     lead.hp = lead.maxHp;
     this.registry.set('defeated', true);
-    // S6: wake at the last Dad-save's spot (hospitals reuse respawnPoint)
-    const p = GS.respawnPoint();
+    // Mushroomized defeat retreats to the last authored clean pocket and cures
+    // the scramble atomically. Ordinary defeats keep the Dad-save law.
+    const mushroomRecovery = GS.data.mushroomize.active
+      ? recoverMushroomizedParty(GS.data.mushroomize)
+      : null;
+    if (mushroomRecovery) GS.data.mushroomize = mushroomRecovery.state;
+    const respawn = GS.respawnPoint();
+    const p = mushroomRecovery?.recovery
+      ? {
+          mapId: mushroomRecovery.recovery.map,
+          x: mushroomRecovery.recovery.x,
+          y: mushroomRecovery.recovery.y,
+          facing: mushroomRecovery.recovery.facing,
+        }
+      : respawn;
     this.add.image(0, 0, 'game_over')
       .setOrigin(0, 0)
       .setDisplaySize(this.scale.width, this.scale.height)
@@ -5241,6 +5336,14 @@ export class OverworldScene extends Phaser.Scene {
       await this.ch7RestoredNpcBeat(n.def.id);
       await this.spicesBeat();
       if (n.def.shop) this.openShop(n.def.shop);
+      return;
+    }
+    // Lotus Harbor's master is both the regional shopkeeper and a real quest
+    // giver. Let the quest transaction run first; a completion restart owns the
+    // frame, otherwise the same interaction continues naturally into the shelf.
+    if (n.def.id === 'lh_harbor_master') {
+      await this.ch8QuestGiver('the_harbors_balance');
+      if (!this.transitioning && n.def.shop) this.openShop(n.def.shop);
       return;
     }
     if (n.def.shop) {
@@ -5914,6 +6017,21 @@ export class OverworldScene extends Phaser.Scene {
   private async questTalk(n: NpcObj): Promise<boolean> {
     if (await this.cityServiceBeat(n)) return true;
     switch (n.def.id) {
+      case 'lh_calligrapher':
+        await this.ch8QuestGiver('brushes_of_mt_shu');
+        return true;
+      case 'lh_lantern_girl':
+        await this.ch8QuestGiver('lanterns_of_the_false_fold');
+        return true;
+      case 'lh_yak_handler':
+        await this.ch8QuestGiver('the_yak_who_waits');
+        return true;
+      case 'lh_tea_monk':
+        await this.ch8QuestGiver('tea_for_the_empty_chair');
+        return true;
+      case 'mt_shu_elder':
+        await this.ch8ElderBetaScene();
+        return true;
       case 'mrs_pemmel':
         // The crisis gets one concise beat; the full side quest opens only when
         // restoring the town has actually restored ordinary life.
@@ -6145,6 +6263,168 @@ export class OverworldScene extends Phaser.Scene {
 
   /** Ch.1 #5 — Hal on Meadow Mile gives the route quest (the register is signed
    *  at the overpass post; the three tokens fire as walk triggers). */
+  /** Apply one Chapter 8 quest transition through the shared pure planner.
+   * Flags commit before presentation; reward completion remains retry-safe when
+   * the bag is full. */
+  private applyCh8QuestInteraction(
+    questId: Ch8QuestId,
+    interaction: Ch8QuestInteraction,
+  ): { changed: boolean; completion: 'none' | 'ok' | 'hands-full' | 'already' } {
+    const plan = planCh8QuestInteraction(questId, interaction, (flag) => GS.flag(flag) === true);
+    if (plan.status !== 'ready') return { changed: false, completion: 'none' };
+    for (const flag of plan.setFlags) GS.setFlag(flag);
+
+    // The feedbag is a true carried quest item: consume it only on the first
+    // committed feed interaction, never on a blocked or repeated trigger.
+    if (
+      questId === 'the_yak_who_waits'
+      && interaction === CH8_QUEST_ITEM_FLOW.the_yak_who_waits.consumeOn
+      && plan.setFlags.includes('q_yak_waits_feed')
+    ) {
+      GS.removeItem(CH8_QUEST_ITEM_FLOW.the_yak_who_waits.grantOnStart);
+    }
+
+    const completion = plan.completeQuest ? completeQuest(plan.completeQuest) : 'none';
+    return { changed: plan.setFlags.length > 0 || completion === 'ok', completion };
+  }
+
+  /** The five regional givers use five distinct verbs, but share one exact
+   * start/active/full-bag/done transaction. */
+  private async ch8QuestGiver(questId: Ch8QuestId): Promise<void> {
+    const flow = CH8_QUEST_FLOWS[questId];
+    const text = {
+      brushes_of_mt_shu: {
+        start: 'q_brushes_start', active: 'q_brushes_active', full: 'q_brushes_full',
+        done: 'q_brushes_done', post: 'q_brushes_post',
+      },
+      lanterns_of_the_false_fold: {
+        start: 'q_false_fold_start', active: 'q_false_fold_active', full: 'q_false_fold_full',
+        done: 'q_false_fold_done', post: 'q_false_fold_post',
+      },
+      the_yak_who_waits: {
+        start: 'q_yak_waits_start', active: 'q_yak_waits_active', full: 'q_yak_waits_full',
+        done: 'q_yak_waits_done', post: 'q_yak_waits_post',
+      },
+      the_harbors_balance: {
+        start: 'q_harbor_balance_start', active: 'q_harbor_balance_active', full: 'q_harbor_balance_full',
+        done: 'q_harbor_balance_done', post: 'q_harbor_balance_post',
+      },
+      tea_for_the_empty_chair: {
+        start: 'q_empty_chair_start', active: 'q_empty_chair_active', full: 'q_empty_chair_full',
+        done: 'q_empty_chair_done', post: 'q_empty_chair_post',
+      },
+    } as const;
+    const lines = text[questId];
+
+    if (GS.flag(flow.doneFlag)) {
+      await this.dlg.say(...DIALOGUE[lines.post]);
+      return;
+    }
+    if (!GS.flag(flow.startFlag)) {
+      if (questId === 'the_yak_who_waits') {
+        const item = CH8_QUEST_ITEM_FLOW.the_yak_who_waits.grantOnStart;
+        if (!GS.hasItem(item) && !GS.addItem(item)) {
+          await this.dlg.say(...DIALOGUE.q_yak_waits_treats_full);
+          return;
+        }
+      }
+      this.applyCh8QuestInteraction(questId, 'start');
+      AUDIO.sfx('confirm');
+      await this.dlg.say(...DIALOGUE[lines.start]);
+      return;
+    }
+
+    let interaction: Ch8QuestInteraction | null = null;
+    if (questId === 'brushes_of_mt_shu' && GS.flag('q_brushes_gather')) interaction = 'return';
+    if (questId === 'lanterns_of_the_false_fold' && GS.flag('q_false_fold_lanterns_read')) {
+      if (!GS.flag('q_false_fold_lanterns_refolded')) {
+        this.applyCh8QuestInteraction(questId, 'lantern_refold');
+        await this.dlg.say(...DIALOGUE.q_false_fold_read, ...DIALOGUE.q_false_fold_refold);
+      }
+      interaction = 'return';
+    }
+    if (questId === 'the_yak_who_waits' && GS.flag('q_yak_waits_route')) interaction = 'return';
+    if (questId === 'the_harbors_balance' && GS.flag('q_harbor_balance_weights')) {
+      if (!GS.flag('q_harbor_balance_delivered')) {
+        this.applyCh8QuestInteraction(questId, 'harbor_deliver');
+        await this.dlg.say(...DIALOGUE.q_harbor_balance_delivered);
+      }
+      interaction = 'return';
+    }
+    if (questId === 'tea_for_the_empty_chair') {
+      if (!GS.flag('q_empty_chair_brewed')) {
+        this.applyCh8QuestInteraction(questId, 'tea_brew');
+        AUDIO.sfx('confirm');
+        await this.dlg.say(...DIALOGUE.q_empty_chair_brewed);
+        return;
+      }
+      if (GS.flag('q_empty_chair_offered')) interaction = 'return';
+    }
+
+    if (!interaction) {
+      await this.dlg.say(...DIALOGUE[lines.active]);
+      return;
+    }
+    const result = this.applyCh8QuestInteraction(questId, interaction);
+    if (result.completion === 'hands-full') {
+      await this.dlg.say(...DIALOGUE[lines.full]);
+      return;
+    }
+    if (result.completion === 'ok') {
+      AUDIO.sfx('confirm');
+      await this.dlg.say(...DIALOGUE[lines.done]);
+      toast(this, 'Quest complete — a new caller joined the ledger.');
+      this.fadeRestart();
+      return;
+    }
+    await this.dlg.say(...DIALOGUE[lines.active]);
+  }
+
+  /** Spatial interactions for the five Chapter 8 regional quests. */
+  private async ch8QuestTrigger(id: keyof typeof CH8_QUEST_TRIGGER_INTERACTIONS): Promise<void> {
+    const route = CH8_QUEST_TRIGGER_INTERACTIONS[id];
+    const flow = CH8_QUEST_FLOWS[route.questId];
+    if (!GS.flag(flow.startFlag) || GS.flag(flow.doneFlag)) return;
+    if (
+      route.questId === 'the_yak_who_waits'
+      && route.interaction === 'yak_feed'
+      && !GS.hasItem(CH8_QUEST_ITEM_FLOW.the_yak_who_waits.grantOnStart)
+    ) {
+      await this.dlg.say(...DIALOGUE.q_yak_waits_active);
+      return;
+    }
+    const result = this.applyCh8QuestInteraction(route.questId, route.interaction);
+    if (!result.changed) return;
+
+    const dialogueKey = ({
+      q_brush_river: 'q_brushes_river',
+      q_brush_kiln: 'q_brushes_kiln',
+      q_brush_cloud: 'q_brushes_cloud',
+      q_false_fold_lantern_1: 'q_false_fold_lantern_1',
+      q_false_fold_lantern_2: 'q_false_fold_lantern_2',
+      q_false_fold_lantern_3: 'q_false_fold_lantern_3',
+      q_harbor_balance_weight_1: 'q_harbor_balance_weight_1',
+      q_harbor_balance_weight_2: 'q_harbor_balance_weight_2',
+      q_yak_waits_feed: 'q_yak_waits_feed',
+      q_yak_waits_route: 'q_yak_waits_route',
+      q_empty_chair: 'q_empty_chair_offered',
+    } as const)[id];
+    this.cut = true;
+    AUDIO.sfx('confirm');
+    await this.dlg.say(...DIALOGUE[dialogueKey]);
+    if (GS.flag('q_brushes_gather') && route.questId === 'brushes_of_mt_shu') {
+      await this.dlg.say(...DIALOGUE.q_brushes_gathered);
+    }
+    if (GS.flag('q_false_fold_lanterns_read') && route.questId === 'lanterns_of_the_false_fold') {
+      await this.dlg.say(...DIALOGUE.q_false_fold_read);
+    }
+    if (GS.flag('q_harbor_balance_weights') && route.questId === 'the_harbors_balance') {
+      await this.dlg.say(...DIALOGUE.q_harbor_balance_weights);
+    }
+    this.cut = false;
+    this.fadeRestart();
+  }
+
   private async travelerBeat(): Promise<void> {
     if (!GS.flag('q_walkreg')) {
       await this.dlg.say(...DIALOGUE.q_walkreg_ask);
@@ -6592,8 +6872,14 @@ export class OverworldScene extends Phaser.Scene {
       GS.data.cashOnHand -= CURE_ALL_COST;
       const wasHomesick = GS.flag('rex_homesick') === true;
       GS.setFlag('rex_homesick', false);
+      const mushroomResult = cureMushroomize(GS.data.mushroomize);
+      GS.data.mushroomize = mushroomResult.state;
       AUDIO.sfx('heal');
-      await this.dlg.say(...(wasHomesick ? DIALOGUE.hospital_cured_homesick : DIALOGUE.hospital_cured));
+      await this.dlg.say(...(
+        mushroomResult.cured
+          ? ['@The doctor clears the spores from your head. Left is left, right is right, and the room stops folding around you. (MUSHROOMIZED cured.)']
+          : wasHomesick ? DIALOGUE.hospital_cured_homesick : DIALOGUE.hospital_cured
+      ));
     }
   }
 
@@ -7239,8 +7525,18 @@ export class OverworldScene extends Phaser.Scene {
         gift_doubloon: 'gold_doubloon', // Puerto Sol dockside
         gift_boat_ticket: 'banana_boat_ticket', // the §A5 cargo passage stub
         gift_wish_token: 'wish_token', // the idol's bowl, post-Grin
+        // Chapter 8's four optional route rewards. Their map props swap on the
+        // same flag, and a full bag leaves both item and closed cache untouched.
+        q_lotus_jade_cache: 'jade_bi_disc',
+        q_bamboo_islet_cache: 'harbor_lantern',
+        q_spore_kiln_cache: 'ming_vase',
+        q_mt_shu_jade_cache: 'terracotta_soldier',
       };
       if (dialogueId in loot) {
+        // The map hides a claimed cache through its unlessFlag, but the
+        // interaction handler can still be re-entered by an already-queued
+        // confirm. Keep the transaction idempotent at the durable flag seam.
+        if (GS.flag(dialogueId)) return true;
         const itemId = loot[dialogueId];
         await this.dlg.say(...DIALOGUE[dialogueId]);
         if (!GS.addItem(itemId)) {
@@ -7419,7 +7715,13 @@ export class OverworldScene extends Phaser.Scene {
     this.game.events.once('mf-menu-closed', () => {
       // a Spark may have revived someone, gear may have moved (S3)
       this.rebuildFollowers();
+      const teleport = this.registry.get(TELEPORT_REQUEST_REGISTRY_KEY) as TeleportMenuRequest | undefined;
+      if (teleport) this.registry.remove(TELEPORT_REQUEST_REGISTRY_KEY);
       this.scene.resume();
+      if (teleport) {
+        void this.executeTeleportRequest(teleport);
+        return;
+      }
       // §A4.5 (S14): a basket Used at a table closes the menu ONTO the picnic
       const basket = this.registry.get('picnicBasket') as string | undefined;
       if (basket) {
@@ -7430,6 +7732,144 @@ export class OverworldScene extends Phaser.Scene {
     });
     this.scene.pause();
     this.scene.launch('menu', { music: this.mapDef.music });
+  }
+
+  /** Execute the menu's one-shot Teleport request in the live field. The pure
+   * resolver is the sole PP accountant: a wall or a successful fold charges
+   * once; every preflight block is free. */
+  private async executeTeleportRequest(request: TeleportMenuRequest): Promise<void> {
+    const stale = request.version !== 1
+      || request.origin.map !== this.mapDef.id
+      || Math.hypot(request.origin.x - this.player.x, request.origin.y - this.player.y) > s(1);
+    if (stale || this.transitioning || this.dlg.busy) {
+      AUDIO.sfx('cancel');
+      toast(this, 'The route folded shut before the run-up. No PP spent.');
+      return;
+    }
+    const caster = GS.hero(request.casterId);
+    if (!caster) return;
+    const learnedAbilities = availableAbilities(caster.id, caster.level, (flag) => GS.flag(flag) === true);
+    const context = {
+      inBattle: false,
+      inCutscene: this.cut,
+      modalOpen: false,
+      incompatibleVehicle: Boolean(GS.data.drivingVehicle) || this.isRidingBmx(),
+      locketStolen: !locketAvailable(GS.data),
+    };
+    const preflight = resolveTeleportAttempt({
+      ability: request.ability,
+      learnedAbilities,
+      flagOf: (flag) => GS.flag(flag) === true,
+      pp: caster.pp,
+      destination: request.destination,
+      distanceNativePx: 0,
+      wallCollision: false,
+      context,
+      ppAlreadyCharged: request.ppAlreadyCharged,
+    });
+    if (preflight.status === 'blocked') {
+      AUDIO.sfx('cancel');
+      const reason = preflight.reason === 'not-enough-pp'
+        ? 'Not enough PP for that run-up.'
+        : preflight.reason === 'incompatible-vehicle'
+          ? 'Dismount or park before folding the road.'
+          : preflight.reason === 'locket-stolen'
+            ? 'The Star Locket cannot find the route right now.'
+            : 'That route is not open right now.';
+      toast(this, `${reason} No PP spent.`);
+      return;
+    }
+
+    this.cut = true;
+    this.facing = request.origin.facing as Facing;
+    const targetRuntimeDistance = s(request.runUpNativePx);
+    let traveledRuntime = 0;
+    let wallCollision = false;
+    let neutralMs = 0;
+    toast(this, `Hold a direction to build ${request.runUpNativePx}px of run-up. B cancels free.`);
+    while (traveledRuntime + 0.01 < targetRuntimeDistance) {
+      const direction = INPUT.dir();
+      if (direction.x === 0 && direction.y === 0) {
+        this.player.anims.stop();
+        if (INPUT.held('B') || neutralMs >= 8000) {
+          AUDIO.sfx('cancel');
+          toast(this, 'Teleport cancelled before the run-up. No PP spent.');
+          this.cut = false;
+          return;
+        }
+        neutralMs += 16;
+        await this.wait(16);
+        continue;
+      }
+      neutralMs = 0;
+      const length = Math.hypot(direction.x, direction.y);
+      const vector = { x: direction.x / length, y: direction.y / length };
+      this.facing = facingFromVec(vector.x, vector.y);
+      const stride = Math.min(s(4), targetRuntimeDistance - traveledRuntime);
+      const beforeX = this.player.x;
+      const beforeY = this.player.y;
+      const nx = this.tryMove(beforeX, beforeY, vector.x * stride, 0);
+      const ny = this.tryMove(nx, beforeY, 0, vector.y * stride, true);
+      const moved = Math.hypot(nx - beforeX, ny - beforeY);
+      this.player.setPosition(nx, ny);
+      this.player.setDepth(ny + this.levelLift(nx, ny));
+      GS.data.x = nx;
+      GS.data.y = ny;
+      GS.data.facing = this.facing;
+      if (this.player.anims.currentAnim?.key !== `rex-run-${this.facing}`) {
+        this.player.anims.play(`rex-run-${this.facing}`, true);
+      }
+      if (traveledRuntime === 0) AUDIO.sfx('whoosh');
+      traveledRuntime += moved;
+      if (moved + s(0.25) < stride) {
+        wallCollision = true;
+        break;
+      }
+      await this.wait(30);
+    }
+    this.player.anims.stop();
+
+    const result = resolveTeleportAttempt({
+      ability: request.ability,
+      learnedAbilities,
+      flagOf: (flag) => GS.flag(flag) === true,
+      pp: caster.pp,
+      destination: request.destination,
+      distanceNativePx: traveledRuntime / ART_SCALE,
+      wallCollision,
+      context: { ...context, inCutscene: false },
+      ppAlreadyCharged: request.ppAlreadyCharged,
+    });
+    if (result.status === 'failed') {
+      caster.pp = result.ppAfter;
+      this.player.setTint(0x514b47);
+      this.cameras.main.shake(260, 0.008);
+      this.dustPuff(this.player.x - s(4), this.player.y - s(2));
+      this.dustPuff(this.player.x + s(4), this.player.y - s(2));
+      AUDIO.sfx('thud');
+      toast(this, `Wall wins. ${result.ppSpent} PP spent; soot acquired.`);
+      await this.wait(520);
+      if (GS.data.mushroomize.active) this.mushroomTinted = false;
+      else this.player.clearTint();
+      this.cut = false;
+      return;
+    }
+    if (result.status !== 'success') {
+      this.cut = false;
+      return;
+    }
+    caster.pp = result.ppAfter;
+    this.followers.forEach((follower) => follower.spr.setPosition(this.player.x, this.player.y));
+    this.trail = [{ x: this.player.x, y: this.player.y, f: this.facing }];
+    this.cameras.main.flash(180, 232, 244, 255);
+    toast(this, `${request.ability === 'teleport_b' ? 'TELEPORT BETA' : 'TELEPORT ALPHA'} — ${result.ppSpent} PP.`);
+    this.cut = false;
+    this.goThroughDoor(
+      result.arrival.map,
+      result.arrival.x,
+      result.arrival.y,
+      result.arrival.facing as Facing,
+    );
   }
 
   /* ---------------- §A4.5 PICNIC (S14 — Bible Prompt 23) ---------------- */
@@ -7617,6 +8057,14 @@ export class OverworldScene extends Phaser.Scene {
           return;
         }
       }
+      if (this.mapDef.id === 'lotus_harbor' && d.to === 'biplane_interior') {
+        this.cut = true;
+        await this.dlg.say(...DIALOGUE.ch8_riverboat_return);
+        this.cut = false;
+      }
+      if (this.mapDef.id === 'spore_forest' && d.to === 'mt_shu_temple') {
+        await this.ch8YakDepartScene();
+      }
       // S11b: a real door swings OPEN before it admits you
       if ((d.indicator ?? (this.mapDef.interior ? 'mat' : 'none')) === 'door') {
         this.goThroughInteriorDoor(d);
@@ -7792,6 +8240,8 @@ export class OverworldScene extends Phaser.Scene {
   }
 
   private insideTriggers = new Set<string>();
+  private ch8TriggerQueue: string[] = [];
+  private ch8TriggerRunnerActive = false;
 
   private checkTriggers(): void {
     const txi = Math.floor(this.player.x / TILE_PX);
@@ -7806,7 +8256,32 @@ export class OverworldScene extends Phaser.Scene {
       // edge-trigger: fire on entry, not every frame while standing in it
       if (this.insideTriggers.has(t.id)) continue;
       this.insideTriggers.add(t.id);
-      void this.runTrigger(t.id);
+      if (CH8_MAP_IDS.some((mapId) => mapId === this.mapDef.id)) {
+        this.queueCh8Trigger(t.id);
+      } else {
+        void this.runTrigger(t.id);
+      }
+    }
+  }
+
+  /** The frozen Chapter 8 layout intentionally has four overlapping trigger
+   * rectangles. Drain entries in authored map order so a story beat finishes
+   * before its overlapping quest/hazard beat begins. */
+  private queueCh8Trigger(id: string): void {
+    if (!this.ch8TriggerQueue.includes(id)) this.ch8TriggerQueue.push(id);
+    if (!this.ch8TriggerRunnerActive) void this.drainCh8TriggerQueue();
+  }
+
+  private async drainCh8TriggerQueue(): Promise<void> {
+    if (this.ch8TriggerRunnerActive) return;
+    this.ch8TriggerRunnerActive = true;
+    try {
+      for (let id = this.ch8TriggerQueue.shift(); id !== undefined; id = this.ch8TriggerQueue.shift()) {
+        await this.runTrigger(id);
+      }
+    } finally {
+      this.ch8TriggerRunnerActive = false;
+      if (this.ch8TriggerQueue.length > 0) void this.drainCh8TriggerQueue();
     }
   }
 
@@ -7819,6 +8294,27 @@ export class OverworldScene extends Phaser.Scene {
     }
     if (this.mapDef.id === 'boat_interior') {
       await this.boatCutscene();
+      return;
+    }
+    if (this.mapDef.id === 'mt_shu_temple' && GS.flag('ch8_yak_arrival_pending')) {
+      // The reciprocal door first lands on its frozen transition seam. This
+      // one authored arrival beat then advances the whole formation to the
+      // distinct Yak forecourt anchor before dialogue commits arrival.
+      const arrival = CH8_WORLD.mtShuTemple.yakArrival;
+      const x = (arrival.x + 0.5) * TILE_PX;
+      const y = (arrival.y + 0.75) * TILE_PX;
+      this.player.setPosition(x, y).setDepth(y + this.levelLift(x, y));
+      this.facing = arrival.facing;
+      GS.data.x = x;
+      GS.data.y = y;
+      GS.data.facing = arrival.facing;
+      this.followers.forEach((follower) => follower.spr.setPosition(x, y));
+      this.trail = [{ x, y, f: arrival.facing }];
+      GS.setFlag('ch8_yak_arrival_pending', false);
+      GS.setFlag('ch8_yak_arrived');
+      this.cut = true;
+      await this.dlg.say(...DIALOGUE.ch8_yak_arrive);
+      this.cut = false;
       return;
     }
     const cityHotelWake = AMENITY_SETTLEMENT_IDS.find((cityId) => {
@@ -8274,8 +8770,64 @@ export class OverworldScene extends Phaser.Scene {
       case 'ch8_arrival':
         if (!GS.flag('ch8_arrived')) await this.ch8ArrivalScene();
         break;
+      case 'ch8_orientation':
+      case 'ch8_trust_setup':
+        await this.ch8StoryFrontier('lotus_orientation');
+        break;
+      case 'ch8_clicker_setup':
+        await this.ch8StoryFrontier('lotus_clicker');
+        break;
+      case 'ch8_barge_crisis':
+        await this.ch8StoryFrontier('bamboo_lock', 'clicker_crisis');
+        break;
+      case 'ch8_clicker_clearing':
+        await this.ch8StoryFrontier('bamboo_lock');
+        break;
+      case 'ch8_trust_escalation':
+        await this.ch8StoryFrontier('bamboo_trust');
+        break;
+      case 'spore_forest_scramble':
+        await this.ch8SporeRevealScene();
+        break;
+      case 'ch8_spore_trust':
+        await this.ch8StoryFrontier('spore_forest');
+        break;
+      case 'ch8_pippa_creases':
+        await this.ch8PippaCreasesScene();
+        break;
+      case 'mushroomize_0':
+      case 'mushroomize_1':
+      case 'mushroomize_2':
+        await this.ch8MushroomizeHazard(id);
+        break;
+      case 'q_brush_river':
+      case 'q_brush_kiln':
+      case 'q_brush_cloud':
+      case 'q_false_fold_lantern_1':
+      case 'q_false_fold_lantern_2':
+      case 'q_false_fold_lantern_3':
+      case 'q_harbor_balance_weight_1':
+      case 'q_harbor_balance_weight_2':
+      case 'q_yak_waits_feed':
+      case 'q_yak_waits_route':
+      case 'q_empty_chair':
+        await this.ch8QuestTrigger(id);
+        break;
+      case 'porcelain_warlord_encounter':
+        await this.ch8PorcelainWarlordEncounter();
+        break;
+      case 'ch8_false_folds':
+        await this.ch8FalseFoldsScene();
+        break;
+      case 'ch8_trust_climax':
+        await this.ch8StoryFrontier('mt_shu');
+        break;
+      case 'ch8_elder_beta':
+        await this.ch8ElderBetaScene();
+        break;
       case 'paper_dragon_boss':
         if (!GS.flag('paper_dragon_defeated')) await this.paperDragonBossScene();
+        else if (!GS.flag('paper_fan_claimed')) await this.givePaperFanAndRestart();
         break;
       case 'mt_shu_temple_resonance':
         if (!GS.flag('ch8_complete')) await this.mtShuTempleScene();
@@ -8710,19 +9262,28 @@ export class OverworldScene extends Phaser.Scene {
       this.goThroughDoor('valea_stelelor', 8 * 16, 20 * 16, 'down');
       return;
     }
-    // the §A5 Lotus Harbor leg: once Chandrapore (Ch.7) is done, Bert flies the party to LOTUS
-    // HARBOR (kept for the backtrack now that Valea Stelelor is the frontier)
+    // The Chapter 8 leg ends Lucille at the western river connection. The
+    // Bargeman owns the final approach and Lotus arrival; the cabin door remains
+    // the only safe route back into Lucille's network.
     if (GS.flag('ch7_complete') && !GS.flag('ch8_arrived')) {
       await this.dlg.say(...DIALOGUE.bert_china_ask);
-      const pick = await this.dlg.ask(['Fly to LOTUS HARBOR', 'Not yet'], { cancelIndex: 1 });
+      const pick = await this.dlg.ask(['Connect to the LOTUS riverboat', 'Not yet'], { cancelIndex: 1 });
       if (pick !== 0) {
         this.cut = false;
         return;
       }
       AUDIO.stopMusic();
-      await playCutscene(this, 'ch8_journey'); // the authored China panels (no-ops if missing)
-      // the hatch drops on the Lotus Harbor ghat landing square; ch8_arrival fires the beat
-      this.goThroughDoor('lotus_harbor', 8 * 16, 22 * 16, 'down');
+      GS.setFlag('ch8_riverboat_seen');
+      await this.dlg.say(...DIALOGUE.ch8_riverboat_handoff);
+      await playCutscene(this, 'ch8_riverboat');
+      await this.dlg.say(...DIALOGUE.ch8_riverboat_board);
+      const landing = CH8_WORLD.lotusHarbor.arrival.riverboat;
+      this.goThroughDoor(
+        'lotus_harbor',
+        landing.x * 16 + 8,
+        landing.y * 16 + 12,
+        landing.facing,
+      );
       return;
     }
     // the §A5 Chandrapore leg: Bert flies to the western railhead and the crowded
@@ -9307,10 +9868,168 @@ export class OverworldScene extends Phaser.Scene {
     this.cut = false;
   }
 
-  /** the §A6 arrival — Bert sets the party down on the Lotus Harbor ghats, into the lanterns */
+  /** Stage every genuinely missing Trust/Clicker beat through an authored
+   * frontier. The thread flag commits before its scene, so an interrupted
+   * dialogue cannot duplicate a choice outcome or Caller. */
+  private async ch8StoryFrontier(frontier: Ch8StoryFrontier, stopAfter?: string): Promise<void> {
+    // A save can be interrupted after the clearing flag commits but before its
+    // dialogue returns. Repair that seam before the empty-plan early return.
+    GS.data.callers = reconcileCh8ClickerCaller(
+      GS.data.callers,
+      GS.flag('thread_clicker_clearing') === true,
+    );
+    const beats = planCh8Story(frontier, (flag) => GS.flag(flag) === true);
+    if (beats.length === 0) return;
+    this.cut = true;
+    for (const beat of beats) {
+      GS.setFlag(beat.flag);
+      if (beat.id === 'clicker_clearing') {
+        // Commit the Bargeman in the same synchronous turn as the thread flag;
+        // a dialogue interruption can no longer leave one without the other.
+        GS.data.callers = reconcileCh8ClickerCaller(GS.data.callers, true);
+      }
+      let lines: readonly string[];
+      switch (beat.id) {
+        case 'trust_open': lines = DIALOGUE.ch8_trust_open; break;
+        case 'trust_esc_norway': lines = DIALOGUE.ch8_trust_esc1; break;
+        case 'trust_esc_minimus': lines = DIALOGUE.ch8_trust_esc2; break;
+        case 'trust_esc_africa': lines = DIALOGUE.ch8_trust_esc3; break;
+        case 'trust_esc_india':
+          lines = isPresent('pippa') ? DIALOGUE.ch8_trust_esc4 : DIALOGUE.ch8_trust_esc4_elder;
+          break;
+        case 'trust_climax': lines = DIALOGUE.ch8_trust_climax; break;
+        case 'trust_resolve': {
+          const decision = decidePippaOutcomeFromFlags(
+            (flag) => GS.flag(flag) === true,
+            GS.data.echoes.rewindCount,
+          );
+          if (decision === 'depart') lines = DIALOGUE.ch8_trust_resolve_strings_leave;
+          else if (decision === 'stay' && GS.flag('axis_trust_free')) lines = DIALOGUE.ch8_trust_resolve_free;
+          else if (decision === 'stay') lines = DIALOGUE.ch8_trust_resolve_strings_stay;
+          else lines = DIALOGUE.ch8_trust_resolve_neutral;
+          await this.dlg.say(...lines);
+          if (decision === 'depart' && departHero('pippa')) this.rebuildFollowers();
+          if (decision === 'stay' && !isPresent('pippa') && GS.flag('pippa_left')) {
+            rejoinHero('pippa', Math.max(1, Math.round(this.avgPartyLevel())));
+            this.rebuildFollowers();
+          }
+          continue;
+        }
+        case 'clicker_seed': lines = DIALOGUE.ch8_clicker_seed; break;
+        case 'clicker_crisis': lines = DIALOGUE.ch8_clicker_crisis; break;
+        case 'clicker_clearing': lines = DIALOGUE.ch8_clicker_clearing; break;
+        default: lines = [];
+      }
+      if (lines.length) await this.dlg.say(...lines);
+      if (beat.id === stopAfter) break;
+    }
+    this.cut = false;
+  }
+
+  private async ch8SporeRevealScene(): Promise<void> {
+    if (GS.flag('spore_forest_scramble')) return;
+    GS.setFlag('spore_forest_scramble');
+    this.cut = true;
+    await playCutscene(this, 'ch8_spore');
+    await this.dlg.say(
+      '(The forest breathes. Three belts of bright spores roll across the path, each turning the compass in a different, repeatable way.)',
+      '@Clean pockets and the Scroll of Calm can settle MUSHROOMIZED feet. If the forest wins a fight, the last clean pocket will still remember you.',
+    );
+    this.cut = false;
+  }
+
+  private async ch8YakDepartScene(): Promise<void> {
+    if (GS.flag('ch8_yak_arrived')) return;
+    if (GS.flag('ch8_yak_arrival_pending')) return;
+    // Repair the only meaningful legacy partial: departed was durable but the
+    // pending handoff was not. Do not replay the departure presentation.
+    if (GS.flag('ch8_yak_departed')) {
+      GS.setFlag('ch8_yak_arrival_pending');
+      return;
+    }
+    GS.setFlag('ch8_yak_departed');
+    GS.setFlag('ch8_yak_arrival_pending');
+    this.cut = true;
+    await this.dlg.say(...DIALOGUE.ch8_yak_depart);
+    await playCutscene(this, 'ch8_yak');
+    this.cut = false;
+  }
+
+  private async ch8PippaCreasesScene(): Promise<void> {
+    if (GS.flag('ch8_pippa_creases_seen')) return;
+    GS.setFlag('ch8_pippa_creases_seen');
+    this.cut = true;
+    await this.dlg.say(...(
+      isPresent('pippa') ? DIALOGUE.ch8_pippa_creases : DIALOGUE.ch8_pippa_creases_elder
+    ));
+    this.cut = false;
+  }
+
+  private async ch8MushroomizeHazard(id: 'mushroomize_0' | 'mushroomize_1' | 'mushroomize_2'): Promise<void> {
+    const hazard = CH8_WORLD.sporeForest.hazards.find((entry) => entry.id === id);
+    if (!hazard) return;
+    const wasActive = GS.data.mushroomize.active;
+    const point = CH8_WORLD.sporeForest.recovery;
+    GS.data.mushroomize = applyMushroomize(GS.data.mushroomize, {
+      phase: hazard.phase,
+      source: hazard.id,
+      recovery: GS.data.mushroomize.recovery ?? {
+        map: 'spore_forest',
+        x: (point.x + 0.5) * TILE_PX,
+        y: (point.y + 0.75) * TILE_PX,
+        facing: point.facing,
+      },
+    });
+    if (wasActive) return;
+    AUDIO.sfx('alert');
+    this.cameras.main.shake(320, 0.006);
+    toast(this, `MUSHROOMIZED — phase ${hazard.phase + 1} latched. Find a cure or clean retreat.`);
+  }
+
+  private async ch8PorcelainWarlordEncounter(): Promise<void> {
+    if (GS.flag('porcelain_warlord_defeated')) return;
+    this.cut = true;
+    await this.dlg.say('(The old kiln cracks open. A PORCELAIN WARLORD steps out, then splits its glaze into two marching shadows.)');
+    this.cut = false;
+    const outcome = await this.startBattle(['porcelain_warlord'], 'none', [], {});
+    if (outcome !== 'victory') return;
+    GS.setFlag('porcelain_warlord_defeated');
+    AUDIO.sfx('confirm');
+    toast(this, 'The kiln path is clear.');
+    this.fadeRestart();
+  }
+
+  private async ch8FalseFoldsScene(): Promise<void> {
+    if (GS.flag('ch8_false_folds_seen')) return;
+    GS.setFlag('ch8_false_folds_seen');
+    this.cut = true;
+    await playCutscene(this, 'ch8_false_folds');
+    await this.dlg.say(...(
+      isPresent('pippa') ? DIALOGUE.ch8_false_folds_pippa : DIALOGUE.ch8_false_folds_elder
+    ));
+    this.cut = false;
+  }
+
+  private async ch8ElderBetaScene(): Promise<void> {
+    this.cut = true;
+    if (GS.flag('awake_teleport_b')) {
+      await this.dlg.say(...DIALOGUE.ch8_elder_teleport_beta_done);
+      this.cut = false;
+      return;
+    }
+    GS.setFlag('ch8_elder_beta_seen');
+    GS.setFlag('awake_teleport_b');
+    await this.dlg.say(...DIALOGUE.ch8_elder_teleport_beta);
+    AUDIO.jingle('levelup', 1200, this.mapDef.music);
+    toast(this, 'TELEPORT BETA awakened — 32px run-up.');
+    this.cut = false;
+  }
+
+  /** the §A6 arrival — the riverboat owns Lotus Harbor's final bend */
   private async ch8ArrivalScene(): Promise<void> {
     this.cut = true;
     GS.setFlag('ch8_arrived');
+    await playCutscene(this, 'ch8_arrival');
     AUDIO.sfx('thud');
     this.cameras.main.shake(380, 0.005);
     await this.dlg.say(...DIALOGUE.ch8_arrival);
@@ -9324,49 +10043,112 @@ export class OverworldScene extends Phaser.Scene {
    *  ground it, then burn it down before it burns you. */
   private async paperDragonBossScene(): Promise<void> {
     this.cut = true;
-    await this.dlg.say(...DIALOGUE.paper_dragon_door);
+    if (!GS.flag('ch8_dragon_seen')) {
+      GS.setFlag('ch8_dragon_seen');
+      await playCutscene(this, ch8PartyCutsceneId('dragon', isPresent('pippa')));
+    }
+    await this.dlg.say(...(
+      isPresent('pippa') ? DIALOGUE.paper_dragon_door_pippa : DIALOGUE.paper_dragon_door_elder
+    ));
     AUDIO.sfx('thud');
     this.cameras.main.shake(460, 0.008);
     await this.wait(420);
+    this.cut = false;
     const outcome = await this.startBattle(['paper_dragon'], 'none', [], { boss: true });
     if (outcome !== 'victory') return;
     this.cut = true;
+    // Retry-safe post-boss order begins here: victory flag first, then the
+    // unique Fan transaction, then a fixed safe restart below the bell.
     GS.setFlag('paper_dragon_defeated');
     AUDIO.sfx('confirm');
     this.cameras.main.flash(420, 248, 232, 160);
     await this.dlg.say(...DIALOGUE.paper_dragon_win);
+    this.cut = false;
+    await this.givePaperFanAndRestart();
+  }
+
+  private async givePaperFanAndRestart(): Promise<void> {
+    if (GS.flag('paper_fan_claimed')) return;
+    this.cut = true;
+    const held = GS.hasItem('paper_fan');
+    if (!held && !GS.addItem('paper_fan')) {
+      await this.dlg.say(...DIALOGUE.paper_fan_full);
+      this.cut = false;
+      return;
+    }
+    GS.setFlag('paper_fan_claimed');
+    AUDIO.sfx('confirm');
+    await this.dlg.say(...DIALOGUE.paper_fan_get);
     AUDIO.jingle('victory', 2200, this.mapDef.music);
     this.cut = false;
-    this.fadeRestart(); // the bell is free to ring now; the resonance trigger can fire
+    this.restartAtCh8BossSafePoint();
+  }
+
+  private restartAtCh8BossSafePoint(): void {
+    if (this.transitioning) return;
+    this.transitioning = true;
+    const safe = CH8_WORLD.mtShuTemple.bossRestart;
+    this.cameras.main.fadeOut(260, 0, 0, 0);
+    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+      this.scene.restart({
+        mapId: 'mt_shu_temple',
+        x: (safe.x + 0.5) * TILE_PX,
+        y: (safe.y + 0.75) * TILE_PX,
+        facing: safe.facing,
+      });
+    });
   }
 
   /** §A6 Resonance Site — the Mt. Shu temple bell. Before the Dragon is unmade it keeps its
    *  peace; once beaten the bell rings (HEARTLIGHT 8 — The Folded Hymn) and Ember 8 lands. No
    *  joins (the party is whole); ch8_complete opens the §A5 gate to Ch.9. */
   private async mtShuTempleScene(): Promise<void> {
+    // The resonance trigger remains live so a partially committed save can
+    // resume, but a completed chapter is terminal and must never replay.
+    if (GS.flag('ch8_complete')) return;
     if (!GS.flag('paper_dragon_defeated')) {
       this.cut = true;
       await this.dlg.say(...DIALOGUE.mt_shu_temple_early);
       this.cut = false;
       return;
     }
+    if (!GS.flag('paper_fan_claimed')) {
+      this.cut = true;
+      await this.dlg.say(...DIALOGUE.mt_shu_temple_fan_wait);
+      this.cut = false;
+      return;
+    }
     this.cut = true;
-    // HEARTLIGHT 8 — the Folded Hymn (Ember 8)
-    GS.setFlag('ember8');
-    GS.data.embers = 8;
-    const ember = this.add.image(this.player.x, this.player.y - s(44), 'ember').setDepth(9999);
-    AUDIO.sfx('ember');
-    this.sparkleBurst(ember.x, ember.y, 12);
-    this.tweens.add({ targets: ember, y: this.player.y - s(30), x: this.player.x, duration: 1300, ease: 'sine.inout' });
-    AUDIO.playMusic('heartlight');
-    await this.wait(1400);
-    this.sparkleBurst(this.player.x, this.player.y - s(30), 14);
-    ember.destroy();
-    this.cameras.main.flash(300, 248, 232, 160);
-    await this.dlg.say(...DIALOGUE.ember8_get);
-    GS.setFlag('ch8_complete'); // §A6 — the chapter button (the §A5 gate to Ch.9)
-    AUDIO.jingle('victory', 2200, null);
-    await this.dlg.say(...DIALOGUE.ch8_card);
+    // HEARTLIGHT 8 — the Folded Hymn (Ember 8). Each durable flag commits
+    // before its presentation. A reload resumes at the next missing stage,
+    // never replaying the cutscene or granting the Ember twice.
+    if (!GS.flag('ch8_heartlight_seen')) {
+      GS.setFlag('ch8_heartlight_seen');
+      await playCutscene(this, ch8PartyCutsceneId('heartlight', isPresent('pippa')));
+    }
+    if (!GS.flag('ember8')) {
+      GS.setFlag('ember8');
+      GS.data.embers = 8;
+      const ember = this.add.image(this.player.x, this.player.y - s(44), 'ember').setDepth(9999);
+      AUDIO.sfx('ember');
+      this.sparkleBurst(ember.x, ember.y, 12);
+      this.tweens.add({ targets: ember, y: this.player.y - s(30), x: this.player.x, duration: 1300, ease: 'sine.inout' });
+      AUDIO.playMusic('heartlight');
+      await this.wait(1400);
+      this.sparkleBurst(this.player.x, this.player.y - s(30), 14);
+      ember.destroy();
+      this.cameras.main.flash(300, 248, 232, 160);
+      await this.dlg.say(...DIALOGUE.ember8_get);
+    } else {
+      // Repair a legacy partial state that has the Ember flag but a stale
+      // chapter counter without replaying any presentation.
+      GS.data.embers = 8;
+    }
+    if (!GS.flag('ch8_complete')) {
+      GS.setFlag('ch8_complete'); // §A6 — the chapter button (the §A5 gate to Ch.9)
+      AUDIO.jingle('victory', 2200, null);
+      await this.dlg.say(...DIALOGUE.ch8_card);
+    }
     AUDIO.playMusic(this.mapDef.music);
     this.cut = false;
   }

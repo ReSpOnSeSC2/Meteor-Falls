@@ -22,6 +22,12 @@ describe('GameState serialization (Prompt 2: round-trip)', () => {
     expect(GS.hasItem('salt_shaker')).toBe(true);
   });
 
+  it('starts v25 with an inactive field status and an empty departed-hero bench', () => {
+    expect(GS.data.version).toBe(25);
+    expect(GS.data.mushroomize).toEqual({ active: false, phase: 0, source: null, recovery: null });
+    expect(GS.data.departedHeroes).toEqual({});
+  });
+
   it('rejects unknown versions', () => {
     const bad = JSON.stringify({ ...newGameData(), version: 99 });
     expect(() => GS.deserialize(bad)).toThrow();
@@ -223,6 +229,14 @@ describe('S2 — Mia joins (§A3/§A6, ADR-013/ADR-014)', () => {
     // Jay pre-crater has NOTHING; the prophecy hands him the Surge
     expect(availableAbilities('rex', 5, () => false)).toEqual([]);
     expect(availableAbilities('rex', 5, (f) => f === 'awake_surge_a')).toEqual(['vibe_surge_a']);
+  });
+
+  it('keeps Teleport Alpha at L26 and grants Beta only through the Mt. Shu awakening', () => {
+    expect(unlockedAbilities('rex', 25)).not.toContain('teleport_a');
+    expect(unlockedAbilities('rex', 26)).toContain('teleport_a');
+    expect(unlockedAbilities('rex', 99)).not.toContain('teleport_b');
+    expect(availableAbilities('rex', 99, () => false)).not.toContain('teleport_b');
+    expect(availableAbilities('rex', 40, (flag) => flag === 'awake_teleport_b')).toContain('teleport_b');
   });
 
   it('a two-hero party with a down angel survives a save round-trip', () => {

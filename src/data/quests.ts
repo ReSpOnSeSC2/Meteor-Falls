@@ -667,11 +667,9 @@ export const QUESTS: Record<string, QuestDef> = Object.fromEntries(
         effect: { kind: 'heal', power: 720 },
       },
     }),
-    // ── CHAPTER 8 (China) — §A10 the named core quest: Brushes of Mt. Shu (the
-    //    Calligrapher's three brushes, blown off her sill into the Spore Forest). Banks a
-    //    finale CALLER (§A6) and rewards the reusable SCROLL OF CALM (cures Mushroomize,
-    //    §A10 #17). Data-valid + giver placed in lotus_harbor (the Ch.5/6/7 precedent —
-    //    shipped as data, completability is map-light). ──
+    // ── CHAPTER 8 (China) — five distinct verbs and five persistent local
+    // footprints. Runtime interactions use engine/ch8Quests.ts and finish through
+    // completeQuest(), preserving the existing hands-full retry transaction. ──
     Q({
       id: 'brushes_of_mt_shu',
       name: 'Brushes of Mt. Shu',
@@ -688,6 +686,78 @@ export const QUESTS: Record<string, QuestDef> = Object.fromEntries(
         name: 'The Calligrapher',
         quote: 'Three brushes, all the way down off that wicked mountain, and not a bristle bent — you have a steady hand for great big things. When the world goes all sideways and swimming for YOU, child, hold still: I will draw you one calm line, and the muddle will settle.',
         effect: { kind: 'heal', power: 1400 },
+      },
+    }),
+    Q({
+      id: 'lanterns_of_the_false_fold',
+      name: 'Lanterns of the False Fold',
+      chapter: 8,
+      giver: 'lh_lantern_girl',
+      startFlag: 'q_false_fold_lanterns',
+      objectives: [
+        { id: 'read', text: 'Read the three tooth-fold lanterns along the harbor terraces and mark the false creases hiding under their paper.', flag: 'q_false_fold_lanterns_read' },
+        { id: 'refold', text: 'Refold all three lanterns into honest cranes and return to the Lantern Girl beneath the market string.', flag: 'q_false_fold_lanterns_refolded' },
+      ],
+      rewardItem: 'paper_crane_charm',
+      doneFlag: 'q_false_fold_lanterns_done',
+      caller: {
+        name: 'The Lantern Girl',
+        quote: 'Three cranes are flying over the harbor now, and none of them has teeth. If the dark folds itself around YOU, call me. I know where the honest crease begins.',
+        effect: { kind: 'damage', power: 820 },
+      },
+    }),
+    Q({
+      id: 'the_yak_who_waits',
+      name: 'The Yak Who Waits',
+      chapter: 8,
+      giver: 'lh_yak_handler',
+      startFlag: 'q_yak_waits',
+      objectives: [
+        { id: 'feed', text: 'Carry the Yak Treats up Bamboo Road and feed the waiting Yak at the high depot.', flag: 'q_yak_waits_feed' },
+        { id: 'route', text: 'Water the climbing dish, repair the route bell, and walk the newly opened scenic depot loop with the Yak.', flag: 'q_yak_waits_route' },
+      ],
+      rewardItem: 'jade_salamander_charm',
+      doneFlag: 'q_yak_waits_done',
+      caller: {
+        name: 'The Yak Handler',
+        quote: 'A patient Yak can move a mountain, but yours decided it liked YOU enough to move quickly. Call us when the road gets hot. We know the cool way through.',
+        effect: { kind: 'damage', power: 880 },
+      },
+    }),
+    Q({
+      id: 'the_harbors_balance',
+      name: "The Harbor's Balance",
+      chapter: 8,
+      giver: 'lh_harbor_master',
+      startFlag: 'q_harbor_balance',
+      objectives: [
+        { id: 'weights', text: 'Recover the two tide-weights from the old ferry steps and the east market landing, then balance the quay scales.', flag: 'q_harbor_balance_weights' },
+        { id: 'deliver', text: 'Use the balanced scales to clear the working quay and deliver the fair allotment to the Grand Market shelf.', flag: 'q_harbor_balance_delivered' },
+      ],
+      rewardItem: 'river_beads',
+      doneFlag: 'q_harbor_balance_done',
+      caller: {
+        name: 'The Harbor Master',
+        quote: 'A harbor stays alive because every hand takes its weight and no hand takes more. When YOUR load tips the beam, call. Lotus Harbor will put a shoulder under it.',
+        effect: { kind: 'damage', power: 900 },
+      },
+    }),
+    Q({
+      id: 'tea_for_the_empty_chair',
+      name: 'Tea for the Empty Chair',
+      chapter: 8,
+      giver: 'lh_tea_monk',
+      startFlag: 'q_empty_chair',
+      objectives: [
+        { id: 'brew', text: 'Brew the remembrance tea at the Lotus Harbor tea court, where the river can cool the first pour.', flag: 'q_empty_chair_brewed' },
+        { id: 'offer', text: 'Carry the covered cup to the empty remembrance chair in Mt. Shu Temple and leave it steaming there.', flag: 'q_empty_chair_offered' },
+      ],
+      rewardItem: 'temple_incense',
+      doneFlag: 'q_empty_chair_done',
+      caller: {
+        name: 'The Tea-House Monk',
+        quote: 'An empty chair is not an empty promise. You carried the warmth all the way up. If YOU ever have to wait alone, call, and I will keep the second cup hot.',
+        effect: { kind: 'heal', power: 960 },
       },
     }),
 

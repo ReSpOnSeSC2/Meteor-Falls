@@ -1,7 +1,12 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { CUTSCENES, cutscenePanelFilenames, type CutsceneBeat } from './cutscenes';
+import {
+  CUTSCENES,
+  ch8PartyCutsceneId,
+  cutscenePanelFilenames,
+  type CutsceneBeat,
+} from './cutscenes';
 
 const all = Object.values(CUTSCENES);
 
@@ -153,6 +158,43 @@ describe('cutscene registry', () => {
       'ch7_heartlight',
       'ch7_cinema',
     ].map((id) => CUTSCENES[id].beats.map((beat) => beat.art))).toEqual(expected.map((art) => [art]));
+  });
+
+  it('keeps the Chapter 8 gallery canonical and every runtime cut contextual', () => {
+    const expected = [
+      'riverboat_to_lotus_harbor',
+      'lotus_harbor_arrival',
+      'spore_forest_scramble',
+      'yak_express_to_mt_shu',
+      'paper_guardians_false_folds',
+      'paper_dragon_reveal',
+      'temple_bell_resonance',
+    ];
+    const contextual = [
+      'ch8_riverboat',
+      'ch8_arrival',
+      'ch8_spore',
+      'ch8_yak',
+      'ch8_false_folds',
+      'ch8_dragon',
+      'ch8_heartlight',
+    ];
+
+    expect(CUTSCENES.ch8_journey.beats.map((beat) => beat.art)).toEqual(expected);
+    expect(contextual.map((id) => CUTSCENES[id].beats.map((beat) => beat.art))).toEqual(
+      expected.map((art) => [art]),
+    );
+    expect(contextual.every((id) => CUTSCENES[id].beats.length === 1)).toBe(true);
+    expect(CUTSCENES.ch8_dragon_departed.beats.map((beat) => beat.art)).toEqual([
+      'paper_dragon_reveal_departed',
+    ]);
+    expect(CUTSCENES.ch8_heartlight_departed.beats.map((beat) => beat.art)).toEqual([
+      'temple_bell_resonance_departed',
+    ]);
+    expect(ch8PartyCutsceneId('dragon', true)).toBe('ch8_dragon');
+    expect(ch8PartyCutsceneId('dragon', false)).toBe('ch8_dragon_departed');
+    expect(ch8PartyCutsceneId('heartlight', true)).toBe('ch8_heartlight');
+    expect(ch8PartyCutsceneId('heartlight', false)).toBe('ch8_heartlight_departed');
   });
 
   it('prefers runtime-resolution _4x panels over legacy _01 placeholders', () => {

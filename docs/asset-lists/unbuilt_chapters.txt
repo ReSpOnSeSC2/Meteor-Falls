@@ -1,18 +1,19 @@
-# Historical chapter art-bundle queue (shipped rows are marked)
+# Historical chapter art-bundle queue (production-shipped rows are marked)
 # Source of truth: src/data/chapters.ts (CHAPTER_MANIFESTS), docs/GAME_BIBLE.md
 # Each chapter = tileset + dungeon + settlement facades + ~10-15 NPCs (8-dir)
-#   + 20-enemy roster (x3 wear = 60 imgs) + boss + battle background
+#   + chapter-approved authored enemy roster + boss + battle background
 #   + ~6-8 cutscene panels + regional home + regional vehicle.
 
-CH4  Norway       boss=the_whisperwig (1900)    towns=kvisthavn, lilleby        travel=biplane     dungeon=sleepers_spine
+CH4  SHIPPED      boss=the_whisperwig (1800)    maps=kvisthavn,bootstep_moor,lilleby,spine_hand,spine_shoulder,spine_ear  travel=biplane
 CH5  Minimus      boss=whiskerzilla (2150)       towns=minimus_major             travel=biplane     dungeon=the_hedgerow
 CH6  SHIPPED      boss=laughing_sphinx (9000)    maps=zanzibel,savanna_run,laughing_ruins,sphinx_chin  travel=biplane
-CH7  India        boss=cobra_raja (3200)         towns=chandrapore               travel=night_train dungeon=night_train
-CH8  China        boss=paper_dragon (4100)       towns=lotus_harbor              travel=riverboat   dungeon=spore_forest
+CH7  SHIPPED      boss=cobra_raja (20000)        maps=chandrapore,monsoon_road,night_train,palace_throne  travel=Tilak_Mail/night_train
+CH8  IMPLEMENTED (PRODUCTION VERIFIED)  boss=paper_dragon (45000)  maps=lotus_harbor,bamboo_road,spore_forest,mt_shu_temple  travel=riverboat/yak
 CH9  Romania      boss=count_hoaxula (5300)      towns=valea_stelelor            travel=train       dungeon=castle_hoaxula
 CH10 Alaska/Hawaii/Mars  bosses=frost_sentinel, tiki_magma_golem, the_hush (6000)  towns=aurora_station, mauna_lani  travel=snowcat->rocket  dungeon=sea_of_silence
 
-# §A7 enemy ecosystem per chapter (20 each):
+# Historical §A7 planning ecosystem (20 each unless a newer accepted production
+# ADR freezes a focused roster; ADR-143 freezes Ch8 at four regulars + boss):
 #   4 road/field roamers, 3 dungeon specialists, 2 social/urban oddities,
 #   2 rare/high-value, 2 late-chapter pressure, 1 set-piece.
 # 35 of 200 built (Ch.1-3) -> ~165 enemies remain -> ~495 images with wear.

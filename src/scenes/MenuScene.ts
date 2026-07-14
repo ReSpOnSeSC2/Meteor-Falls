@@ -52,6 +52,14 @@ import { breathsLeft, rewindableAnchors, rewindTo } from '../engine/echo';
 import { recordedOption } from '../engine/choice';
 import { vehicleByTitle } from '../engine/vehicle-domain';
 import { locketAvailable, ownsStarLocket } from '../engine/ch7';
+import { resolveMushroomizeCureUse } from '../engine/mushroomize';
+import { eligibleTeleportDestinations, teleportPpCost, type TeleportAbility } from '../engine/teleport';
+import {
+  isTeleportAbilityId,
+  makeTeleportMenuRequest,
+  TELEPORT_REQUEST_REGISTRY_KEY,
+  TELEPORT_TOWN_DESTINATIONS,
+} from '../engine/teleport-menu';
 
 export class MenuScene extends Phaser.Scene {
   private dlg!: Dialogue;
@@ -62,6 +70,8 @@ export class MenuScene extends Phaser.Scene {
   private vitals!: VitalsBar;
   /** how many item DESCRIPTION panels are open right now (the strip yields) */
   private infoPanels = 0;
+  /** A field Vibe closes the overlay into a typed OverworldScene handoff. */
+  private fieldHandoff = false;
 
   constructor() {
     super('menu');
@@ -70,6 +80,7 @@ export class MenuScene extends Phaser.Scene {
   init(data: { music?: string }): void {
     this.mapMusic = data.music ?? '';
     this.pageObjs = [];
+    this.fieldHandoff = false;
   }
 
   create(): void {
@@ -109,6 +120,7 @@ export class MenuScene extends Phaser.Scene {
       else if (pick === 4) await this.journalPage();
       else if (pick === 5) await this.locketPage();
       else await this.setupPage();
+      if (this.fieldHandoff) return;
     }
     AUDIO.sfx('cancel');
     this.vitals.destroy();
@@ -261,6 +273,21 @@ export class MenuScene extends Phaser.Scene {
       await this.dlg.say(`${drinker.name} drank the ${item.name}. About ${item.ppHeal} PP fizzed back!`);
       return;
     }
+    // Ch.8 field cure: Mushroomized is one persistent party/world status, so it
+    // has no ally picker. Reusable Scroll of Calm survives through the shared
+    // consumesOnUse rule; Spore Antidote is spent exactly once on a real cure.
+    if (item.kind === 'cure' && item.cures?.includes('mushroomize')) {
+      const result = resolveMushroomizeCureUse(GS.data.mushroomize, consumesOnUse(item));
+      if (!result.cured) {
+        await this.dlg.say(`The ${item.name} waits. Nothing needs curing right now.`);
+        return;
+      }
+      if (result.consumeItem) GS.removeItem(itemId, hero.id);
+      GS.data.mushroomize = result.state;
+      AUDIO.sfx('heal');
+      await this.dlg.say(`The ${item.name} cleared the Mushroomized muddle.`);
+      return;
+    }
     // §A4.12 THE REVIVAL LINE (S17/ADR-061): any cure that lists 'down' brings
     // an angel back — Glint's Spark (heal 9999 → full) opens the line; later
     // tiers revive by their own `heal` (Second Wind weak → the Hallelujah Bell
@@ -405,6 +432,13 @@ export class MenuScene extends Phaser.Scene {
         .setDepth(DEPTH_UI + 1)
         .setTint(colorOf(px(RAMP.RED, 2)));
       this.pageObjs.push(d);
+    } else if (GS.data.mushroomize.active) {
+      const d = this.add
+        .bitmapText(x + w - s(88), y + s(10), 'retro', 'MUSHROOMIZED', fs)
+        .setScrollFactor(0)
+        .setDepth(DEPTH_UI + 1)
+        .setTint(colorOf(px(RAMP.GRASS, 2)));
+      this.pageObjs.push(d);
     } else if (h.id === 'rex' && GS.flag('rex_homesick') === true) {
       // §A4.8: HOMESICK rides the save until Mom's call (S4)
       const d = this.add
@@ -414,7 +448,12 @@ export class MenuScene extends Phaser.Scene {
         .setTint(colorOf(px(RAMP.CYAN, 2)));
       this.pageObjs.push(d);
     }
-    line(s(22), HEROES[h.id].epithet, DIM, headIndent);
+    if (GS.data.mushroomize.active) {
+      line(s(22), 'INPUT ROTATES; CALM/ANTIDOTE', colorOf(px(RAMP.GRASS, 2)));
+      line(s(32), 'A DOCTOR CAN CURE IT', colorOf(px(RAMP.GRASS, 2)));
+    } else {
+      line(s(22), HEROES[h.id].epithet, DIM, headIndent);
+    }
     line(s(40), `HP ${h.hp}/${h.maxHp}    PP ${h.pp}/${h.maxPp}`);
     // every combat stat reads through its seam (heroX) so equip + tonic boosts show
     line(s(58), `Offense ${heroOffense(h)}   Defense ${heroDefense(h)}`);
@@ -453,6 +492,7 @@ export class MenuScene extends Phaser.Scene {
       const hero = await this.pickHero();
       if (hero === null || hero === 'keys') return;
       await this.vibeList(hero);
+      if (this.fieldHandoff) return;
       if (GS.data.party.length === 1) return;
     }
   }
@@ -467,8 +507,19 @@ export class MenuScene extends Phaser.Scene {
       return;
     }
     for (;;) {
+      const destinations = eligibleTeleportDestinations(
+        TELEPORT_TOWN_DESTINATIONS,
+        (flag) => GS.flag(flag) === true,
+      );
       const usable = (id: string): boolean => {
         const a = ABILITIES[id];
+        if (isTeleportAbilityId(id)) {
+          return hero.id === 'rex'
+            && !hero.down
+            && locketAvailable(GS.data)
+            && hero.pp >= teleportPpCost(id)
+            && destinations.length > 0;
+        }
         return a.heal === true && a.power > 0 && !hero.down && hero.pp >= a.pp;
       };
       const labels = ids.map((id) => `${ABILITIES[id].name}  ${ABILITIES[id].pp}pp`);
@@ -482,7 +533,12 @@ export class MenuScene extends Phaser.Scene {
         title: `${hero.name}  PP ${hero.pp}/${hero.maxPp}`,
       });
       if (sel < 0) return;
-      const ab = ABILITIES[ids[sel]];
+      const id = ids[sel];
+      if (isTeleportAbilityId(id)) {
+        if (await this.teleportDestinationList(hero, id, ids, destinations)) return;
+        continue;
+      }
+      const ab = ABILITIES[id];
       const alive = GS.aliveParty();
       const t =
         alive.length === 1
@@ -497,6 +553,65 @@ export class MenuScene extends Phaser.Scene {
       this.vitals.refresh(); // HP + PP both changed while the strip is visible
       await this.dlg.say(ab.text.replaceAll('{user}', hero.name), `${target.name} recovered about ${amount} HP!`);
     }
+  }
+
+  /**
+   * Select a visited/story-open safe town, then close the paused menu into one
+   * registry request. PP stays untouched here: the overworld's terminal
+   * resolveTeleportAttempt result is the sole accounting authority.
+   */
+  private async teleportDestinationList(
+    hero: HeroState,
+    ability: TeleportAbility,
+    learnedAbilities: readonly string[],
+    destinations = eligibleTeleportDestinations(
+      TELEPORT_TOWN_DESTINATIONS,
+      (flag) => GS.flag(flag) === true,
+    ),
+  ): Promise<boolean> {
+    if (destinations.length === 0) {
+      await this.dlg.say('No visited, story-open town answers the light right now.');
+      return false;
+    }
+    const selected = await this.pick({
+      x: s(116),
+      y: s(18),
+      options: destinations.map((destination) => destination.label),
+      cols: destinations.length > 7 ? 2 : 1,
+      title: ability === 'teleport_b' ? 'BETA — TO WHERE?' : 'ALPHA — TO WHERE?',
+    });
+    if (selected < 0) return false;
+
+    const selection = makeTeleportMenuRequest({
+      ability,
+      casterId: hero.id,
+      learnedAbilities,
+      flagOf: (flag) => GS.flag(flag) === true,
+      pp: hero.pp,
+      destination: destinations[selected],
+      origin: {
+        map: GS.data.map,
+        x: GS.data.x,
+        y: GS.data.y,
+        facing: GS.data.facing,
+      },
+    });
+    if (!selection.ok) {
+      await this.dlg.say(
+        selection.reason === 'not-enough-pp'
+          ? `${hero.name} could not find enough PP for the run-up.`
+          : 'The route folded shut before the first step.',
+      );
+      return false;
+    }
+
+    this.registry.set(TELEPORT_REQUEST_REGISTRY_KEY, selection.request);
+    AUDIO.sfx('confirm');
+    this.fieldHandoff = true;
+    this.vitals.destroy();
+    this.game.events.emit('mf-menu-closed');
+    this.scene.stop();
+    return true;
   }
 
   /* ================= EQUIP ================= */

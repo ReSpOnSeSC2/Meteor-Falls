@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Character Animation Audit</title>
+<style>
+:root {
+  color-scheme: dark;
+  font-family: Arial, sans-serif;
+  background: #111318;
+  color: #f2f4f8;
+}
+body {
+  margin: 0;
+  padding: 18px;
+}
+header {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background: #111318;
+  border-bottom: 1px solid #333945;
+  padding: 0 0 12px;
+}
+h1 {
+  font-size: 20px;
+  margin: 0 0 10px;
+}
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+input, select, button {
+  background: #1b2029;
+  color: #f2f4f8;
+  border: 1px solid #3a4352;
+  border-radius: 4px;
+  padding: 6px 8px;
+}
+button {
+  cursor: pointer;
+}
+.summary {
+  margin: 10px 0 0;
+  color: #b8c2d0;
+  font-size: 13px;
+}
+.character {
+  border-top: 1px solid #333945;
+  padding: 14px 0 18px;
+}
+.character h2 {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  font-size: 17px;
+  margin: 0 0 10px;
+}
+.tag {
+  color: #111318;
+  background: #d7e3f4;
+  border-radius: 4px;
+  padding: 2px 5px;
+  font-size: 11px;
+}
+.tag.warn {
+  background: #ffd166;
+}
+.tag.review {
+  background: #8ecae6;
+}
+.tag.error {
+  background: #ff6b6b;
+}
+.issue-list {
+  margin: 0 0 12px;
+  padding-left: 18px;
+  color: #ffd9a3;
+  font-size: 13px;
+}
+.loops {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: 10px;
+}
+.loop {
+  background: #171b23;
+  border: 1px solid #303846;
+  border-radius: 6px;
+  padding: 8px;
+}
+.loop b {
+  display: block;
+  font-size: 12px;
+  color: #c9d3df;
+  margin-bottom: 6px;
+}
+.anim {
+  width: calc(96px * var(--scale));
+  height: calc(128px * var(--scale));
+  image-rendering: pixelated;
+  background-repeat: no-repeat;
+  background-size: calc(384px * var(--scale)) calc(1536px * var(--scale));
+  background-color: #232933;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+}
+.frames {
+  margin-top: 5px;
+  color: #8996a8;
+  font-size: 11px;
+}
+.hidden {
+  display: none;
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Character Animation Audit</h1>
+  <div class="controls">
+    <input id="search" placeholder="filter character">
+    <select id="scale">
+      <option value="1">1x</option>
+      <option value="1.5">1.5x</option>
+      <option value="2">2x</option>
+    </select>
+    <select id="speed">
+      <option value="180">slow</option>
+      <option value="120" selected>normal</option>
+      <option value="80">fast</option>
+    </select>
+    <button id="toggleIssues">show issues only</button>
+  </div>
+  <p class="summary" id="summary"></p>
+</header>
+<main id="app"></main>
+<script>
+const FRAME_W = 96;
+const FRAME_H = 128;
+const COLS = 4;
+const LOOPS = [{"key":"walk_down","label":"walk down","facing":"down","frames":[0,1,2,3]},{"key":"walk_left","label":"walk left","facing":"left","frames":[4,5,6,7]},{"key":"walk_right","label":"walk right","facing":"right","frames":[8,9,10,11]},{"key":"walk_up","label":"walk up","facing":"up","frames":[12,13,14,15]},{"key":"run_down","label":"run down","facing":"down","frames":[16,17]},{"key":"run_left","label":"run left","facing":"left","frames":[18,19]},{"key":"run_right","label":"run right","facing":"right","frames":[20,21]},{"key":"run_up","label":"run up","facing":"up","frames":[22,23]},{"key":"walk_downright","label":"walk down-right","facing":"downright","frames":[24,25,26]},{"key":"walk_downleft","label":"walk down-left","facing":"downleft","frames":[27,28,29]},{"key":"walk_upright","label":"walk up-right","facing":"upright","frames":[30,31,32]},{"key":"walk_upleft","label":"walk up-left","facing":"upleft","frames":[33,34,35]},{"key":"run_downright","label":"run down-right","facing":"downright","frames":[36,37]},{"key":"run_downleft","label":"run down-left","facing":"downleft","frames":[38,39]},{"key":"run_upright","label":"run up-right","facing":"upright","frames":[40,41]},{"key":"run_upleft","label":"run up-left","facing":"upleft","frames":[42,43]},{"key":"idle","label":"idle down","facing":"down","frames":[0,44,44,0,45,0]}];
+const ROWS = [{"id":"dorin","art":"dorin","role":"hero","src":"../../assets/art/characters/dorin_anim_46_4x.png","issues":[{"severity":"review","scope":"frame 18","message":"run left looks closer to downleft than left"},{"severity":"review","scope":"frame 19","message":"run left looks closer to downleft than left"},{"severity":"review","scope":"frame 20","message":"run right looks closer to downright than right"},{"severity":"review","scope":"frame 21","message":"run right looks closer to downright than right"}]},{"id":"faye","art":"mia","role":"hero","src":"../../assets/art/characters/mia_anim_46_4x.png","issues":[]},{"id":"milo","art":"milo","role":"hero","src":"../../assets/art/characters/milo_anim_46_4x.png","issues":[]},{"id":"pippa","art":"pippa","role":"hero","src":"../../assets/art/characters/pippa_anim_46_4x.png","issues":[{"severity":"review","scope":"frame 21","message":"run right looks closer to downright than right"},{"severity":"review","scope":"frame 31","message":"walk up-right looks closer to downright than upright"},{"severity":"review","scope":"frame 32","message":"walk up-right looks closer to up than upright"}]},{"id":"rex","art":"jay","role":"hero","src":"../../assets/art/characters/jay_anim_46_4x.png","issues":[{"severity":"review","scope":"frame 18","message":"run left looks closer to downright than left"},{"severity":"review","scope":"frame 19","message":"run left looks closer to downright than left"},{"severity":"review","scope":"frame 20","message":"run right looks closer to downleft than right"},{"severity":"review","scope":"frame 21","message":"run right looks closer to downleft than right"},{"severity":"review","scope":"frame 22","message":"run up looks closer to upright than up"},{"severity":"review","scope":"frame 23","message":"run up looks closer to downleft than up"}]},{"id":"ana","art":"ana","role":"npc","src":"../../assets/art/characters/ana_anim_46_4x.png","issues":[{"severity":"review","scope":"frame 18","message":"run left looks closer to upright than left"},{"severity":"review","scope":"frame 19","message":"run left looks closer to upright than left"},{"severity":"review","scope":"frame 20","message":"run right looks closer to left than right"},{"severity":"review","scope":"frame 21","message":"run right looks closer to left than right"},{"severity":"review","scope":"frame 40","message":"run up-right looks closer to downleft than upright"},{"severity":"review","scope":"frame 41","message":"run up-right looks closer to downleft than upright"}]},{"id":"arcadeOwner","art":"arcadeOwner","role":"npc","src":"../../assets/art/characters/arcadeOwner_anim_46_4x.png","issues":[]},{"id":"as_keeper","art":"as_keeper","role":"npc","src":"../../assets/art/characters/as_keeper_anim_46_4x.png","issues":[]},{"id":"as_provisioner","art":"as_provisioner","role":"npc","src":"../../assets/art/characters/as_provisioner_anim_46_4x.png","issues":[]},{"id":"as_radio","art":"as_radio","role":"npc","src":"../../assets/art/characters/as_radio_anim_46_4x.png","issues":[{"severity":"review","scope":"frame 5","message":"walk left looks closer to down than left"},{"severity":"review","scope":"frame 9","message":"walk right looks closer to up than right"},{"severity":"review","scope":"frame 18","message":"run left looks closer to down than left"},{"severity":"review","scope":"frame 20","message":"run right looks closer to up than right"}]},{"id":"aurora_busker","art":"aurora_busker","role":"npc","src":"../../assets/art/characters/aurora_busker_anim_46_4x.png","issues":[]},{"id":"baobab_healer","art":"baobab_healer","role":"npc","src":"../../assets/art/characters/baobab_healer_anim_46_4x.png","issues":[]},{"id":"bell_choir_child","art":"bell_choir_child","role":"npc","src":"../../assets/art/characters/bell_choir_child_anim_46_4x.png","issues":[]},{"id":"bootstep_shepherd","art":"bootstep_shepherd","role":"npc","src":"../../assets/art/characters/bootstep_shepherd_anim_46_4x.png","issues":[]},{"id":"busDriver","art":"busDriver","role":"npc","src":"../../assets/art/characters/busDriver_anim_46_4x.png","issues":[]},{"id":"caddy","art":"caddy","role":"npc","src":"../../assets/art/characters/caddy_anim_46_4x.png","issues":[]},{"id":"canteen_keeper","art":"canteen_keeper","role":"npc","src":"../../assets/art/characters/canteen_keeper_anim_46_4x.png","issues":[]},{"id":"captain","art":"captain","role":"npc","src":"../../assets/art/characters/captain_anim_46_4x.png","issues":[{"severity":"review","scope":"frame 3","message":"walk down looks closer to downright than down"}]},{"id":"chad","art":"chad","role":"npc","src":"../../assets/art/characters/chad_anim_46_4x.png","issues":[{"severity":"review","scope":"frame 5","message":"walk left looks closer to upleft than left"},{"severity":"review","scope":"frame 7","message":"walk left looks closer to upleft than left"},{"severity":"review","scope":"frame 9","message":"walk right looks closer to upright than right"},{"severity":"review","scope":"frame 11","message":"walk right looks closer to upright than right"},{"severity":"review","scope":"frame 18","message":"run left looks closer to upleft than left"},{"severity":"review","scope":"frame 19","message":"run left looks closer to upleft than left"},{"severity":"review","scope":"frame 20","message":"run right looks closer to upright than right"},{"severity":"review","scope":"frame 21","message":"run right looks closer to upright than right"}]},{"id":"cp_dabbawala","art":"cp_dabbawala","role":"npc","src":"../../assets/art/characters/cp_dabbawala_anim_46_4x.png","issues":[{"severity":"review","scope":"frame 3","message":"walk down looks closer to downleft than down"},{"severity":"review","scope":"frame 15","message":"walk up looks closer to downleft than up"},{"severity":"review","scope":"frame 17","message":"run down looks closer to downleft than down"},{"severity":"review","scope":"frame 23","message":"run up looks closer to downleft than up"}]},{"id":"cp_spice_merchant","art":"cp_spice_merchant","role":"npc","src":"../../assets/art/characters/cp_spice_merchant_anim_46_4x.png","issues":[]},{"id":"cp_stationmaster","art":"cp_stationmaster","role":"npc","src":"../../assets/art/characters/cp_stationmaster_anim_46_4x.png","issues":[{"severity":"review","scope":"frame 3","message":"walk down looks closer to up than down"},{"severity":"review","scope":"frame 15","message":"walk up looks closer to down than up"},{"severity":"review","scope":"frame 17","message":"run down looks closer to up than down"},{"severity":"review","scope":"frame 23","message":"run up looks closer to down than up"},{"severity":"review","scope":"frame 25","message":"walk down-right looks closer to down than downright"},{"severity":"review","scope":"frame 36","message":"run down-right looks closer to down than downright"}]},{"id":"cp_usher","art":"cp_usher","role":"npc","src":"../../assets/art/characters/cp_usher_anim_46_4x.png","issues":[]},{"id":"curator","art":"curator","role":"npc","src":"../../assets/art/characters/curator_anim_46_4x.png","issues":[]},{"id":"deliKeeper","art":"deliKeeper","role":"npc","src":"../../assets/art/characters/deliKeeper_anim_46_4x.png","issues":[]},{"id":"docBrickton","art":"docBrickton","role":"npc","src":"../../assets/art/characters/docBrickton_anim_46_4x.png","issues":[]},{"id":"dockworker","art":"dockworker","role":"npc","src":"../../assets/art/characters/dockworker_anim_46_4x.png","issues":[]},{"id":"docPuerto","art":"docPuerto","role":"npc","src":"../../assets/art/characters/docPuerto_anim_46_4x.png","issues":[]},{"id":"docValle","art":"docValle","role":"npc","src":"../../assets/art/characters/docValle_anim_46_4x.png","issues":[]},{"id":"drugClerk","art":"drugClerk","role":"npc","src":"../../assets/art/characters/drugClerk_anim_46_4x.png","issues":[]},{"id":"fernLady","art":"fernLady","role":"npc","src":"../../assets/art/characters/fernLady_anim_46_4x.png","issues":[]},{"id":"fjord_nurse","art":"fjord_nurse","role":"npc","src":"../../assets/art/characters/fjord_nurse_anim_46_4x.png","issues":[]},{"id":"glint","art":"glint","role":"npc","src":"../../assets/art/characters/glint_anim_46_4x.png","issues":[]},{"id":"grand_duchess_millimetta","art":"grand_duchess_millimetta","role":"npc","src":"../../assets/art/characters/grand_duchess_millimetta_anim_46_4x.png","issues":[]},{"id":"grayCommuter","art":"grayCommuter","role":"npc","src":"../../assets/art/characters/grayCommuter_anim_46_4x.png","issues":[]},{"id":"kvisthavn_fisher","art":"kvisthavn_fisher","role":"npc","src":"../../assets/art/characters/kvisthavn_fisher_anim_46_4x.png","issues":[]},{"id":"kvisthavn_shopkeeper","art":"kvisthavn_shopkeeper","role":"npc","src":"../../assets/art/characters/kvisthavn_shopkeeper_anim_46_4x.png","issues":[]},{"id":"laughing_ruins_guide","art":"laughing_ruins_guide","role":"npc","src":"../../assets/art/characters/laughing_ruins_guide_anim_46_4x.png","issues":[]},{"id":"lh_calligrapher","art":"lh_calligrapher","role":"npc","src":"../../assets/art/characters/lh_calligrapher_anim_46_4x.png","issues":[]},{"id":"lh_harbor_master","art":"lh_harbor_master","role":"npc","src":"../../assets/art/characters/lh_harbor_master_anim_46_4x.png","issues":[]},{"id":"lh_lantern_girl","art":"lh_lantern_girl","role":"npc","src":"../../assets/art/characters/lh_lantern_girl_anim_46_4x.png","issues":[{"severity":"review","scope":"up diagonals","message":"standing pair is not mirror-compatible (0.278)"}]},{"id":"lh_tea_monk","art":"lh_tea_monk","role":"npc","src":"../../assets/art/characters/lh_tea_monk_anim_46_4x.png","issues":[]},{"id":"lh_yak_handler","art":"lh_yak_handler","role":"npc","src":"../../assets/art/characters/lh_yak_handler_anim_46_4x.png","issues":[]},{"id":"lilleby_giant_child","art":"lilleby_giant_child","role":"npc","src":"../../assets/art/characters/lilleby_giant_child_anim_46_4x.png","issues":[]},{"id":"lilleby_undertaker","art":"lilleby_undertaker","role":"npc","src":"../../assets/art/characters/lilleby_undertaker_anim_46_4x.png","issues":[]},{"id":"lotus_bargeman","art":"lotus_bargeman","role":"npc","src":"../../assets/art/characters/lotus_bargeman_anim_46_4x.png","issues":[]},{"id":"manager","art":"manager","role":"npc","src":"../../assets/art/characters/manager_anim_46_4x.png","issues":[]},{"id":"martClerk","art":"martClerk","role":"npc","src":"../../assets/art/characters/martClerk_anim_46_4x.png","issues":[]},{"id":"matchbox_herald","art":"matchbox_herald","role":"npc","src":"../../assets/art/characters/matchbox_herald_anim_46_4x.png","issues":[]},{"id":"mayor_of_lilleby","art":"mayor_of_lilleby","role":"npc","src":"../../assets/art/characters/mayor_of_lilleby_anim_46_4x.png","issues":[]},{"id":"mercadoKeeper","art":"mercadoKeeper","role":"npc","src":"../../assets/art/characters/mercadoKeeper_anim_46_4x.png","issues":[]},{"id":"ml_local","art":"ml_local","role":"npc","src":"../../assets/art/characters/ml_local_anim_46_4x.png","issues":[]},{"id":"ml_pemberton","art":"ml_pemberton","role":"npc","src":"../../assets/art/characters/ml_pemberton_anim_46_4x.png","issues":[]},{"id":"ml_vendor","art":"ml_vendor","role":"npc","src":"../../assets/art/characters/ml_vendor_anim_46_4x.png","issues":[]},{"id":"mom","art":"mom","role":"npc","src":"../../assets/art/characters/mom_anim_46_4x.png","issues":[]},{"id":"mr_click","art":"mr_click","role":"npc","src":"../../assets/art/characters/mr_click_anim_46_4x.png","issues":[]},{"id":"mrPlummer","art":"mrPlummer","role":"npc","src":"../../assets/art/characters/mrPlummer_anim_46_4x.png","issues":[]},{"id":"mrsPemmel","art":"mrsPemmel","role":"npc","src":"../../assets/art/characters/mrsPemmel_anim_46_4x.png","issues":[]},{"id":"mt_shu_elder","art":"mt_shu_elder","role":"npc","src":"../../assets/art/characters/mt_shu_elder_anim_46_4x.png","issues":[]},{"id":"npc_bert","art":"npc_bert","role":"npc","src":"../../assets/art/characters/npc_bert_anim_46_4x.png","issues":[]},{"id":"npc_borden","art":"npc_borden","role":"npc","src":"../../assets/art/characters/npc_borden_anim_46_4x.png","issues":[{"severity":"review","scope":"frame 3","message":"walk down looks closer to up than down"}]},{"id":"npc_clerk","art":"npc_clerk","role":"npc","src":"../../assets/art/characters/npc_clerk_anim_46_4x.png","issues":[]},{"id":"npc_depot_clerk","art":"npc_depot_clerk","role":"npc","src":"../../assets/art/characters/npc_depot_clerk_anim_46_4x.png","issues":[]},{"id":"npc_hodgkin","art":"npc_hodgkin","role":"npc","src":"../../assets/art/characters/npc_hodgkin_anim_46_4x.png","issues":[]},{"id":"npc_realtor","art":"npc_realtor","role":"npc","src":"../../assets/art/characters/npc_realtor_anim_46_4x.png","issues":[{"severity":"review","scope":"frame 3","message":"walk down looks closer to up than down"},{"severity":"review","scope":"frame 15","message":"walk up looks closer to down than up"}]},{"id":"npc_waitress","art":"npc_waitress","role":"npc","src":"../../assets/art/characters/npc_waitress_anim_46_4x.png","issues":[{"severity":"review","scope":"frame 3","message":"walk down looks closer to up than down"},{"severity":"review","scope":"frame 15","message":"walk up looks closer to down than up"},{"severity":"review","scope":"down diagonals","message":"standing pair is not mirror-compatible (0.183)"}]},{"id":"nurse","art":"nurse","role":"npc","src":"../../assets/art/characters/nurse_anim_46_4x.png","issues":[]},{"id":"oldTimer","art":"oldTimer","role":"npc","src":"../../assets/art/characters/oldTimer_anim_46_4x.png","issues":[]},{"id":"pajamaKid","art":"pajamaKid","role":"npc","src":"../../assets/art/characters/pajamaKid_anim_46_4x.png","issues":[]},{"id":"permit","art":"permit","role":"npc","src":"../../assets/art/characters/permit_anim_46_4x.png","issues":[]},{"id":"pigeonKid","art":"pigeonKid","role":"npc","src":"../../assets/art/characters/pigeonKid_anim_46_4x.png","issues":[]},{"id":"priestOtter","art":"priestOtter","role":"npc","src":"../../assets/art/characters/priestOtter_anim_46_4x.png","issues":[]},{"id":"priestValle","art":"priestValle","role":"npc","src":"../../assets/art/characters/priestValle_anim_46_4x.png","issues":[]},{"id":"quarterMan","art":"quarterMan","role":"npc","src":"../../assets/art/characters/quarterMan_anim_46_4x.png","issues":[]},{"id":"royal_census_taker","art":"royal_census_taker","role":"npc","src":"../../assets/art/characters/royal_census_taker_anim_46_4x.png","issues":[]},{"id":"senora","art":"senora","role":"npc","src":"../../assets/art/characters/senora_anim_46_4x.png","issues":[{"severity":"review","scope":"frame 7","message":"walk left looks closer to right than left"},{"severity":"review","scope":"frame 11","message":"walk right looks closer to left than right"},{"severity":"review","scope":"frame 19","message":"run left looks closer to right than left"},{"severity":"review","scope":"frame 21","message":"run right looks closer to left than right"}]},{"id":"sidewalkCritic","art":"sidewalkCritic","role":"npc","src":"../../assets/art/characters/sidewalkCritic_anim_46_4x.png","issues":[]},{"id":"sigrid_spectacles","art":"sigrid_spectacles","role":"npc","src":"../../assets/art/characters/sigrid_spectacles_anim_46_4x.png","issues":[]},{"id":"sleepwalker_miner","art":"sleepwalker_miner","role":"npc","src":"../../assets/art/characters/sleepwalker_miner_anim_46_4x.png","issues":[]},{"id":"smiler","art":"smiler","role":"npc","src":"../../assets/art/characters/smiler_anim_46_4x.png","issues":[]},{"id":"smilerB","art":"smilerB","role":"npc","src":"../../assets/art/characters/smilerB_anim_46_4x.png","issues":[]},{"id":"spool_engineer","art":"spool_engineer","role":"npc","src":"../../assets/art/characters/spool_engineer_anim_46_4x.png","issues":[]},{"id":"teacup_innkeeper","art":"teacup_innkeeper","role":"npc","src":"../../assets/art/characters/teacup_innkeeper_anim_46_4x.png","issues":[]},{"id":"tiny_postmaster","art":"tiny_postmaster","role":"npc","src":"../../assets/art/characters/tiny_postmaster_anim_46_4x.png","issues":[]},{"id":"tomas","art":"tomas","role":"npc","src":"../../assets/art/characters/tomas_anim_46_4x.png","issues":[]},{"id":"uncleBert","art":"uncleBert","role":"npc","src":"../../assets/art/characters/uncleBert_anim_46_4x.png","issues":[]},{"id":"vivi","art":"vivi","role":"npc","src":"../../assets/art/characters/vivi_anim_46_4x.png","issues":[]},{"id":"vs_buni","art":"vs_buni","role":"npc","src":"../../assets/art/characters/vs_buni_anim_46_4x.png","issues":[]},{"id":"vs_kid","art":"vs_kid","role":"npc","src":"../../assets/art/characters/vs_kid_anim_46_4x.png","issues":[]},{"id":"vs_provisioner","art":"vs_provisioner","role":"npc","src":"../../assets/art/characters/vs_provisioner_anim_46_4x.png","issues":[]},{"id":"vs_shepherd","art":"vs_shepherd","role":"npc","src":"../../assets/art/characters/vs_shepherd_anim_46_4x.png","issues":[]},{"id":"whistle_guard_npc","art":"whistle_guard_npc","role":"npc","src":"../../assets/art/characters/whistle_guard_npc_anim_46_4x.png","issues":[]},{"id":"wisherA","art":"wisherA","role":"npc","src":"../../assets/art/characters/wisherA_anim_46_4x.png","issues":[]},{"id":"wisherB","art":"wisherB","role":"npc","src":"../../assets/art/characters/wisherB_anim_46_4x.png","issues":[]},{"id":"wisherC","art":"wisherC","role":"npc","src":"../../assets/art/characters/wisherC_anim_46_4x.png","issues":[]},{"id":"wokeA","art":"wokeA","role":"npc","src":"../../assets/art/characters/wokeA_anim_46_4x.png","issues":[{"severity":"review","scope":"frame 3","message":"walk down looks closer to downright than down"}]},{"id":"wokeB","art":"wokeB","role":"npc","src":"../../assets/art/characters/wokeB_anim_46_4x.png","issues":[]},{"id":"wokeC","art":"wokeC","role":"npc","src":"../../assets/art/characters/wokeC_anim_46_4x.png","issues":[]},{"id":"zanzibel_dockmaster","art":"zanzibel_dockmaster","role":"npc","src":"../../assets/art/characters/zanzibel_dockmaster_anim_46_4x.png","issues":[]},{"id":"zanzibel_market_queen","art":"zanzibel_market_queen","role":"npc","src":"../../assets/art/characters/zanzibel_market_queen_anim_46_4x.png","issues":[{"severity":"review","scope":"frame 3","message":"walk down looks closer to downright than down"},{"severity":"review","scope":"frame 15","message":"walk up looks closer to upright than up"},{"severity":"review","scope":"frame 17","message":"run down looks closer to downright than down"},{"severity":"review","scope":"frame 23","message":"run up looks closer to upright than up"}]}];
+let frameTick = 0;
+let issuesOnly = false;
+const app = document.getElementById('app');
+const search = document.getElementById('search');
+const scale = document.getElementById('scale');
+const speed = document.getElementById('speed');
+const summary = document.getElementById('summary');
+const toggleIssues = document.getElementById('toggleIssues');
+
+function framePos(frame, s) {
+  const x = (frame % COLS) * FRAME_W * s;
+  const y = Math.floor(frame / COLS) * FRAME_H * s;
+  return '-' + x + 'px -' + y + 'px';
+}
+
+function render() {
+  const q = search.value.trim().toLowerCase();
+  const s = Number(scale.value);
+  app.style.setProperty('--scale', s);
+  app.textContent = '';
+  let visible = 0;
+  const totalIssues = ROWS.reduce((n, row) => n + row.issues.length, 0);
+  for (const row of ROWS) {
+    if (q && !row.id.toLowerCase().includes(q) && !row.art.toLowerCase().includes(q)) continue;
+    if (issuesOnly && row.issues.length === 0) continue;
+    visible++;
+    const section = document.createElement('section');
+    section.className = 'character';
+    const h2 = document.createElement('h2');
+    h2.innerHTML = '<span>' + escapeHtml(row.id) + '</span><span class="tag">' + escapeHtml(row.role) + '</span><span class="tag ' + issueTag(row.issues) + '">' + row.issues.length + ' issues</span>';
+    section.appendChild(h2);
+    if (row.issues.length) {
+      const ul = document.createElement('ul');
+      ul.className = 'issue-list';
+      for (const issue of row.issues) {
+        const li = document.createElement('li');
+        li.textContent = issue.severity.toUpperCase() + ' ' + issue.scope + ': ' + issue.message;
+        ul.appendChild(li);
+      }
+      section.appendChild(ul);
+    }
+    const loops = document.createElement('div');
+    loops.className = 'loops';
+    for (const loop of LOOPS) {
+      const card = document.createElement('div');
+      card.className = 'loop';
+      const title = document.createElement('b');
+      title.textContent = loop.label;
+      const anim = document.createElement('div');
+      anim.className = 'anim';
+      anim.dataset.frames = loop.frames.join(',');
+      anim.style.backgroundImage = 'url("' + row.src + '")';
+      const frames = document.createElement('div');
+      frames.className = 'frames';
+      frames.textContent = loop.frames.join(', ');
+      card.appendChild(title);
+      card.appendChild(anim);
+      card.appendChild(frames);
+      loops.appendChild(card);
+    }
+    section.appendChild(loops);
+    app.appendChild(section);
+  }
+  summary.textContent = visible + ' visible / ' + ROWS.length + ' sheets, ' + totalIssues + ' total issues';
+  advanceFrames();
+}
+
+function escapeHtml(text) {
+  return String(text).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+}
+
+function issueTag(issues) {
+  if (issues.some((issue) => issue.severity === 'error')) return 'error';
+  if (issues.some((issue) => issue.severity === 'warn')) return 'warn';
+  if (issues.some((issue) => issue.severity === 'review')) return 'review';
+  return '';
+}
+
+function advanceFrames() {
+  const s = Number(scale.value);
+  document.querySelectorAll('.anim').forEach((el) => {
+    const frames = el.dataset.frames.split(',').map(Number);
+    const frame = frames[frameTick % frames.length];
+    el.style.backgroundSize = (384 * s) + 'px ' + (1536 * s) + 'px';
+    el.style.backgroundPosition = framePos(frame, s);
+  });
+}
+
+let timer = null;
+function restartTimer() {
+  if (timer) clearInterval(timer);
+  timer = setInterval(() => {
+    frameTick++;
+    advanceFrames();
+  }, Number(speed.value));
+}
+
+search.addEventListener('input', render);
+scale.addEventListener('change', render);
+speed.addEventListener('change', restartTimer);
+toggleIssues.addEventListener('click', () => {
+  issuesOnly = !issuesOnly;
+  toggleIssues.textContent = issuesOnly ? 'show all' : 'show issues only';
+  render();
+});
+render();
+restartTimer();
+</script>
+</body>
+</html>

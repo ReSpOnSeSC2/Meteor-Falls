@@ -107,7 +107,9 @@ export function itemEffectLine(item: ItemDef): string {
     case 'charm': return `Luck +${item.luck ?? 0} when equipped`;
     case 'food': return `Heals about ${item.heal ?? 0} HP`;
     case 'pp': return `Restores about ${item.ppHeal ?? 0} PP`;
-    case 'cure': return item.cures && item.cures.length ? `Cures ${item.cures.join(', ')}` : 'Settles what ails you';
+    case 'cure': return item.cures && item.cures.length
+      ? `Cures ${item.cures.map((status) => status === 'mushroomize' ? 'Mushroomized' : status).join(', ')}`
+      : 'Settles what ails you';
     case 'basket': return 'Open it at a picnic table to share a meal';
     case 'tonic': return item.boost ? `Permanently raises ${boostStatLabel(item.boost.stat)} by ${item.boost.amount}` : 'A permanent boost';
     case 'valuable': return item.price > 0 ? `Worth $${sellPrice(item)} at a shop counter` : 'Worth something to the right person';
@@ -3406,28 +3408,26 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       price: 15,
       text: 'A coil of sandalwood smoke; breathe the curl of it and the mind unclenches one finger at a time. Restores about 20 PP.',
     }),
-    // — cures for the SPORE FOREST (§A4.8): the standalone Mushroomize status is
-    //   deferred, so the Spore Puffer's "mushroomize stand-in" is dealt as the
-    //   existing asleep/crying spore-daze (see enemies.ts spore_puffer) — a
-    //   consumable spore antidote AND the SCROLL OF CALM (§A10 #17, REUSABLE) —
+    // — cures for the SPORE FOREST (§A4.8): Mushroomized is the stable
+    //   `mushroomize` token. The antidote is consumed; the Scroll is reusable. —
     I({
       id: 'spore_antidote',
       name: 'Spore Antidote',
       kind: 'cure',
-      cures: ['asleep', 'crying'],
+      cures: ['mushroomize'],
       usableInBattle: true,
       price: 40,
-      text: 'A bitter doctor-grade draught that un-scrambles a head full of Spore Forest. The controls settle; the colours behave. Clears the spore-daze.',
+      text: 'A bitter doctor-grade draught that cures Mushroomized. The controls settle; the colours behave. One dose is consumed when used.',
     }),
     I({
       id: 'scroll_of_calm',
       name: 'Scroll of Calm',
       kind: 'cure',
-      cures: ['asleep', 'crying'],
+      cures: ['mushroomize'],
       reusable: true,
       usableInBattle: true,
       price: 0,
-      text: "The Mt. Shu calligrapher's gift for fetching her three brushes: one unrolled breath of a single grounding stroke, and the mushroom-muddle clears. Read it as often as you need — it never runs out.",
+      text: "The Mt. Shu calligrapher's gift for fetching her three brushes: one unrolled breath cures Mushroomized. Read it as often as you need — it never runs out.",
     }),
     // — TONICS (ginseng for the long climb; the elder's discipline, made to keep) —
     I({

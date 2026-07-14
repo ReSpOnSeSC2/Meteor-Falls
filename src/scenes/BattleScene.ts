@@ -81,16 +81,25 @@
  *    the timeline drain folds in event-born inners (the S11b fix).
  */
 import Phaser from 'phaser';
-import { ENEMIES, introLine, type EnemyDef, type EnemyMove } from '../data/enemies';
+import {
+  ENEMIES,
+  ORIGAMI_REFOLD_TURNS,
+  enemyElementProfile,
+  introLine,
+  type EnemyDef,
+  type EnemyMove,
+} from '../data/enemies';
 import { ABILITIES, groupAbilityFamilies, rollPray, PRAY_TEXT, type AbilityDef, type PrayTier } from '../data/abilities';
 import { ITEMS, consumesOnUse, spiceFoodHeal } from '../data/items';
 import { BATTLE_TEXT, DIALOGUE } from '../data/dialogue';
 import { BOSS_SCRIPTS } from '../data/bosses';
 import { AWAKENINGS } from '../data/awakenings';
+import { CH8_WORLD } from '../data/maps_ch8';
 import { GS, expForLevel, type HeroState } from '../engine/state';
 // S21 (ADR-126): Mia's high-tier PRAY refuels Jay's Held Breath (faith owns the rewind's supply)
 import { breathsLeft, refillBreath, puppetLocked } from '../engine/echo';
 import { locketAvailable } from '../engine/ch7';
+import { applyMushroomize, cureMushroomize } from '../engine/mushroomize';
 // S21 (ADR-130): the IRON path can WITHHOLD a hero's awakened ultimate (Dorin's Comet Ω)
 import { isWithheldAbility } from '../engine/party';
 import { MAX_BREATHS } from '../data/echoes';
@@ -232,9 +241,14 @@ interface EnemyUnit {
    *  Pickpocket Parrot's pending-cash hoard (recovered on its defeat) */
   gilded: number;
   shield: number;
+  /** Chapter 8: turns remaining in the Origami Warrior's reversed elemental
+   * fold. Damage and scouting read the same live profile. */
+  refolded: number;
   stolenCash: number;
   /** S14 phase machine: this unit was summoned mid-battle (bothSummonsDead) */
   summoned: boolean;
+  /** Chapter 8: Porcelain Warlord's same-roster split is thresholded and once. */
+  splitDone: boolean;
   /** S-Mia: Fire's DoT (turns of `burn`), Freeze's skip-lock (`frozen`, 1 turn),
    *  Hush Hex's ×1.3 incoming amplifier (`exposed`), and Milo/Pippa's focus tag
    *  (`marked`, ×1.25) — `exposed` and `marked` stack multiplicatively. */
@@ -626,8 +640,10 @@ export class BattleScene extends Phaser.Scene {
         wear: 0,
         gilded: 0,
         shield: 0,
+        refolded: 0,
         stolenCash: 0,
         summoned: true,
+        splitDone: false,
         puppet: 0,
         burn: 0,
         frozen: 0,
@@ -922,8 +938,10 @@ export class BattleScene extends Phaser.Scene {
         wear: 0,
         gilded: 0,
         shield: 0,
+        refolded: 0,
         stolenCash: 0,
         summoned: false,
+        splitDone: false,
         puppet: 0,
         burn: 0,
         frozen: 0,
@@ -2279,8 +2297,9 @@ export class BattleScene extends Phaser.Scene {
       // distinct from Jay's incoming mitigateIncoming). `holy` (Starsong) PIERCES
       // a slice of resistance — the Embers' light is the Hush's bane.
       const holy = ab.element === 'holy';
-      const weak = ab.element !== 'none' && ab.element !== 'physical' && t.def.weakness.includes(ab.element as 'fire' | 'freeze' | 'volt' | 'holy');
-      const resist = ab.element !== 'none' && ab.element !== 'physical' && (t.def.resists?.includes(ab.element as 'fire' | 'freeze' | 'volt' | 'holy') ?? false);
+      const elementProfile = enemyElementProfile(t.def, t.refolded > 0);
+      const weak = ab.element !== 'none' && ab.element !== 'physical' && elementProfile.weakness.includes(ab.element as 'fire' | 'freeze' | 'volt' | 'holy');
+      const resist = ab.element !== 'none' && ab.element !== 'physical' && elementProfile.resists.includes(ab.element as 'fire' | 'freeze' | 'volt' | 'holy');
       // gadgets are machines: flat power, no Vibe scaling, defense pierced
       // ADR-134 — Milo's siege carries a %-max-HP rider so his flat tech SCALES late
       // (a 2% bite off a 95k boss is 1,900 that 360 flat could never be) — never dead weight.
@@ -2374,14 +2393,15 @@ export class BattleScene extends Phaser.Scene {
    *  panel shows the read for the rest of the fight — scouting is a real first-turn
    *  decision, not a wasted turn. Shared by Spy and Scope (Spy++). */
   private async revealColor(name: string, e: EnemyUnit): Promise<void> {
+    const profile = enemyElementProfile(e.def, e.refolded > 0);
     await this.print(this.fill(BATTLE_TEXT.spy_report, name, e, String(e.hp)));
     await this.print(
-      e.def.weakness.length > 0
-        ? this.fill(BATTLE_TEXT.spy_weak, name, e, e.def.weakness.join(', '))
+      profile.weakness.length > 0
+        ? this.fill(BATTLE_TEXT.spy_weak, name, e, profile.weakness.join(', '))
         : this.fill(BATTLE_TEXT.spy_no_weak, name, e),
     );
-    if (e.def.resists && e.def.resists.length > 0)
-      await this.print(this.fill(BATTLE_TEXT.spy_resist, name, e, e.def.resists.join(', ')));
+    if (profile.resists.length > 0)
+      await this.print(this.fill(BATTLE_TEXT.spy_resist, name, e, profile.resists.join(', ')));
     if (e.def.absorbs && e.def.absorbs.length > 0)
       await this.print(this.fill(BATTLE_TEXT.spy_absorb, name, e, e.def.absorbs.join(', ')));
     e.scouted = true;
@@ -2641,6 +2661,23 @@ export class BattleScene extends Phaser.Scene {
       }
       return true;
     }
+    // Chapter 8 field ailment: Mushroomized is one persistent party/world
+    // state, not a per-card combat counter. Both the consumable antidote and
+    // reusable Scroll of Calm clear it without opening the ally picker.
+    if (item.kind === 'cure' && item.cures?.includes('mushroomize')) {
+      const result = cureMushroomize(GS.data.mushroomize);
+      if (!result.cured) {
+        await this.print(`The ${item.name} waits. Nothing is Mushroomized right now.`);
+        return true;
+      }
+      if (consumesOnUse(item)) GS.removeItem(itemId, h.hero.id);
+      GS.data.mushroomize = result.state;
+      h.bust.poseFor('rummage', 360);
+      if (fxKey) await this.fx.play(fxKey, { caster: this.cardTarget(h), targets: [this.cardTarget(h)] });
+      AUDIO.sfx('heal');
+      await this.print(`${name} cleared the Mushroomized muddle!`);
+      return true;
+    }
     // S14 (§A8 cures): the Hanky dries Crying, the Aloe Leaf cools Sunburn —
     // battle-usable status cures aimed by the ally picker
     if (item.kind === 'cure' && item.cures && !item.cures.includes('down')) {
@@ -2699,7 +2736,7 @@ export class BattleScene extends Phaser.Scene {
       }
       await this.print(`${name} threw the ${item.name}!`);
       if (onStage) void this.stage.strike('throwB', 380);
-      const weak = target.def.weakness.includes('salt');
+      const weak = enemyElementProfile(target.def, target.refolded > 0).weakness.includes('salt');
       // the thrown arc lands — and visibly snaps the Tick's latch (§A6)
       if (fxKey) {
         await this.fx.play(fxKey, {
@@ -3285,6 +3322,27 @@ export class BattleScene extends Phaser.Scene {
           if (move.status === 'crying') target.status.crying = 3;
           if (move.status === 'asleep') target.status.asleep = 2;
           if (move.status === 'paralyzed') target.status.paralyzed = 3; // §A7 Ch.2: the Jitterbug
+          if (move.status === 'mushroomize') {
+            const safe = CH8_WORLD.sporeForest.recovery;
+            const recovery = GS.data.mushroomize.recovery ?? {
+              map: 'spore_forest',
+              x: s(safe.x * 16 + 8),
+              y: s(safe.y * 16 + 12),
+              facing: safe.facing,
+            };
+            const wasActive = GS.data.mushroomize.active;
+            GS.data.mushroomize = applyMushroomize(GS.data.mushroomize, {
+              // Spore Puffer's authored cloud is the clockwise strain. Field
+              // belts own phases 0/1/2 by deterministic CH8_WORLD hazard id;
+              // neither source samples RNG or wall-clock state.
+              phase: 0,
+              source: e.def.id,
+              recovery,
+            });
+            if (!wasActive) {
+              await this.print(`${target.hero.name} is Mushroomized — every direction feels folded wrong!`);
+            }
+          }
           if (move.status === 'productive') {
             target.status.productive = 3;
             await this.print(`${target.hero.name} feels horribly PRODUCTIVE! Offense fell!`);
@@ -3331,8 +3389,17 @@ export class BattleScene extends Phaser.Scene {
           break;
         }
         case 'shield': {
-          // §A7 Ch.2 — the Step-Mask casts Shield on itself (halves physical)
+          // Generic Shield halves physical damage.
           e.shield = 4;
+          await this.fx.play('shield_snap', { targets: [this.foeTarget(e)] });
+          break;
+        }
+        case 'refold': {
+          // Chapter 8: Refold is a real elemental state, not merely flavor on
+          // the generic shield. The physical guard and reversed read share a
+          // single visible window and relax together.
+          e.shield = ORIGAMI_REFOLD_TURNS;
+          e.refolded = ORIGAMI_REFOLD_TURNS;
           await this.fx.play('shield_snap', { targets: [this.foeTarget(e)] });
           break;
         }
@@ -3348,6 +3415,13 @@ export class BattleScene extends Phaser.Scene {
               this.fx.popup(a.spr.x, a.spr.y - a.spr.displayHeight / 2 - s(2), `+${amt}`, RAMP.GRASS);
             }
             AUDIO.sfx('heal');
+          }
+          break;
+        }
+        case 'split': {
+          if (!e.splitDone && e.hp <= e.def.hp / 2 && move.summon) {
+            e.splitDone = true;
+            await this.summonUnits(e, move.summon, move.count ?? 2);
           }
           break;
         }
@@ -3397,7 +3471,9 @@ export class BattleScene extends Phaser.Scene {
 
   private pickMove(e: EnemyUnit): EnemyMove {
     const latchedAlready = this.heroes.some((h) => h.latched);
-    const moves = eligibleEnemyMoves(e.def.moves, latchedAlready, e.hushed > 0);
+    const moves = eligibleEnemyMoves(e.def.moves, latchedAlready, e.hushed > 0).filter((move) =>
+      move.kind !== 'split' || (!e.splitDone && e.hp <= e.def.hp / 2),
+    );
     const total = moves.reduce((a, m) => a + m.weight, 0);
     let r = Math.random() * total;
     for (const m of moves) {
@@ -3471,6 +3547,9 @@ export class BattleScene extends Phaser.Scene {
       if (e.crying > 0) e.crying--;
       if (e.hushed > 0) e.hushed--;
       if (e.shield > 0) e.shield--;
+      if (e.refolded > 0 && --e.refolded === 0) {
+        await this.print(`${e.def.name}'s creases relaxed. Its FIRE fold showed again.`);
+      }
       if (e.paralyzed > 0 && --e.paralyzed === 0) await this.print(this.fill(BATTLE_TEXT.enemy_paralyzed_off, '', e));
       // S-Mia BURN: Fire's DoT chips at end of round (~6% max HP, min 4) — and
       // the chip rides `exposed` (the chip-and-amplify combo) through damageEnemy.

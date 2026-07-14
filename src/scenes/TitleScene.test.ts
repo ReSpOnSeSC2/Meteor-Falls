@@ -15,9 +15,13 @@ vi.mock('phaser', () => {
 
 let title: typeof import('./TitleScene');
 let maps: typeof import('../data/maps');
+let chapter8Maps: typeof import('../data/maps_ch8');
+let tiles: typeof import('../spritegen/tiles');
 
 beforeAll(async () => {
-  [title, maps] = await Promise.all([import('./TitleScene'), import('../data/maps')]);
+  [title, maps, chapter8Maps, tiles] = await Promise.all([
+    import('./TitleScene'), import('../data/maps'), import('../data/maps_ch8'), import('../spritegen/tiles'),
+  ]);
 });
 
 describe('Chapter 3 dev-map boots', () => {
@@ -263,5 +267,165 @@ describe('Chapter 7 dev-map boots', () => {
     expect(title.chapter7DevSpawn('palace_throne', 'boss')).toEqual(feet(44, 41, 'up'));
     expect(title.chapter7DevSpawn('palace_throne', 'postBoss')).toEqual(feet(44, 37, 'up'));
     expect(title.chapter7DevSpawn('palace_throne', 'complete')).toEqual(feet(44, 9, 'up'));
+  });
+});
+
+describe('Chapter 8 dev-map boots', () => {
+  const states = [
+    'arrival', 'city', 'barge', 'trustFree', 'trustStrings', 'mushroomized',
+    'forestCured', 'brushes', 'yak', 'temple', 'boss', 'postBoss', 'complete',
+  ] as const;
+
+  it('exports the exact four-map roster and exact thirteen-state profile vocabulary', () => {
+    expect(title.CH8_DEV_MAP_IDS).toEqual([
+      'lotus_harbor', 'bamboo_road', 'spore_forest', 'mt_shu_temple',
+    ]);
+    expect(title.CH8_DEV_STATES).toEqual(states);
+    expect(title.chapter8DevProfile(null).state).toBe('city');
+    expect(title.chapter8DevProfile('not-a-state').state).toBe('city');
+  });
+
+  it.each(states)('builds a coherent level-40 %s profile with seven Embers until completion', (state) => {
+    const profile = title.chapter8DevProfile(state);
+    expect(profile.state).toBe(state);
+    expect(profile.level).toBe(40);
+    expect(profile.embers).toBe(state === 'complete' ? 8 : 7);
+    expect(profile.flags).toEqual(expect.arrayContaining([
+      'ember1', 'ember2', 'ember3', 'ember4', 'ember5', 'ember6', 'ember7',
+      'ch7_complete', 'cobra_raja_defeated', 'pippa_joined', 'held_breath_unlocked',
+    ]));
+    expect(new Set(profile.flags).size).toBe(profile.flags.length);
+    expect(new Set(profile.keyItems).size).toBe(profile.keyItems.length);
+    expect(new Set(profile.items).size).toBe(profile.items.length);
+    expect(profile.flags).not.toContain('ch9_arrived');
+    expect(profile.flags).not.toContain('ch9_complete');
+    expect(profile.callers.filter((caller) => caller.quest === 'thread:clicker')).toHaveLength(
+      profile.flags.includes('thread_clicker_clearing') ? 1 : 0,
+    );
+  });
+
+  it('models only the two named Trust profiles as choices and keeps Pippa until live resolution', () => {
+    const free = title.chapter8DevProfile('trustFree');
+    expect(free.flags).toEqual(expect.arrayContaining(['ch6_string_decided', 'axis_trust_free']));
+    expect(free.flags).not.toContain('axis_trust_strings');
+    expect(free.party).toContain('pippa');
+    expect(free.departed).toEqual([]);
+
+    const strings = title.chapter8DevProfile('trustStrings');
+    expect(strings.flags).toEqual(expect.arrayContaining(['ch6_string_decided', 'axis_trust_strings']));
+    expect(strings.flags).not.toContain('axis_trust_free');
+    expect(strings.flags).not.toContain('pippa_reconciled');
+    expect(strings.flags).not.toContain('pippa_left');
+    expect(strings.flags).not.toContain('thread_trust_resolve');
+    expect(strings.party).toContain('pippa');
+    expect(strings.departed).toEqual([]);
+    expect(strings.rewindCount).toBeGreaterThan(2);
+
+    for (const state of states.filter((candidate) => candidate !== 'trustFree' && candidate !== 'trustStrings')) {
+      const profile = title.chapter8DevProfile(state);
+      expect(profile.flags, state).not.toContain('ch6_string_decided');
+      expect(profile.flags, state).not.toContain('axis_trust_free');
+      expect(profile.flags, state).not.toContain('axis_trust_strings');
+      expect(profile.party, state).toContain('pippa');
+    }
+  });
+
+  it('pins the Mushroomized profile to hazard phase 0 and the shared clean recovery', () => {
+    const profile = title.chapter8DevProfile('mushroomized');
+    const point = chapter8Maps.CH8_WORLD.sporeForest.recovery;
+    expect(profile.mushroomize).toEqual({
+      active: true,
+      phase: 0,
+      source: chapter8Maps.CH8_WORLD.sporeForest.hazards[0].id,
+      recovery: {
+        map: 'spore_forest',
+        x: point.x * 64 + 32,
+        y: point.y * 64 + 48,
+        facing: point.facing,
+      },
+    });
+    expect(title.chapter8DevProfile('forestCured').mushroomize).toEqual({
+      active: false, phase: 0, source: null, recovery: null,
+    });
+  });
+
+  it('stages Clicker, forest, elder, boss, and completion in order', () => {
+    expect(title.chapter8DevProfile('barge').flags).toContain('thread_clicker_seed');
+    expect(title.chapter8DevProfile('barge').flags).not.toContain('thread_clicker_crisis');
+    expect(title.chapter8DevProfile('mushroomized').flags).toEqual(expect.arrayContaining([
+      'thread_clicker_seed', 'thread_clicker_crisis', 'thread_clicker_clearing',
+    ]));
+    expect(title.chapter8DevProfile('mushroomized').callers).toEqual([
+      expect.objectContaining({ quest: 'thread:clicker', name: 'The Lotus Bargeman' }),
+    ]);
+    expect(title.chapter8DevProfile('temple').flags).toEqual(expect.arrayContaining([
+      'ch8_yak_departed', 'ch8_yak_arrived',
+    ]));
+    expect(title.chapter8DevProfile('temple').flags).not.toContain('awake_teleport_b');
+    expect(title.chapter8DevProfile('boss').flags).toEqual(expect.arrayContaining([
+      'thread_trust_climax', 'thread_trust_resolve', 'awake_teleport_b',
+    ]));
+    expect(title.chapter8DevProfile('boss').flags).not.toContain('paper_dragon_defeated');
+    const postBoss = title.chapter8DevProfile('postBoss');
+    expect(postBoss.flags).toEqual(expect.arrayContaining([
+      'ch8_dragon_seen', 'paper_dragon_defeated', 'paper_fan_claimed',
+    ]));
+    expect(postBoss.items).toEqual(['paper_fan']);
+    expect(title.chapter8DevProfile('boss').flags).not.toContain('ch8_dragon_seen');
+
+    const complete = title.chapter8DevProfile('complete');
+    expect(complete.flags).toEqual(expect.arrayContaining([
+      'ch8_dragon_seen', 'paper_dragon_defeated', 'paper_fan_claimed',
+      'ch8_heartlight_seen', 'ember8', 'ch8_complete',
+    ]));
+    expect(complete.items.filter((item) => item === 'paper_fan')).toHaveLength(1);
+    expect(complete.embers).toBe(8);
+  });
+
+  it('does not retain Yak Treats after the feed objective has consumed them', () => {
+    for (const state of ['yak', 'temple', 'boss', 'postBoss', 'complete'] as const) {
+      const profile = title.chapter8DevProfile(state);
+      expect(profile.flags, state).toContain('q_yak_waits_feed');
+      expect(profile.keyItems, state).not.toContain('yak_treats');
+    }
+  });
+
+  it.each(['lotus_harbor', 'bamboo_road', 'spore_forest', 'mt_shu_temple'] as const)(
+    '%s resolves an in-bounds production spawn for every profile',
+    (mapId) => {
+      for (const state of states) {
+        const spawn = title.chapter8DevSpawn(mapId, state);
+        const map = maps.MAPS[mapId];
+        expect(spawn.x, `${mapId}/${state} x`).toBeGreaterThanOrEqual(0);
+        expect(spawn.y, `${mapId}/${state} y`).toBeGreaterThanOrEqual(0);
+        expect(spawn.x, `${mapId}/${state} x`).toBeLessThan(map.grid[0].length * 64);
+        expect(spawn.y, `${mapId}/${state} y`).toBeLessThan(map.grid.length * 64);
+        const tx = Math.floor(spawn.x / 64);
+        const ty = Math.floor(spawn.y / 64);
+        const tile = map.grid[ty][tx];
+        const tileName = maps.CHAR_LEGEND[tile] ?? 'grass_a';
+        const solid = tiles.TILESET.find((definition) => definition.name === tileName)?.solid === true;
+        expect(tile === ':' || tile === 'r' || !solid, `${mapId}/${state} tile '${tile}' walkable`).toBe(true);
+      }
+    },
+  );
+
+  it('derives every exact named spawn from CH8_WORLD', () => {
+    const feet = (point: Readonly<{ x: number; y: number; facing: string }>) => ({
+      x: point.x * 64 + 32,
+      y: point.y * 64 + 48,
+      facing: point.facing,
+    });
+    expect(title.chapter8DevSpawn('lotus_harbor', 'arrival')).toEqual(feet(chapter8Maps.CH8_WORLD.lotusHarbor.profiles.arrival));
+    expect(title.chapter8DevSpawn('lotus_harbor', 'city')).toEqual(feet(chapter8Maps.CH8_WORLD.lotusHarbor.profiles.city));
+    expect(title.chapter8DevSpawn('bamboo_road', 'barge')).toEqual(feet(chapter8Maps.CH8_WORLD.bambooRoad.profiles.barge));
+    expect(title.chapter8DevSpawn('spore_forest', 'mushroomized')).toEqual(feet(chapter8Maps.CH8_WORLD.sporeForest.profiles.mushroomized));
+    expect(title.chapter8DevSpawn('spore_forest', 'forestCured')).toEqual(feet(chapter8Maps.CH8_WORLD.sporeForest.profiles.forestCured));
+    expect(title.chapter8DevSpawn('spore_forest', 'brushes')).toEqual(feet(chapter8Maps.CH8_WORLD.sporeForest.profiles.brushes));
+    expect(title.chapter8DevSpawn('spore_forest', 'yak')).toEqual(feet(chapter8Maps.CH8_WORLD.sporeForest.profiles.yak));
+    expect(title.chapter8DevSpawn('mt_shu_temple', 'temple')).toEqual(feet(chapter8Maps.CH8_WORLD.mtShuTemple.profiles.temple));
+    expect(title.chapter8DevSpawn('mt_shu_temple', 'boss')).toEqual(feet(chapter8Maps.CH8_WORLD.mtShuTemple.profiles.boss));
+    expect(title.chapter8DevSpawn('mt_shu_temple', 'postBoss')).toEqual(feet(chapter8Maps.CH8_WORLD.mtShuTemple.profiles.postBoss));
+    expect(title.chapter8DevSpawn('mt_shu_temple', 'complete')).toEqual(feet(chapter8Maps.CH8_WORLD.mtShuTemple.profiles.complete));
   });
 });

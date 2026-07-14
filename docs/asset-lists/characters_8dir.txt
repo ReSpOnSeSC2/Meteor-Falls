@@ -91,6 +91,9 @@ lh_harbor_master
 lh_calligrapher
 lh_lantern_girl
 lh_tea_monk
+lotus_bargeman
+lh_yak_handler
+mt_shu_elder
 # Ch.9 Romania — Valea Stelelor cast
 vs_buni
 vs_provisioner

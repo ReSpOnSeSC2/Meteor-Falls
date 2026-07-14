@@ -237,7 +237,13 @@ export const CHAPTER_MANIFESTS: Record<string, ChapterManifest> = {
     // the 2 overworld maps from buildChapter8Maps(): the harbor city + the bamboo road
     // (the dungeon maps live under dungeon.maps above)
     maps: ['lotus_harbor', 'bamboo_road'],
-    quests: ['brushes_of_mt_shu'],
+    quests: [
+      'brushes_of_mt_shu',
+      'lanterns_of_the_false_fold',
+      'the_yak_who_waits',
+      'the_harbors_balance',
+      'tea_for_the_empty_chair',
+    ],
   },
 
   // THE ROMANIA LANDING — Ch.9 flips to 'shipped'. The dungeon site becomes live

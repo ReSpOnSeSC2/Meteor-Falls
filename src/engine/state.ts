@@ -53,8 +53,33 @@ export interface VehicleParkingState {
   facing: SaveFacing;
 }
 
+/** v25: a clean point the party can safely return to after a Spore Forest
+ * control scramble. Coordinates are runtime pixels, just like the main save
+ * position; keeping the map and facing with them makes defeat recovery atomic. */
+export interface MushroomizeRecovery {
+  map: string;
+  x: number;
+  y: number;
+  facing: SaveFacing;
+}
+
+export type MushroomizePhase = 0 | 1 | 2;
+
+/** v25: Mushroomized is a field status, not a per-frame battle ailment. The
+ * hazard-selected phase latches until a cure or recovery clears it. */
+export interface MushroomizeState {
+  active: boolean;
+  phase: MushroomizePhase;
+  source: string | null;
+  recovery: MushroomizeRecovery | null;
+}
+
+export function freshMushroomize(): MushroomizeState {
+  return { active: false, phase: 0, source: null, recovery: null };
+}
+
 export interface GameStateData {
-  version: 24;
+  version: 25;
   party: HeroState[];
   guest: string | null; // e.g. Chad tagging along
   keyItems: string[];
@@ -121,6 +146,11 @@ export interface GameStateData {
    * Kept separate from `activeVehicle` so existing BMX selection/toggle saves
    * remain byte-compatible while cars gain explicit enter/exit state. */
   drivingVehicle: string | null;
+  /** v25: persistent Spore Forest control transform. */
+  mushroomize: MushroomizeState;
+  /** v25: exact serialized companions temporarily outside the active party.
+   * Rejoining restores these records instead of reconstructing a level shell. */
+  departedHeroes: Partial<Record<HeroId, HeroState>>;
   /** S21 (v16, ADR-126): THE HELD BREATH — Jay's Locket rewind. The Breath bank,
    *  the snapshot ring (full GS.serialize() blobs taken before a rewindable
    *  choice), and the rewind-debt counter the Trust Thread + golden ending read.
@@ -198,7 +228,7 @@ export function newGameData(): GameStateData {
   rex.bag = ['cracked_bat', 'corn_dog', 'corn_dog'];
   rex.equip = { weapon: 'cracked_bat' };
   return {
-    version: 24,
+    version: 25,
     party: [rex],
     guest: null,
     keyItems: [],
@@ -235,6 +265,8 @@ export function newGameData(): GameStateData {
     carLocation: {},
     vehicleParking: {},
     drivingVehicle: null,
+    mushroomize: freshMushroomize(),
+    departedHeroes: {},
     echoes: freshEchoes(),
   };
 }

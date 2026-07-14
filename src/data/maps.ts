@@ -5314,6 +5314,9 @@ const MAP_AREA: Record<string, string> = {
   // CH.7 Chandrapore — the capital carries its barscript settlement glyph;
   // the road, train, and palace retain plain place banners.
   chandrapore: 'chandrapore',
+  // CH.8 Lotus Harbor — only the formal river city receives the authored China
+  // tile/glyph skin; Bamboo Road, Spore Forest, and Mt. Shu keep route banners.
+  lotus_harbor: 'lotus_harbor',
   // CH.10 The Long Shot — the two settlements wear their region glyph banners (AURORA STATION
   // in the frost script, MAUNA LANI in the tiki script). The ice field / magma flats / Sea of
   // Silence carry no settlement glyph (like the moor/spine), matching the tile-skin precedent.
@@ -5354,7 +5357,15 @@ for (const m of Object.values(MAPS)) {
     area: m.area ?? m.id,
     seed: cityLifeSeed(m.id),
     ...(m.id === 'brickton' ? { unitId: stableTwotonLotId } : {}),
+    ...(m.id === 'lotus_harbor' ? { pinnedUnlockedPrefix: 4 } : {}),
   }));
+}
+
+// Chapter 8 appends a production city behind four save-facing service units.
+// Fail assembly immediately if a facade/lock edit ever renumbers the prefix.
+for (let unit = 0; unit < 4; unit++) {
+  const id = `lotus_harbor_unit_${unit}`;
+  if (!MAPS[id]) throw new Error(`Lotus Harbor historical unit ${unit} must survive occupancy`);
 }
 
 // CH.6 production expansion changes the occupancy RNG horizon from six source

@@ -13,6 +13,8 @@ import {
   CHAPTER6_PARKING_RECOVERY,
   CHAPTER7_LAYOUT_RECOVERY,
   CHAPTER7_PARKING_RECOVERY,
+  CHAPTER8_LAYOUT_RECOVERY,
+  CHAPTER8_PARKING_RECOVERY,
 } from './migrations';
 import { BAG_MAX } from '../data/items';
 import { HEROES, availableAbilities, type HeroId } from '../data/heroes';
@@ -22,7 +24,9 @@ import { buildChapter4Maps } from '../data/maps_ch4';
 import { buildChapter5Maps } from '../data/maps_ch5';
 import { buildChapter6Maps } from '../data/maps_ch6';
 import { buildChapter7Maps } from '../data/maps_ch7';
-import { MAPS } from '../data/maps';
+import { buildChapter8Maps, CH8_MAP_IDS, CH8_WORLD, LOTUS_HARBOR_UNIT_IDS, nativeFeet as chapter8NativeFeet } from '../data/maps_ch8';
+import { CHAR_LEGEND, MAPS } from '../data/maps';
+import { TILESET } from '../spritegen/tiles';
 import { vehicleParkingSlotsOverlap } from './vehicle-domain';
 
 /** a hero exactly as v1 saves stored them — no bag, no equip */
@@ -1384,5 +1388,286 @@ describe('save migration registry -- v23 to v24: Chapter 7 production rollout', 
       expect(JSON.stringify(first)).toBe(JSON.stringify(wanted));
       expect(JSON.stringify(second)).toBe(JSON.stringify(first));
     }
+  });
+});
+
+describe('save migration registry -- v24 to v25: Chapter 8 production rollout', () => {
+  const v24At = (map: string): Record<string, unknown> => {
+    const raw = newGameData() as unknown as Record<string, unknown>;
+    raw.version = 24;
+    raw.map = map;
+    raw.x = 99999;
+    raw.y = -1;
+    raw.facing = 'left';
+    raw.flags = { ch7_complete: true, custom_story: 7 };
+    raw.callers = ['old_friend'];
+    raw.cashOnHand = 8123;
+    raw.banked = 1440;
+    raw.vehicleParking = {};
+    delete raw.mushroomize;
+    delete raw.departedHeroes;
+    return raw;
+  };
+
+  const stablePoints = [
+    CH8_WORLD.lotusHarbor.migration,
+    CH8_WORLD.bambooRoad.migration,
+    CH8_WORLD.sporeForest.migration,
+    CH8_WORLD.mtShuTemple.migration,
+  ] as const;
+
+  it('pins every stable map and all generated Lotus units through CH8_WORLD', () => {
+    expect(Object.keys(CHAPTER8_LAYOUT_RECOVERY)).toEqual([
+      ...CH8_MAP_IDS,
+      ...LOTUS_HARBOR_UNIT_IDS,
+      CH8_WORLD.lotusHarbor.hotelRoom.id,
+    ]);
+    const built = buildChapter8Maps();
+    for (let index = 0; index < CH8_MAP_IDS.length; index += 1) {
+      const mapId = CH8_MAP_IDS[index];
+      const point = stablePoints[index];
+      const feet = chapter8NativeFeet(point);
+      expect(built[mapId]).toBeDefined();
+      expect(CHAPTER8_LAYOUT_RECOVERY[mapId]).toEqual({ x: feet.tx, y: feet.ty, facing: point.facing });
+    }
+    const unitFeet = chapter8NativeFeet(CH8_WORLD.lotusHarbor.unitMigration);
+    for (const unitId of LOTUS_HARBOR_UNIT_IDS) {
+      expect(MAPS[unitId], unitId).toBeDefined();
+      expect(CHAPTER8_LAYOUT_RECOVERY[unitId]).toEqual({
+        x: unitFeet.tx, y: unitFeet.ty, facing: CH8_WORLD.lotusHarbor.unitMigration.facing,
+      });
+    }
+    const roomFeet = chapter8NativeFeet(CH8_WORLD.lotusHarbor.hotelRoom.migration);
+    expect(MAPS[CH8_WORLD.lotusHarbor.hotelRoom.id]).toBeDefined();
+    expect(CHAPTER8_LAYOUT_RECOVERY[CH8_WORLD.lotusHarbor.hotelRoom.id]).toEqual({
+      x: roomFeet.tx,
+      y: roomFeet.ty,
+      facing: CH8_WORLD.lotusHarbor.hotelRoom.migration.facing,
+    });
+
+    const solid = new Map(TILESET.map((tile) => [tile.name, tile.solid]));
+    for (const [mapId, point] of Object.entries(CHAPTER8_LAYOUT_RECOVERY)) {
+      const map = MAPS[mapId];
+      const tx = Math.floor(point.x / 16);
+      const ty = Math.floor(point.y / 16);
+      const tile = map?.grid[ty]?.[tx];
+      expect(tile, `${mapId} recovery in bounds`).toBeDefined();
+      const walkable = tile === ':' || tile === 'r'
+        || solid.get(CHAR_LEGEND[tile ?? ''] ?? 'grass_a') !== true;
+      expect(walkable, `${mapId} recovery tile '${tile}' walkable`).toBe(true);
+    }
+  });
+
+  it.each(CH8_MAP_IDS)('recovers %s without changing party, quest, caller, or economy state', (mapId) => {
+    const raw = v24At(mapId);
+    const point = stablePoints[CH8_MAP_IDS.indexOf(mapId)];
+    const feet = chapter8NativeFeet(point);
+    const partyBefore = JSON.stringify(raw.party);
+    const flagsBefore = JSON.stringify(raw.flags);
+    const callersBefore = JSON.stringify(raw.callers);
+    const migrated = migrateSave(raw, newGameData());
+    expect(migrated.version).toBe(25);
+    expect(migrated.map).toBe(mapId);
+    expect(migrated.x).toBe(s(feet.tx));
+    expect(migrated.y).toBe(s(feet.ty));
+    expect(migrated.facing).toBe(point.facing);
+    expect(JSON.stringify(migrated.party)).toBe(partyBefore);
+    expect(JSON.stringify(migrated.flags)).toBe(flagsBefore);
+    expect(JSON.stringify(migrated.callers)).toBe(callersBefore);
+    expect(migrated.cashOnHand).toBe(8123);
+    expect(migrated.banked).toBe(1440);
+  });
+
+  it('recovers historical and appended Lotus unit ids to the shared safe aisle', () => {
+    for (const unitId of [
+      LOTUS_HARBOR_UNIT_IDS[0], LOTUS_HARBOR_UNIT_IDS[3], LOTUS_HARBOR_UNIT_IDS[4],
+      LOTUS_HARBOR_UNIT_IDS[LOTUS_HARBOR_UNIT_IDS.length - 1],
+    ]) {
+      const migrated = migrateSave(v24At(unitId), newGameData());
+      const feet = chapter8NativeFeet(CH8_WORLD.lotusHarbor.unitMigration);
+      expect(migrated.map).toBe(unitId);
+      expect(migrated.x).toBe(s(feet.tx));
+      expect(migrated.y).toBe(s(feet.ty));
+      expect(migrated.facing).toBe(CH8_WORLD.lotusHarbor.unitMigration.facing);
+    }
+  });
+
+  it('recovers the generated Lotus hotel room through its shared world anchor', () => {
+    const room = CH8_WORLD.lotusHarbor.hotelRoom;
+    const feet = chapter8NativeFeet(room.migration);
+    const migrated = migrateSave(v24At(room.id), newGameData());
+    expect(migrated.map).toBe(room.id);
+    expect(migrated.x).toBe(s(feet.tx));
+    expect(migrated.y).toBe(s(feet.ty));
+    expect(migrated.facing).toBe(room.migration.facing);
+  });
+
+  it('rehomes Lotus/Bamboo parking into deterministic nonstacked Lotus bays', () => {
+    const raw = v24At('lotus_harbor');
+    raw.vehicleParking = {
+      title_car_sedan: { area: 'bamboo_road', x: 100, y: 200, facing: 'left' },
+      title_car_ev: { area: 'lotus_harbor', x: 100, y: 200, facing: 'right' },
+      title_car_bmx: { area: 'lotus_harbor', x: 100, y: 200, facing: 'up' },
+      title_car_van: { area: 'otterbrook', x: 144, y: 288, facing: 'left' },
+    };
+    const migrated = migrateSave(raw, newGameData());
+    const base = CHAPTER8_PARKING_RECOVERY.lotus_harbor;
+    expect(migrated.vehicleParking.title_car_bmx).toEqual({
+      area: 'lotus_harbor', x: s(base.x), y: s(base.y), facing: base.facing,
+    });
+    expect(migrated.vehicleParking.title_car_van).toEqual({ area: 'otterbrook', x: 144, y: 288, facing: 'left' });
+    expect(migrated.vehicleParking.title_car_sedan.area).toBe('lotus_harbor');
+    expect(vehicleParkingSlotsOverlap(
+      'title_car_bmx', migrated.vehicleParking.title_car_bmx,
+      'title_car_ev', migrated.vehicleParking.title_car_ev,
+    )).toBe(false);
+    expect(vehicleParkingSlotsOverlap(
+      'title_car_ev', migrated.vehicleParking.title_car_ev,
+      'title_car_sedan', migrated.vehicleParking.title_car_sedan,
+    )).toBe(false);
+  });
+
+  it('preserves mounted vehicle, ownership, location, and fuel while recovering other parked titles', () => {
+    const raw = v24At('bamboo_road');
+    raw.keyItems = ['star_locket', 'title_car_van', 'title_car_sedan'];
+    raw.activeVehicle = 'title_car_van';
+    raw.drivingVehicle = 'title_car_van';
+    raw.carLocation = { title_car_van: 'china', title_car_sedan: 'china' };
+    raw.fuel = { title_car_van: 7.25, title_car_sedan: 18 };
+    raw.vehicleParking = {
+      title_car_sedan: { area: 'bamboo_road', x: 100, y: 200, facing: 'left' },
+    };
+    const migrated = migrateSave(raw, newGameData());
+    expect(migrated.activeVehicle).toBe('title_car_van');
+    expect(migrated.drivingVehicle).toBe('title_car_van');
+    expect(migrated.keyItems).toEqual(['star_locket', 'title_car_van', 'title_car_sedan']);
+    expect(migrated.carLocation).toEqual({ title_car_van: 'china', title_car_sedan: 'china' });
+    expect(migrated.fuel).toEqual({ title_car_van: 7.25, title_car_sedan: 18 });
+    expect(migrated.vehicleParking.title_car_van).toBeUndefined();
+    expect(migrated.vehicleParking.title_car_sedan.area).toBe('lotus_harbor');
+  });
+
+  it('adds only the inactive status and empty exact-hero bench to an ordinary v24 save', () => {
+    const raw = v24At('otterbrook');
+    const migrated = migrateSave(raw, newGameData());
+    expect(migrated.mushroomize).toEqual({ active: false, phase: 0, source: null, recovery: null });
+    expect(migrated.departedHeroes).toEqual({});
+    expect(migrated.flags).toEqual({ ch7_complete: true, custom_story: 7 });
+    expect(migrated.keyItems).not.toContain('paper_fan');
+    expect(migrated.callers).toEqual(['old_friend']);
+  });
+
+  it('preserves Pippa/Trust/Clicker/quest truth without inventing a missing hero or branch', () => {
+    const raw = v24At('spore_forest');
+    raw.party = (raw.party as Array<Record<string, unknown>>).filter((hero) => hero.id !== 'pippa');
+    raw.flags = {
+      axis_trust_strings: true,
+      ch6_string_decided: true,
+      pippa_left: true,
+      thread_clicker_crisis: true,
+      q_brushes: true,
+      q_brush_river: true,
+    };
+    const exactFlags = JSON.stringify(raw.flags);
+    const migrated = migrateSave(raw, newGameData());
+    expect(migrated.party.some((hero) => hero.id === 'pippa')).toBe(false);
+    expect(migrated.departedHeroes).toEqual({});
+    expect(JSON.stringify(migrated.flags)).toBe(exactFlags);
+    expect(migrated.flags.axis_trust_free).toBeUndefined();
+    expect(migrated.callers).toEqual(['old_friend']);
+  });
+
+  it.each([
+    'ch8_elder_beta', 'ch8_elder_beta_seen', 'ch8_beta_lesson',
+    'paper_dragon_defeated', 'ch8_heartlight_seen', 'ch8_complete',
+  ])('backfills Beta when the irreversible %s flag proves the elder/post-Ch8 state', (proof) => {
+    const raw = v24At('otterbrook');
+    raw.flags = { [proof]: true };
+    expect(migrateSave(raw, newGameData()).flags.awake_teleport_b).toBe(true);
+  });
+
+  it('does not infer Beta from L34+, an early Ch8 map, or generic arrival', () => {
+    const raw = v24At('lotus_harbor');
+    raw.flags = { ch8_arrived: true };
+    const party = raw.party as Array<Record<string, unknown>>;
+    party[0].level = 99;
+    const migrated = migrateSave(raw, newGameData());
+    expect(migrated.flags.awake_teleport_b).toBeUndefined();
+  });
+
+  it('migrates supported nested Held Breath saves recursively and preserves their unrelated data', () => {
+    const grandchild = v24At('spore_forest');
+    grandchild.customNested = { keep: ['all', 25] };
+    const child = v24At('bamboo_road');
+    child.echoes = {
+      stack: [{ choice: 'ch6_string', chapter: 6, json: JSON.stringify(grandchild), at: 1 }],
+      breaths: 2,
+      rewindCount: 1,
+    };
+    const outer = v24At('lotus_harbor');
+    outer.echoes = {
+      stack: [{ choice: 'ch6_string', chapter: 6, json: JSON.stringify(child), at: 2 }],
+      breaths: 1,
+      rewindCount: 2,
+    };
+    const migrated = migrateSave(outer, newGameData());
+    const childAfter = JSON.parse(migrated.echoes.stack[0].json);
+    const grandchildAfter = JSON.parse(childAfter.echoes.stack[0].json);
+    expect(childAfter.version).toBe(25);
+    expect(childAfter.mushroomize.active).toBe(false);
+    expect(grandchildAfter.version).toBe(25);
+    expect(grandchildAfter.customNested).toEqual({ keep: ['all', 25] });
+    expect(grandchildAfter.map).toBe('spore_forest');
+  });
+
+  it('also repairs an imported older snapshot inside an already-current outer save', () => {
+    const child = v24At('mt_shu_temple');
+    const outer = newGameData();
+    outer.echoes.stack = [{
+      choice: 'ch6_string', chapter: 6, json: JSON.stringify(child), at: 9,
+    }];
+    const migrated = migrateSave(outer, newGameData());
+    const childAfter = JSON.parse(migrated.echoes.stack[0].json);
+    expect(childAfter.version).toBe(25);
+    expect(childAfter.mushroomize.active).toBe(false);
+    const again = migrateSave(JSON.parse(JSON.stringify(migrated)), newGameData());
+    expect(JSON.stringify(again)).toBe(JSON.stringify(migrated));
+  });
+
+  it('preserves malformed/current/future echo JSON byte-exact while outer future saves reject', () => {
+    const malformed = '{not-json';
+    const current = ' { "version": 25, "custom": true } ';
+    const future = JSON.stringify({ version: 99, custom: true });
+    const raw = v24At('otterbrook');
+    raw.echoes = {
+      stack: [malformed, current, future].map((json, at) => ({ choice: 'ch6_string', chapter: 6, json, at })),
+      breaths: 3,
+      rewindCount: 0,
+    };
+    const migrated = migrateSave(raw, newGameData());
+    expect(migrated.echoes.stack.map((snapshot) => snapshot.json)).toEqual([malformed, current, future]);
+    expect(() => migrateSave({ ...newGameData(), version: 99 }, newGameData())).toThrow(/unknown save version/);
+  });
+
+  it('is deterministic, idempotent, and preserves malformed or unrelated state', () => {
+    const raw = v24At('constructor');
+    raw.x = 1234; raw.y = 5678; raw.facing = 'downleft';
+    raw.mushroomize = 'prerelease-malformed-sentinel';
+    raw.departedHeroes = null;
+    raw.vehicleParking = {
+      malformed: { area: 'lotus_harbor', note: 'missing coordinates' },
+      prototype: { area: 'constructor', x: 400, y: 800, facing: 'upright' },
+    };
+    const first = migrateSave(JSON.parse(JSON.stringify(raw)), newGameData());
+    const repeated = migrateSave(JSON.parse(JSON.stringify(raw)), newGameData());
+    const again = migrateSave(JSON.parse(JSON.stringify(first)), newGameData());
+    expect(JSON.stringify(repeated)).toBe(JSON.stringify(first));
+    expect(JSON.stringify(again)).toBe(JSON.stringify(first));
+    expect((first as unknown as Record<string, unknown>).mushroomize).toBe('prerelease-malformed-sentinel');
+    expect((first as unknown as Record<string, unknown>).departedHeroes).toBeNull();
+    expect(first.vehicleParking).toEqual(raw.vehicleParking);
+    expect(first.x).toBe(1234);
+    expect(first.y).toBe(5678);
+    expect(first.facing).toBe('downleft');
   });
 });

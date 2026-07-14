@@ -35,6 +35,47 @@ describe('party fate — depart + rejoin', () => {
     expect(GS.flag('pippa_left')).toBe(false);
   });
 
+  it('round-trips and restores the exact damaged, equipped, boosted hero record', () => {
+    rejoinHero('pippa', 26);
+    const pippa = GS.hero('pippa')!;
+    pippa.name = 'Pip';
+    pippa.exp += 77;
+    pippa.hp = 3;
+    pippa.pp = 1;
+    pippa.down = true;
+    pippa.stats.speed += 5;
+    pippa.bag = ['paper_fan', 'scroll_of_calm'];
+    pippa.equip = { weapon: 'paper_fan' };
+    pippa.boosts = { speed: 4, hp: 2 };
+    const exact = JSON.parse(JSON.stringify(pippa));
+
+    expect(departHero('pippa')).toBe(true);
+    // The bench owns a deep-enough copy, not aliases to the removed object.
+    pippa.bag.push('corn_dog');
+    pippa.stats.speed = 999;
+    expect(GS.data.departedHeroes.pippa).toEqual(exact);
+
+    GS.deserialize(GS.serialize());
+    expect(GS.data.departedHeroes.pippa).toEqual(exact);
+    rejoinHero('pippa', 99);
+    expect(GS.hero('pippa')).toEqual(exact);
+    expect(GS.data.departedHeroes.pippa).toBeUndefined();
+  });
+
+  it('departure and rejoin are idempotent and never duplicate a hero', () => {
+    rejoinHero('pippa', 26);
+    expect(departHero('pippa')).toBe(true);
+    const exactBench = JSON.parse(JSON.stringify(GS.data.departedHeroes.pippa));
+    expect(departHero('pippa')).toBe(false);
+    expect(GS.data.departedHeroes.pippa).toEqual(exactBench);
+
+    rejoinHero('pippa', 40);
+    rejoinHero('pippa', 40);
+    expect(GS.data.party.filter((hero) => hero.id === 'pippa')).toHaveLength(1);
+    expect(GS.data.departedHeroes.pippa).toBeUndefined();
+    expect(GS.flag('pippa_left')).toBe(false);
+  });
+
   it('departing an absent hero is a no-op', () => {
     expect(departHero('dorin')).toBe(false);
   });

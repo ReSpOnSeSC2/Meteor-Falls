@@ -93,6 +93,7 @@ export const AWAKENING_LEVEL: Record<string, number> = {
   the_wall_that_answers: 13, // Jay, Power Shield Σ — the Idol's last blow (Ch.2 boss)
   the_first_borrow: 18, // Jay, Mind Warp α — Milo's join (Ch.3)
   the_thunder_snore: 20, // Mia, Vibe Volt α — the Whisperwig surfaces (Ch.4)
+  awake_teleport_b: 40, // Jay, Teleport Beta — the Mt. Shu elder's short-step lesson (Ch.8)
   the_borrowed_voice: 35, // Jay, Mind Warp Ω — the hollowed crowd (mid-late)
   the_match_that_stays_lit: 46, // Mia, Fire Σ — the flame that stays lit (late)
   she_hears_it_all: 46, // Mia, Magnet Σ — the whole field's song (late)

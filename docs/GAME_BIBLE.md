@@ -64,7 +64,7 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 
 ### Vibe ability unlock tables (abridged — full PP costs in data files, Prompt 9)
 
-- **Jay:** Vibe Surge α (L1) /β (L16) /γ (L31) /Ω (L47); Lifeup α/β/γ (L3/L20/L38); Shield α/Σ (L9/L33); Flash α (L24); Hypno α (L6); **Teleport α (L26, story-gated Ch.6) / Teleport β (Ch.8)**
+- **Jay:** Vibe Surge α (L1) /β (L16) /γ (L31) /Ω (L47); Lifeup α/β/γ (L3/L20/L38); Shield α/Σ (L9/L33); Flash α (L24); Hypno α (L6); **Teleport α (L26) / Teleport β (taught by the Mt. Shu elder in Ch.8)**
 - **Mia:** Vibe Fire α–Ω (L1/15/29/44); Vibe Freeze α–Ω (L4/18/32/46); Vibe Volt α–γ (L10/26/40); Magnet α (L8); **Pray (L1)**
 - **Pippa:** No Vibe. **Pinpoint Mark** (joins; next ally ignores miss/evasion), **Royal Rally** (joins; party Speed/Luck pulse), **Pocket Patch** (joins; small heal + status peel), **Scale Step** (L30; self-evasion + decoy), **Big-Little Focus** (Ch.5 build with Milo; party-wide Focus), **Bellwether** (L44; morale burst that strengthens the next Pray/caller-style effect)
 - **Dorin:** Vibe Comet α (joins) / Ω (L52); Vibe Freeze line shared; Mirror (joins); Brainjam α/Ω (L44/50); Healing α–γ
@@ -85,8 +85,9 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 > no longer start with Vibe. The old light arrives at STORY MOMENTS, scene-
 > staged and played straight (§A11.2), so every ability is an event; level
 > unlocks are spaced out and the signature lines leap harder per tier
-> (Surge/Fire α→β ≈ 2.6×). Teleport α/β (story-gated, Ch.6/Ch.8) was always
-> the precedent — it is the rule now. **Ch.1 ships three:** Jay awakens
+> (Surge/Fire α→β ≈ 2.6×). Later production contracts supersede this
+> block's old story-gated-Alpha precedent: Teleport α is the L26 ability, while
+> Teleport β is taught by the Mt. Shu elder after Ch.8's Trust climax. **Ch.1 ships three:** Jay awakens
 > VIBE SURGE α at Glint's crater prophecy — one beat before the Tick, whose
 > latch the Surge can sever (§A6 amended below) — and LIFEUP α at the porch
 > when Glint's last spark settles into him (beside the GLINT'S SPARK item
@@ -99,7 +100,8 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 > implement, one awakening per chapter's emotional center):** Ch.2 the
 > Gilded Grin's HOLLOW reveal; Ch.3 Milo's gadget tiers stay level/quest
 > work (gadgets are built, not awakened — his identity); Ch.5 Pippa's
-> Big-Little Focus is built, not awakened; Ch.6 Teleport α (canon);
+> Big-Little Focus is built, not awakened; Ch.6 introduces far-world use of
+> Teleport α, which Jay learns from the level table at L26 rather than a story gate;
 > Ch.7 the Locket recovered on the night train re-awakens loud; Ch.8
 > Teleport β (canon); Ch.9 Dorin's Trial IS his awakening (canon
 > already staged it); Ch.10 the finale's scripted PRAY is the last one. The
@@ -187,9 +189,9 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 3. **Save = Call Your Dad.** Phones (home phones, payphones, banana-shaped novelty phones, a yak with a satellite dish in China) let you call **Dad**, who saves the game ("Have you been eating well, champ?"), tracks playtime, and occasionally insists you take a break. **3 save slots.**
 4. **Money = Dad's deposits.** Battle winnings are deposited by Dad into the **Otterbrook Savings & Loan** card, withdrawn at ATMs worldwide. Mom's home cooking (your favorite food, chosen at game start) cures **Homesickness** — a status Jay randomly contracts that makes him skip turns daydreaming about Mom's cooking. Call Mom to cure it.
 5. **Picnic.** At picnic tables scattered through every region (≈3 per chapter, ≈30 total), use a **Picnic Basket** item: full party HP/PP restore + the **Sunny Side** buff (+10% all stats for the next 5 battles). Baskets are bought (Basic), assembled at delis from 3 regional foods (Family), or earned from Buni's quest (Feast — adds auto-revive once). Tables are placed *before* dungeons — finding one is strategy.
-6. **Teleport.** Jay learns Teleport α (run-up required — on touch, hold the D-pad to sprint a circle; with a controller, hold the stick) in Ch.6 to revisit any visited town. Teleport β (Ch.8) needs only a short dash. Crashing into walls = comic soot-faced failure.
+6. **Teleport.** Jay learns Teleport α at level 26. It needs 96 native pixels of player-directed run-up; hold a D-pad direction or controller stick and keep a clear route until the threshold. The Mt. Shu elder teaches Teleport β once after Ch.8's Trust climax — it is not a level unlock — and its run-up is 32 native pixels. Both target legitimately visited, currently story-open towns at authored safe-arrival anchors. Crashing into a wall is a comic soot-faced failure; the attempt charges PP once (Alpha 2, Beta 4), deals no HP damage, never travels or strands the party, followers reform on a successful safe arrival, and vehicles are neither duplicated nor teleported.
 7. **Death & Angels.** Hitting 0 HP makes a hero **unconscious**; if the whole party drops, Jay wakes at the last Dad-save with **half his cash on hand** (banked money is safe). Fallen party members trail behind Jay as **little haloed angels** — visible on the overworld, unusable in battle — until revived at a **hospital** (or **Healing γ / Hallelujah-tier prayer items**).
-8. **Status effects:** Sunburn (poison-over-time), Crying (can't aim — gnats, onion ghosts), Asleep, Paralyzed, Homesick (Jay only), **Hushed** (silenced — no Vibe), Mushroomized (Ch.8 spore forest — controls scramble until cured at a doctor).
+8. **Status effects:** Sunburn (poison-over-time), Crying (can't aim — gnats, onion ghosts), Asleep, Paralyzed, Homesick (Jay only), **Hushed** (silenced — no Vibe), Mushroomized (Ch.8 Spore Forest — one authored hazard deterministically latches clockwise, counter-clockwise, or reversed logical movement until a Spore Antidote, reusable Scroll of Calm, doctor, or defeat recovery clears it).
 9. **The Star Locket.** Key item UI: shows Embers collected (0–10) and plays the growing Homesong on the pause screen — one more instrument layer per Ember.
 
 > *(Amended 2026-06-13 per Appendix rule 6, ADR-061 — **§A4.12 TONICS & THE
@@ -582,7 +584,7 @@ The HIGH Ember fell on coronation night and shrank the realm to 1/100; the duchy
 
 ### Chapter 6 — "The Ruins That Laugh" (Africa) — target level: 30
 
-Port city **Zanzibel** (best market music in the game), caravan escort across the savanna at dusk (waves of hyena-ish enemies), then desert ruins where laughter echoes from nowhere. **Teleport α unlocks here** (taught by a retired courier mystic, "The Fastest Man in Zanzibel, 1961").
+Port city **Zanzibel** (best market music in the game), caravan escort across the savanna at dusk (waves of hyena-ish enemies), then desert ruins where laughter echoes from nowhere. By this level band Jay normally reaches L26 and learns **Teleport α** from his level table, with no story gate; a retired courier mystic ("The Fastest Man in Zanzibel, 1961") supplies flavor and a field-use tutorial, not the unlock.
 
 **Resonance Site:** the Sphinx's chin. **BOSS 6 — THE LAUGHING SPHINX** (2,300 HP / opens with a riddle — answer via menu choice; correct = skip its first 3 turns, wrong = party starts Crying. Riddles drawn from a pool of 8 for replays).
 
@@ -594,9 +596,45 @@ Port city **Zanzibel** (best market music in the game), caravan escort across th
 
 ### Chapter 8 — "The Paper Dragon" (China) — target level: 40
 
-Riverboat to **Lotus Harbor**, through the **Spore Forest** (Mushroomized status — controls scramble), up the Yak Express to **Mt. Shu Temple**, where monks fold paper guardians. The Hush got into the paper. **Teleport β unlocks** (temple elder: "You run too much. Run less."). Pippa's tiny-diplomat read pays off here: she spots false folds and hidden creases in the paper guardians before the taller kids can see them.
+The production route is the riverboat to **Lotus Harbor** → braided **Bamboo
+Road** → nonlinear **Spore Forest** → the visible **Yak Express** → **Mt. Shu
+Temple**. Bert and Lucille reach the riverboat connection only; the riverboat
+owns arrival and Lucille remains the backtracking network. The four stable maps
+are `lotus_harbor` (112×80), `bamboo_road` (104×64), `spore_forest` (88×104),
+and `mt_shu_temple` (96×104), with all fixed points centralized in `CH8_WORLD`.
 
-**Resonance Site:** temple bell. **BOSS 8 — THE PAPER DRAGON** (4,100 HP / immune to physical while airborne; Vibe Volt or Bottle Rockets knock it down for 2 turns; casts Vibe Fire on ITSELF when low — it's paper — entering a desperate burning phase with doubled speed).
+Mushroomized is a real persisted status, not a deferred visual stand-in: each
+Spore Forest belt latches one deterministic common-input transform and preserves
+a clean retreat point. Spore Puffers can also inflict it. A consumed Spore
+Antidote, reusable Scroll of Calm, doctor, or defeat recovery cures it. The Mt.
+Shu elder teaches **Teleport β** exactly once — “You run too much. Run less.” —
+after the Trust climax; Beta is never granted merely for reaching level 34.
+
+Pippa's tiny-diplomat read pays off when she is present: she spots false folds
+and hidden creases before the taller kids can. A departed Pippa is never painted
+back into the party or made a progression requirement; the elder supplies the
+same route knowledge. FREE keeps Pippa. STRINGS keeps her only after
+reconciliation with rewind debt at most two; otherwise her exact hero record is
+persisted on the departed bench. Milo's public Clicker clearing saves the Bamboo
+lock crowd, exposes the spoof, and leaves a repaired painted lock.
+
+Chapter 8 has exactly five backtrackable regional quests: **Brushes of Mt. Shu**,
+**Lanterns of the False Fold**, **The Yak Who Waits**, **The Harbor's Balance**,
+and **Tea for the Empty Chair**. Each leaves a visible local footprint and grants
+one retry-safe reward and one Caller. The focused regular roster is exactly Paper
+Lantern Wisp, Spore Puffer, Origami Warrior, and Porcelain Warlord; this production
+contract supersedes the old twenty-enemy planning quota. Origami Warrior's
+four-turn Refold keeps its physical shield while replacing FIRE weakness/FREEZE
+resistance with FREEZE weakness/FIRE resistance; VOLT remains weak, Spy/Scope and
+damage read the same live profile, and relaxation restores the normal profile.
+
+**Resonance Site:** Mt. Shu temple bell. **BOSS 8 — THE PAPER DRAGON**
+(**45,000 HP**, level 40, offense 80, defense 42, speed 34, no weakness, Volt
+resistant, mind immune / starts AIRBORNE and is physical-immune only while
+airborne; Vibe Volt or Bottle Rockets ground it for exactly two turns; below 30%
+once it enters distinct BURNING art and doubles speed). Normal HP victory grants
+the retry-safe Paper Fan before the separate bell approach. Heartlight 8 is
+**The Folded Hymn** and completion assigns exactly eight Embers.
 
 ### Chapter 9 — "The Count of Valea Stelelor" (Romania) — target level: 46
 
@@ -618,7 +656,7 @@ The Locket holds 9 Embers; the 10th never landed on Earth. **Aurora Station, Ala
 
 ## A7. Enemy Roster (200 unique enemy types — canon target; full movesets in data files, Prompt 10)
 
-The shipped game targets **200 unique standard enemy types**: 20 per chapter across 10 chapters. "Unique" means a distinct concept, sprite/silhouette, moveset hook, death line, and drop identity; palette swaps, raw stat bumps, and "same enemy but stronger" variants do **not** count. The table below is the **seed six per chapter** that anchors the tone and mechanics. Chapter content sessions expand each row to 20 with the same voice: local jokes first, one real mechanical hook per enemy, and no filler.
+The full-game planning target remains **200 unique standard enemy types**: 20 per chapter across 10 chapters. "Unique" means a distinct concept, sprite/silhouette, moveset hook, death line, and drop identity; palette swaps, raw stat bumps, and "same enemy but stronger" variants do **not** count. The table below began as the **seed six per chapter** that anchors tone and mechanics. Accepted production ADRs may deliberately freeze a smaller authored roster for a chapter rather than add filler: ADR-143 does so for Chapter 8, whose executable roster is exactly four regular enemies plus Paper Dragon.
 
 Per-chapter expansion mix: 6 seed enemies listed below, 4 road/field roamers, 3 dungeon specialists, 2 social/urban oddities, 2 rare/high-value enemies, 2 late-chapter pressure enemies, and 1 one-off set-piece enemy. Each chapter's manifest must name all 20 before the chapter is considered content-complete.
 
@@ -631,7 +669,7 @@ Per-chapter expansion mix: 6 seed enemies listed below, 4 road/field roamers, 3 
 | 5 | Tin Parade (500/attacks in formation), Duelist Pip (560/minuscule), Crumb Cannoneer (640/fires your own rations back), Powder-Wig Wasp (570/Asleep), Wind-Up Wyrmlet (605/winds up), Dust Bunny of Unusual Size (525/splits) |
 | 6 | Cackling Hyena (180), Mirage Vendor (160/sells fake items mid-battle), Scarab Sergeant (210), Dust Devilkin (190/blinds), Riddling Head (170/asks mini-riddles), Sun-Stroked Statue (240/Sunburn aura) |
 | 7 | Bazaar Bull (260/charges), Monkey Magnate (220/steals equipped hat), Hypno Flautist (240/Asleep), Palace Peacock (280/Flash), Spice Spirit (230/random element), Rail Bandit (300) |
-| 8 | Paper Crane Swarm (6×40), Mush Uncle (290/Mushroomize), Porcelain Warrior (340/shatters into 2), River Serpentlet (310), Incense Wisp (270/PP drain), Terracotta Understudy (380) |
+| 8 | **Production roster (ADR-143):** Paper Lantern Wisp (5,500/floating fire tell), Spore Puffer (6,500/Mushroomized), Origami Warrior (8,000/four-turn physical shield plus FIRE↔FREEZE profile refold; VOLT stays weak), Porcelain Warlord (11,000/breaks into smaller problems) |
 | 9 | Haystack Mimic (360), Moss Strigoi (400/HP drain), Castle Bat Choir (5×60/Crying), Animated Armor of Hoaxula (450), Mămăligă Blob (380/splits), Wolf of the Old Road (470/calls pack) |
 | 10 | Frost Wraith (480), Hush Static (520/Hushed), Null Walker (560/"cannot be grasped" 25% of hits), Ember Mimic (500/disguised as the pickup), Gravity Gremlin (450/reverses turn order), Silent Choirboy (3×180/heals Hush enemies) |
 
@@ -773,7 +811,7 @@ Enemy data must include a **map tell**, a **battle hook**, a **drop with identit
 
 **Food (HP):** Corn Dog, PB&J, Alfajor, Scone & Clotted Cream, Jollof Bowl, Samosa, Baozi, **Sarmale**, **Mămăligă cu Brânză** (best HP/$ in the game — Buni's), Akutaq, Poke Bowl, Freeze-Dried Ice Cream (Mars vending machines).
 
-**PP:** Star Cola line, Monastery Tea, Temple Incense. **Cures:** Salt Shaker (anti-Tick!), Aloe Leaf (Sunburn), Hanky (Crying), Doctor's Note (Mushroomize), Mom's Voice Tape (Homesick, 3 uses).
+**PP:** Star Cola line, Monastery Tea, Temple Incense. **Cures:** Salt Shaker (anti-Tick!), Aloe Leaf (Sunburn), Hanky (Crying), Spore Antidote (consumed Mushroomized cure), reusable Scroll of Calm (Mushroomized), doctors (Mushroomized), Mom's Voice Tape (Homesick, 3 uses).
 
 **Battle items:** Bottle Rockets, Firecracker String, Bug Zapper (irony — heavy vs insects), Glint's Spark (revive, rare). **Picnic Baskets:** Basic / Family / Feast.
 
@@ -880,12 +918,21 @@ The shipped game targets **55 quests**: 50 regional quests (5 per chapter) plus 
 | 17 | **The Last Showing** (7): repair the Majestic projector and stay for the movie about the party | Cinema Stub; Caller: the Majestic Usher |
 | 18 | **Third-Class Rules** (7): inspect the signal, coupling, and brake wheel before departure | Star Pendant; Caller: the Stationmaster |
 | 19 | **The River Remembers** (7): follow three ghat marks and return a remembered brass boat | Brass Elephant; Caller: the Ghat Elder |
-| 20 | **Brushes of Mt. Shu** (8): retrieve the calligrapher's 3 brushes from the Spore Forest | Scroll of Calm (cures Mushroomize, reusable); Caller: calligrapher |
+| 20 | **Brushes of Mt. Shu** (8): retrieve the calligrapher's 3 brushes from the Spore Forest | Scroll of Calm (cures Mushroomized, reusable); Caller: The Calligrapher (heal 1,400) |
 | 21 | **Buni's Table** (9): gather 5 ingredients across the valley for the true Feast Basket | **Feast Basket recipe** (craft at any deli) + she calls you "puiul meu"; Caller: **Buni** (her call in the finale heals the full party) |
 | 22 | **Lights of Aurora Station** (10): restore 3 generators while Frost Wraiths hunt | Insulated Suit; Caller: station chief |
 | 23 | **The Last Wave** (10): find the surf legend's lost board inside the volcano approach | Board of Legends (Jay's funniest weapon, sidegrade); Caller: surf legend |
 
 Plus **Mr. Click**, a photographer who ambushes the party for a photo 14 times worldwide ("Say fuzzy pickles— I mean, cheese!") → photo album rolls during the credits. The new world stops add two shots: in Lilleby he shoots from very far away; in Minimus he uses a macro lens.
+
+> *(Chapter 8 production amendment, ADR-143.)* The four additional regional
+> quests are **Lanterns of the False Fold** → Paper Crane Charm + The Lantern
+> Girl (damage 820), **The Yak Who Waits** → Jade Salamander Charm + The Yak
+> Handler (damage 880), **The Harbor's Balance** → River Beads + The Harbor
+> Master (damage 900), and **Tea for the Empty Chair** → Temple Incense + The
+> Tea-House Monk (heal 960). All five Chapter 8 flows use the hands-full retry
+> transaction, grant the Caller exactly once, persist intermediate state, remain
+> completable after the boss, and change the local world when done.
 
 **Quest expansion law:** each chapter owns five quests total. The named core quest(s) above are mandatory; the remaining chapter slots are filled during that chapter's content prompt using this mix: one local-person problem, one mechanical tutorial/remix, one hidden-place discovery, one economy/crafting quest, and one emotionally sincere quest. The five cross-world chains are: Mr. Click's Photo Album, Dad's Postcards, The Traveling Hint Stand, The Homesong Recordings, and The Lost & Found of Impossible Sizes.
 
@@ -1582,12 +1629,13 @@ tables ("There's no good spot here.").
 
 ```
 [Standard Header]
-Implement Teleport α/β per §A4.6: destination list = visited towns (auto-
-registered on first entry); α requires a run-up — hold direction (touch:
-hold D-pad; controller: hold stick) while the party sprints a widening loop,
-trailing flames, then vanishes; collision during run-up = comic crash, soot
-faces, small HP cost, retry allowed. β needs a short straight dash. Arrival
-at each town's teleport pad. Gate α behind the Ch.6 story flag, β behind Ch.8.
+Implement Teleport α/β per §A4.6: destination list = visited, currently
+story-open towns (auto-registered on first entry) with authored safe-arrival
+anchors. α is learned at L26 and requires 96 native pixels of player-directed
+run-up; hold a direction (touch D-pad or controller stick). β is taught by
+the Mt. Shu elder after the Trust climax and needs 32 native pixels. Collision
+during run-up = comic crash and soot, one PP charge, no HP damage, no travel;
+successful arrival reforms followers and leaves vehicles behind unchanged.
 ```
 
 **Done when:** crashing into a fence is funny every time; world reopens post-Ch.6.
@@ -1600,7 +1648,8 @@ Implement hospitals in every town: pay-to-revive angels (price scales by
 level), cure all statuses, the doctor's one weird line each. Add small
 chapels in Otterbrook, Valle Dorado, and Valea Stelelor where a free prayer
 restores 50 HP party-wide and (flavor, not mechanics) the priest comments on
-Mia's gift warmly per §A11.4. Mushroomize curable only at doctors per §A4.8.
+Mia's gift warmly per §A11.4. Mushroomized is cured by a consumed Spore
+Antidote, the reusable Scroll of Calm, a doctor, or defeat recovery per §A4.8.
 ```
 
 **Done when:** angels → humans at the front desk; wallet appropriately lighter.
@@ -1730,13 +1779,16 @@ hop routes using existing movement).
 ### Prompt 34 — Chapter 8: "The Paper Dragon" (China)
 
 ```
-[Same template.] Maps: Lotus Harbor, riverboat scene, Spore Forest
-(Mushroomize zones — implement the control-scramble shader/input warp now),
-Yak Express mountain switchbacks, Mt. Shu Temple (paper-guardian statues
-animate as enemies). Teleport β taught by the elder. Pippa gets chapter
-reactivity here: tiny-diplomat paper reads, fold warnings, and unique
-comments on the temple's scale discipline. Boss: THE PAPER DRAGON airborne/grounded + self-immolation
-desperation phase. Five Ch.8 quests (#17 plus four new regional slots) and Ch.8's 20 unique enemy types.
+[Superseded by ADR-143 and the production implementation.] Stable maps:
+lotus_harbor, bamboo_road, spore_forest, mt_shu_temple. Riverboat owns arrival;
+Yak Express owns the forest-to-temple leg; Lucille remains backtracking.
+Mushroomized is a deterministic persisted common-input transform with authored
+safe retreats and antidote/Scroll/doctor/defeat cures. Teleport β is taught once
+by the elder. Pippa-present and Pippa-departed routes both have truthful crease
+reads and contextual panels. Boss: THE PAPER DRAGON at exactly 45,000 HP with
+AIRBORNE grounding and one BURNING speed-doubling threshold. Exactly five live
+quests and a focused authored four-regular-enemy roster; do not resurrect the
+obsolete twenty-enemy package quota.
 ```
 
 ### Prompt 35 — Chapter 9: "The Count of Valea Stelelor" (Romania)

@@ -1,5 +1,11 @@
 # AI HANDOFF PROMPT — Settlement Redesign + Vibrancy Program (Meteor Falls)
 
+> **Chapter 8 status (2026-07-13):** Lotus Harbor is a 112×80 production city
+> with a fan-shaped terraced river crescent, twenty-four facade placements,
+> twenty-two live units, and eight explicit authored city-scale facade
+> promotions. Historical units 0–3 retain realtor, home-host, dealer, and hotel
+> roles under ADR-143. It is no longer in the future-relayout or palette-gap queue.
+
 > **Chapter 7 status (2026-07-13):** Chandrapore now has fourteen original
 > source facades, fourteen authored city-scale variants, eighteen live units,
 > and a palace-spire axis. Historical units 0–3 and the locked Civic Hall
@@ -84,9 +90,13 @@ soft grass fringes, and CLIFF TERRACING (towns built on levels, Onett-style). St
 - 26 generated keys (`HI_RES_GEN_FACADES`, `src/spritegen/authored.ts`): warm shop/cafe/brownstone (Otterbrook family), the Brickton cool set (neon/theater/deptstore/bank), civic + market halls, THE SPIRE.
 - Golf/Valle bespoke landmarks (clubhouse_grand, gatehouse, mansions, valle_* set) — authored.
 
-**Known gaps (these WILL need ChatGPT authoring when their maps come up):**
-- **foggybottom** (roster: brownstone/bank/civic/cafe × EARTH/PAPER/BLUE/CYAN): only paper-bank, earth-brownstone, cyan/paper-civic exist. Its cafes and the remaining ramp variants need authoring.
-- **chandrapore** (deptstore/theater/hotel/market/neon/apartments × ORANGE/GOLD/MAGENTA/RED/PURPLE): the **hotel** and **apartments** families have ZERO authored keys game-wide; several orange/gold/red variants of the other families are missing too. This is the biggest art lift — plan it as its own 1-map, art-heavy session.
+**Closed production gaps:** Foggybottom's production identity landed through an
+authored landmark/prop kit rather than a needless formal-city facade family.
+Chandrapore's fourteen original source/promoted pairs closed its borrowing gap.
+Lotus Harbor's eight source identities now all have explicit city-scale
+promotions. Do not put any of these settlements back into a zero-art queue.
+
+**Known future gaps (author only when their maps come up):**
 - **Vibrancy bespoke types:** any settlement whose set is small may earn 0–3 NEW bespoke types (`bldg_<area>_<type>`) when a district would otherwise repeat one silhouette 4+ times — e.g. kvisthavn (only 5 types) could take a fish market / smokehouse / net shed; lilleby (4) another giant face. The blueprint decides; don't author speculatively.
 - **Region props for aliveness** (the "and such"): market/dock/street dressing per region — stall variants, hanging laundry, lantern strings, crab pots, prayer flags, snow drifts… authored via the chroma-strip prop pipeline. Cheap (many per strip) and high-impact; every blueprint should list 3–8.
 
@@ -105,8 +115,8 @@ Every area draws ONLY from its own `AREA_SKINS` roster (validator-pinned ⇄ `CA
 
 1. **Valle Dorado** (`buildValleDorado`, `maps_ch2.ts`) — full rebuild like everywhere else, BUT `valle_shop`/`valle_clinic`/`valle_chapel` are FIXED POINTS (exact positions — their `door.ox` values are hand-measured against authored art; re-verify current state via `git log` — the user actively edits this map). Redesign the village around them: lanes, yards/fences, flower beds, well/plaza detail, furniture.
 2. **Full re-layout + vibrancy passes, roughly in play order (2–3 per session; art-heavy = 1–2):**
-   `foggybottom` (ch3, `maps_ch3.ts` — ART-HEAVY, see ledger) · `kvisthavn` + `lilleby` (ch4) · `minimus_major` (ch5) · `zanzibel` (ch6) · `chandrapore` (ch7 — ART-HEAVY, its own session) · `lotus_harbor` (ch8) · `valea_stelelor` (ch9) · `aurora_station` + `mauna_lani` (ch10) · ch1–2 stragglers `costa_estrella` + `golf_resort` (`maps.ts`) · **RE-DO to the §0 bar: `brickton` + `puerto_sol`** (their 2026-07-02 passes predate the full-rebuild directive — same timid style the user rejected on Otterbrook) · route maps per chapter (ch1: hill_road, hickory_trail, whisperwood_rise, hickory_hill, the four meadow legs — currently bare snake-paths).
-3. **Design hooks per map** (expand into blueprints at execution time): foggybottom = damp fog-stone river town (market green, stone lanes, bank/civic quarter); kvisthavn = fjord fishing hamlet (working dock, crate racks, cliff-terraced lanes); **lilleby = GIANT 2.3× scale** — design in big shapes, wide streets, SPARSE furniture (it renders huge); minimus = 1/100 jewel-box miniature (dainty grid, hedge-maze motifs, DAINTY traffic); zanzibel = bazaar port (souk lanes, caravanserai courtyard, stall-crowded shade); chandrapore = the game's biggest city (dense bazaar blocks, arcade rows, sign riot, colossus spire axis); lotus_harbor = river temple town (lantern rows, pagoda forecourt, tea-house lane, docks); valea_stelelor = painted folk village (yards, well, church green, mill lane); aurora_station = utilitarian arctic outpost (boardwalk `:` paths, crate depots, huddled habitats); mauna_lani = launch resort (sand `n` beach band, palm lines, surf-shop row); costa_estrella/golf_resort = links villages (fairway `m`, mansion drives, gatehouse).
+   `minimus_major` (ch5) · `valea_stelelor` (ch9) · `aurora_station` + `mauna_lani` (ch10) · ch1–2 stragglers `costa_estrella` + `golf_resort` (`maps.ts`) · **RE-DO to the §0 bar: `brickton` + `puerto_sol`** (their 2026-07-02 passes predate the full-rebuild directive — same timid style the user rejected on Otterbrook) · route maps per chapter (ch1: hill_road, hickory_trail, whisperwood_rise, hickory_hill, the four meadow legs — currently bare snake-paths). Foggybottom, Kvisthavn/Lilleby, Zanzibel, Chandrapore, and Lotus Harbor are production closes, not entries in this queue.
+3. **Design hooks per remaining map** (expand into blueprints at execution time): minimus = 1/100 jewel-box miniature (dainty grid, hedge-maze motifs, DAINTY traffic); valea_stelelor = painted folk village (yards, well, church green, mill lane); aurora_station = utilitarian arctic outpost (boardwalk `:` paths, crate depots, huddled habitats); mauna_lani = launch resort (sand `n` beach band, palm lines, surf-shop row); costa_estrella/golf_resort = links villages (fairway `m`, mansion drives, gatehouse). The production identities for Foggybottom, Kvisthavn/Lilleby, Zanzibel, Chandrapore, and Lotus Harbor are recorded in their ADRs and verification documents; treat them as compatibility contracts rather than fresh design prompts.
 
 ## THE PER-MAP WORKFLOW (proven on Otterbrook/Brickton/Puerto Sol — follow it exactly)
 
@@ -182,3 +192,36 @@ Foggybottom elevation, map-topology, and v20 migration tests protect this
 contract. For any future town edit, also regenerate `tools/mapeditor/maps.json`
 and `manifest.json`, run `npm run mapeditor:check`, and survey all four terraces
 plus the Kettle room transition in the live game.
+
+## CHAPTER 8 SETTLEMENT STATUS (2026-07-13) — LOTUS HARBOR PRODUCTION CONTRACT
+
+This amendment supersedes the old future-relayout entry. Lotus Harbor is a
+112×80 formal city whose central spatial idea is a working river crescent that
+fans upward through curved terraces: riverboat quay and ghats, lantern market
+and tea cross-lanes, painted civic/temple terrace, then the Bamboo Road/Yak
+interchange. Three-tile main lanes, four-tile plaza mouths, clear doorsteps,
+river sightlines, and a marked vehicle bay are part of the `CH8_WORLD` contract.
+
+Twenty-four exterior source placements use eight Lotus identities and produce
+twenty-two live generated units; two suffix lots remain locked. The first four
+unlocked candidates are save-facing:
+
+- lantern shop → `lotus_harbor_unit_0`, realtor;
+- tea house → `lotus_harbor_unit_1`, home host;
+- temple → `lotus_harbor_unit_2`, dealer;
+- tea house → `lotus_harbor_unit_3`, hotel clerk.
+
+All later tenancy appends through `lotus_harbor_unit_21`. Do not reorder or
+insert an eligible facade ahead of that historical prefix without a migration,
+property/dealer/hotel, return-door, and unit-id audit. The dedicated hotel room
+is `citysvc_lotus_harbor_hotel_room`; market, property, agency, dealership,
+phone, ATM, dock, fuel, vehicle, and `the_stretch` seams retain their established
+ids.
+
+The palette gap is closed by eight explicit source/promoted pairs: Grand Market,
+Harbor Office, Lantern Shop, Pagoda, Row House, Tea House, Temple, and Theater.
+The four landmark sources are Grand Market, Pagoda, Temple, and Theater. Their
+city-scale keys are registered in the authored closed world and may not fall
+back to procedural formal-city construction. Visual evidence is
+`output/ch8_lotus_harbor_facades_contact.png`; full-map and final live findings
+belong in `docs/CH8_PRODUCTION_VERIFICATION.md`.

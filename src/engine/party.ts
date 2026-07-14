@@ -4,12 +4,12 @@
  * path (he knows better than anyone what being emptied costs). Pure state over
  * GS.data.party; the staged departure/return scenes live in OverworldScene.
  *
- * A departed hero is BENCHED (removed from the active party), never deleted: their
- * Prompt-21 name rides `heroNames`, the fact of their leaving rides a `<id>_left`
- * flag (which the ending cards + the finale read — they can still be dialed as a
- * caller), and rejoinHero rebuilds them at a level if they're gone.
+ * A departed hero is BENCHED (removed from the active party), never deleted: the
+ * exact record rides `departedHeroes`, while a `<id>_left` flag feeds ending and
+ * finale logic. Rejoin restores that record; legacy saves without one fall back
+ * to the Prompt-21 name and a supplied level.
  */
-import { GS, makeHeroState } from './state';
+import { GS, makeHeroState, type HeroState } from './state';
 import type { HeroId } from '../data/heroes';
 import { AWAKENINGS } from '../data/awakenings';
 
@@ -18,20 +18,43 @@ export function isPresent(id: HeroId): boolean {
   return GS.data.party.some((h) => h.id === id);
 }
 
+/** Copy the mutable members as well as the hero record itself, so edits to an
+ * active hero can never leak into the persisted bench (or vice versa). */
+export function cloneHeroState(hero: HeroState): HeroState {
+  return {
+    ...hero,
+    stats: { ...hero.stats },
+    bag: [...hero.bag],
+    equip: { ...hero.equip },
+    boosts: { ...hero.boosts },
+  };
+}
+
 /** bench a hero — remove from the active party, remember they left */
 export function departHero(id: HeroId): boolean {
   const i = GS.data.party.findIndex((h) => h.id === id);
   if (i < 0) return false;
+  GS.data.departedHeroes[id] = cloneHeroState(GS.data.party[i]);
   GS.setFlag(`${id}_left`, true);
   GS.data.party.splice(i, 1);
   return true;
 }
 
-/** bring a benched hero back at a level (rebuilt if they were removed) */
+/** Restore the exact benched record. `level` is only a legacy fallback for a
+ * left flag whose old/corrupt save has no companion record. */
 export function rejoinHero(id: HeroId, level: number): void {
+  if (isPresent(id)) {
+    delete GS.data.departedHeroes[id];
+    GS.setFlag(`${id}_left`, false);
+    return;
+  }
+  const benched = GS.data.departedHeroes[id];
+  const restored = benched
+    ? cloneHeroState(benched)
+    : makeHeroState(id, level, GS.data.heroNames[id]);
+  GS.data.party.push(restored);
+  delete GS.data.departedHeroes[id];
   GS.setFlag(`${id}_left`, false);
-  if (isPresent(id)) return;
-  GS.data.party.push(makeHeroState(id, level, GS.data.heroNames[id]));
 }
 
 /** the IRON path locks Dorin's Vibe Comet Ω for the rest of the run — an intended,

@@ -6,6 +6,14 @@
 > in `dormant/sprite-tools/` (except `art:appart`, the Android icon copier).
 > Full workflow: [ART_PIPELINE.md](ART_PIPELINE.md).
 
+> **Chapter 8 production amendment (ADR-143, 2026-07-13):** China is no
+> longer unbuilt. Its four production maps, eight Lotus source/promoted facade
+> pairs, seven named NPC sheets, four-regular-enemy package, 45,000-HP Paper
+> Dragon (including distinct BURNING wear), Spore background, riverboat/Yak,
+> and branch-safe cutscene panels are live. The old 4,100-HP and twenty-enemy
+> PKG-15 claims are superseded; see
+> [`asset-packages/PKG-15-ch8-China.md`](asset-packages/PKG-15-ch8-China.md).
+
 This is the complete, start-to-finish list of every image METEOR FALLS needs if
 we drop the procedural-only rule (ADR-002, "zero binary assets") and ship
 authored art for **everything** — opening screen, cutscenes, characters,
@@ -34,9 +42,10 @@ Literal id checklists for the big sets live in [`docs/asset-lists/`](./asset-lis
 
 ## 0. Totals at a glance
 
-The two columns separate **what the code draws today** (Ch.1–3 built) from the
-**full-game target** the canon (`docs/GAME_BIBLE.md`, `src/data/chapters.ts`)
-commits to. "Author everything" means the right column.
+The two columns separate **what the current production registry draws today**
+from the **full-game target** the canon (`docs/GAME_BIBLE.md`,
+`src/data/chapters.ts`) commits to. "Author everything" means the right column;
+rows not touched by a chapter close remain historical planning snapshots.
 
 > **Producing it in parallel?** This whole job is split into 17 standalone work
 > packages in [`docs/asset-packages/`](./asset-packages/INDEX.md) — one brief per
@@ -46,7 +55,7 @@ commits to. "Author everything" means the right column.
 |---|---:|---:|---|
 | Opening / title / framing screens | ~12 | ~12 | logo, title, app icon, name entry, save slots, boot |
 | Cutscene panels | ~8 (Ch.1) | **~80** | §A6 beats + travel set-pieces, ~8/chapter ×10 |
-| Overworld characters (8-dir) | **48** | **~140** | 5 heroes, 42 human NPCs, and Glint special done; ~10–15 new NPCs per unbuilt chapter |
+| Overworld characters (8-dir) | **100** | **~140** | 100 registered authored 46-frame sheets after the three Chapter 8 additions; ~10–15 new NPCs per still-unbuilt chapter |
 | Hero battle busts | 5 × 18 frames | 5 × 18 | all 5 heroes already exist |
 | Hero battle-stage battlers | 5 × 14 frames | 5 × 14 (× weapon) | all 5 heroes exist; weapon variants optional |
 | **Enemies** (× 3 wear each) | **35** (=105 imgs) | **200** (=600 imgs) | §A7 law: 20/chapter ×10 — see §18 |
@@ -73,8 +82,9 @@ commits to. "Author everything" means the right column.
 
 **Built today: ~1,400–1,600 images. Full "author everything" game:
 ~3,000–3,500 individual images** (every frame + wear variant). The growth is
-almost all in the **seven unbuilt chapters (Ch.4–10)** — see **§18**, which is
-the part not represented anywhere in the current `assets/art/` tree. Item and
+mostly in remaining future chapter/finale work — see **§18**. Chapters 4, 6,
+7, and 8 now have production-world art records and must not be counted as blank
+packages. Item and
 ability icons are the exception: the registries already anticipate all ten
 regions, so that 469/92 work mostly stands for the whole game.
 
@@ -320,7 +330,7 @@ placeholder bitmap was introduced.
 | 5 | Minimus — Minimus Major | **unbuilt** | Whiskerzilla (2150) | minimus_major | biplane |
 | 6 | Africa — Zanzibel | **production world shipped** | The Laughing Sphinx (9000) | zanzibel, savanna_run, laughing_ruins, sphinx_chin | biplane |
 | 7 | India — Chandrapore | **production world shipped** | Cobra Raja (**20000**) | chandrapore, monsoon_road, night_train, palace_throne | biplane + night train |
-| 8 | China — Lotus Harbor | **unbuilt** | The Paper Dragon (4100) | lotus_harbor | riverboat + yak |
+| 8 | China — Lotus Harbor | **implemented on production branch; final close pending** | The Paper Dragon (**45000**) | lotus_harbor, bamboo_road, spore_forest, mt_shu_temple | riverboat + yak |
 | 9 | Romania — Valea Stelelor | **unbuilt** | Count Hoaxula (5300) | valea_stelelor | Orient Less-Express |
 | 10 | Alaska → Hawaii → Mars | **unbuilt** | **The Hush (6000)** + Frost Sentinel + Tiki Magma Golem | aurora_station, mauna_lani | snowcat → rocket |
 
@@ -335,6 +345,14 @@ city package adds four source master banks, fourteen 256×192 source facades,
 fourteen explicit 264px-wide city-scale facades, and the palace-spire prop. See
 `docs/asset-packages/PKG-14-ch7-India.md` for the exact inventory.
 
+Chapter 8 retains the China strip, Bamboo/Spore edges, Spore Forest background,
+riverboat, Yak Express, four quest-giver sheets, and the focused regular
+enemy/boss package. Its production additions include eight explicit Lotus
+city-scale facade promotions, three distinct named NPC sheets (Yak Handler,
+Lotus Bargeman, Mt. Shu Elder), corrected seven-panel party compositions, two
+departed-Pippa panel variants, and distinct Paper Dragon BURNING wear. See
+`docs/asset-packages/PKG-15-ch8-China.md` for the exact inventory.
+
 ### Per-chapter art set (historical planning checklist)
 
 Each unbuilt chapter needs, at minimum:
@@ -347,7 +365,10 @@ Each unbuilt chapter needs, at minimum:
       style (`spire-canton`, `bazaar-port`, `painted-gates`, `fog-stone`).
 - [ ] **NPC roster (8-dir)** — townsfolk, shopkeepers, quest-givers. ~10–15 per
       chapter, same 96×128 runtime (24×32 native) / 8-direction contract as §3.
-- [ ] **Enemy roster — 20 enemies × 3 wear = 60 images** (see ecosystem below).
+- [ ] **Enemy roster — chapter-approved authored roster with complete wear and
+      minis.** The twenty-enemy figure is a historical full-game planning target,
+      not a per-chapter production gate when a newer ADR freezes a focused set;
+      ADR-143 freezes Chapter 8 at four regulars plus Paper Dragon.
 - [ ] **Boss(es)** — bespoke multi-frame sheet, larger than enemies.
 - [ ] **Battle background** — the region's arena backdrop.
 - [ ] **Cutscene panels** — the chapter's §A6 story beats + the travel-in
@@ -368,6 +389,12 @@ Canon mandates **200 unique enemy types** total (`GAME_BIBLE.md` §A7, lines
 each are in the table above; the 20-id rosters per chapter are scaffolded as
 dev-only drafts (`src/data/drafts/chN/`, `npm run scaffold -- chN`) and promoted
 chapter by chapter.
+
+Those counts are a historical planning snapshot, not the current registry
+audit. ADR-143 explicitly supersedes the per-Chapter-8 twenty-id expansion and
+nonexistent Chapter 8 draft-path assumption: its accepted production set is
+four authored regular enemies plus Paper Dragon. Use live registries and the
+enemy-frame audit for current totals.
 
 ### Travel set-pieces
 
@@ -413,7 +440,7 @@ sheet is expected reads as a frozen pose (and can crash if frames are missing).
 
 | Category | Animated how | Frames | Sheet layout | Status |
 |---|---|---:|---|---|
-| Overworld characters | frame anim: `<id>-idle/walk/run-<dir>` | **46** | 4 cols × 12 rows of 24×32 native = **384×1536 runtime** | ✅ all 48 complete |
+| Overworld characters | frame anim: `<id>-idle/walk/run-<dir>` | **46** | 4 cols × 12 rows of 24×32 native = **384×1536 runtime** | 100 registered authored sheets; final Ch8 strict audit 84/100 clean, 0 errors, 0 warnings, 58 assessed hints |
 | Hero battle busts | frame anim: idle/cast/pray/hurt… | **18** | 4 cols × 5 rows of 32×32 = **128×160** | ✅ 5 complete |
 | Hero stage battlers | frame anim: swing/cast/throw/aim | **14** | 4 cols × 4 rows of 28×36 = **112×144** | ✅ 5 complete |
 | Mourning angels (`angel_<id>`) | `*-float` 2-frame loop | **2** | 2 cols of the angel cell | procedural (author ⇒ 2 frames) |
@@ -438,7 +465,7 @@ sheet is expected reads as a frozen pose (and can crash if frames are missing).
 
 Swept every authored asset on disk against the contract above:
 
-- **Characters:** 48/48 sheets are 384×1536 runtime — full walk + run + idle. **0 mis-framed.**
+- **Characters:** 100 registered sheets are 384×1536 runtime — full walk + run + idle. The inherited 97-sheet gate was remediated before Chapter 8; the final 100-sheet Ch8 strict result is pending its close run.
 - **Busts:** 5/5 at 128×160 (18 frames). **Battlers:** 5/5 at 112×144 (14 frames).
 - **Enemies:** 108 single-frame images — correct (engine-tweened).
 
@@ -457,8 +484,8 @@ the bridge to synthesise the cycle. Static slots stay single-image.
 
 The art that's already authored covers leads + NPCs + Otterbrook + Ch.1–3
 enemies. Two tracks run in parallel: **(A) finish the global art** (icons, UI,
-font, polish for already-shipped chapters) and **(B) build the seven unbuilt
-chapters** (§18), one region at a time.
+font, polish for already-shipped chapters) and **(B) build the remaining
+unbuilt chapter/finale packages** (§18), one region at a time.
 
 **Track A — global, most visible payoff first:**
 
@@ -469,12 +496,13 @@ chapters** (§18), one region at a time.
 5. **UI chrome + font + glyph banners.**
 6. **Vehicles, weapons/charms, minigame art.**
 
-**Track B — per unbuilt chapter (Ch.4 → Ch.10), each as one bundle:**
+**Track B — per remaining unbuilt chapter, each as one bundle:**
 
-For each region, deliver the §18 per-chapter set together — tileset, town
-facades, NPCs, **20-enemy roster (×3 wear)**, boss, battle background, cutscene
-panels, regional home + vehicle. Do them in chapter order (4→10) so the game
-becomes playable region by region. **Save the Mars finale (Ch.10) for last** —
+For each remaining region, deliver the §18 per-chapter set together — tileset,
+town facades, NPCs, its accepted authored enemy roster and wear, boss, battle
+background, cutscene panels, regional home + vehicle. Do them in play order so
+the game becomes playable region by region. Do not reopen Chapters 4, 6, 7, or
+8 as blank art packages. **Save the Mars finale (Ch.10) for last** —
 its three bosses, caller portraits, and Homesong UI are the art centerpiece.
 
 > The single biggest line item across everything is the **§A7 enemy roster:

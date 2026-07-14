@@ -187,4 +187,63 @@ describe('completeQuest — rewards via the bag flow, callers onto the ledger', 
     expect(GS.hasItem('cinema_stub')).toBe(true);
     expect(callerEarned('the_last_showing')).toBe(true);
   });
+
+  it('pins exactly five Chapter 8 quest contracts, rewards, and caller strengths', () => {
+    const ids = [
+      'brushes_of_mt_shu',
+      'lanterns_of_the_false_fold',
+      'the_yak_who_waits',
+      'the_harbors_balance',
+      'tea_for_the_empty_chair',
+    ];
+    expect(CHAPTER_MANIFESTS['8'].quests).toEqual(ids);
+    expect(Object.values(QUESTS).filter((quest) => quest.chapter === 8).map((quest) => quest.id)).toEqual(ids);
+    expect(ids.map((id) => QUESTS[id].giver)).toEqual([
+      'lh_calligrapher',
+      'lh_lantern_girl',
+      'lh_yak_handler',
+      'lh_harbor_master',
+      'lh_tea_monk',
+    ]);
+    expect(ids.map((id) => QUESTS[id].rewardItem)).toEqual([
+      'scroll_of_calm',
+      'paper_crane_charm',
+      'jade_salamander_charm',
+      'river_beads',
+      'temple_incense',
+    ]);
+
+    for (const id of ids) expect(completeQuest(id)).toBe('ok');
+    expect(GS.data.callers.map(({ quest, name, effect }) => ({ quest, name, effect }))).toEqual([
+      { quest: 'brushes_of_mt_shu', name: 'The Calligrapher', effect: { kind: 'heal', power: 1400 } },
+      { quest: 'lanterns_of_the_false_fold', name: 'The Lantern Girl', effect: { kind: 'damage', power: 820 } },
+      { quest: 'the_yak_who_waits', name: 'The Yak Handler', effect: { kind: 'damage', power: 880 } },
+      { quest: 'the_harbors_balance', name: 'The Harbor Master', effect: { kind: 'damage', power: 900 } },
+      { quest: 'tea_for_the_empty_chair', name: 'The Tea-House Monk', effect: { kind: 'heal', power: 960 } },
+    ]);
+    for (const id of ids) expect(completeQuest(id)).toBe('already');
+    expect(GS.data.callers).toHaveLength(5);
+  });
+
+  it('keeps every Chapter 8 reward and caller retryable when all bags are full', () => {
+    const ids = [
+      'brushes_of_mt_shu',
+      'lanterns_of_the_false_fold',
+      'the_yak_who_waits',
+      'the_harbors_balance',
+      'tea_for_the_empty_chair',
+    ];
+    for (const hero of GS.data.party) while (hero.bag.length < BAG_MAX) hero.bag.push('pbj');
+
+    for (const id of ids) {
+      expect(completeQuest(id)).toBe('hands-full');
+      expect(GS.flag(QUESTS[id].doneFlag)).toBe(false);
+      expect(callerEarned(id)).toBe(false);
+    }
+
+    GS.data.party[0].bag.pop();
+    expect(completeQuest('tea_for_the_empty_chair')).toBe('ok');
+    expect(GS.hasItem('temple_incense')).toBe(true);
+    expect(callerEarned('tea_for_the_empty_chair')).toBe(true);
+  });
 });

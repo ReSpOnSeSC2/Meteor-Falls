@@ -100,6 +100,16 @@ export const AWAKENINGS: Record<string, AwakeningDef> = Object.fromEntries(
       dialogue: 'awake_the_thunder_snore',
       toast: '{faye} awakened VIBE VOLT Alpha! ⚡',
     }),
+    /* ---- Ch.8: THE SHORT STEP. Teleport Alpha remains Jay's L26 row; Beta
+     * has exactly one path, the Mt. Shu elder's story lesson. */
+    W({
+      id: 'awake_teleport_b',
+      hero: 'rex',
+      ability: 'teleport_b',
+      flag: 'awake_teleport_b',
+      dialogue: 'awake_teleport_b',
+      toast: '{rex} awakened TELEPORT Beta!',
+    }),
     /* ---- S16 ("The Old Light, Doubled"): Jay's three iconic late beats. The
      * 80/20 split (§3) reserves AWAKENINGS for the powers that should land as
      * MOMENTS, not level-up toasts. Each is staged §A11.2-sincere; none of the

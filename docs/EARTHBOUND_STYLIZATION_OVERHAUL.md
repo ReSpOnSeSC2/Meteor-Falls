@@ -1,5 +1,11 @@
 # EARTHBOUND STYLIZATION OVERHAUL — the game-wide program
 
+> **China production contract (2026-07-13):** Chapter 8 implements a 112×80
+> fan-shaped Lotus Harbor, braided Bamboo Road, safe-pocket Spore Forest, and
+> folded-court Mt. Shu Temple, with eight explicit Lotus facade promotions.
+> Its final aggregate gates, evidence refresh, and commit remain pending under
+> ADR-143; the broader shared 47-blob terrain-family program is also separate.
+
 > **Norway completed (2026-07-12):** the Chapter 4 slice now uses deliberate
 > 64×48 through 112×80 grids with six different spatial signatures, additional
 > authored Norway-strip materials, giant-scale negative space in Lilleby, and
@@ -119,7 +125,7 @@ the rebuild is the Track-A layout; the town renders in the existing tileset unti
 | 5 | **Kvisthavn/Lilleby** (Ch4) | **Winters** + scale-gag (Saturn Valley tone) | Reuses Winters; giant-scale layer built |
 | 6 | **Minimus** (Ch5) | **Dalaam** (jewel-box scale) | Reuses hedge autotile; **locks Dalaam grammar** (reused Ch8) |
 | 7 | **Zanzibel** (Ch6) | **Scaraba/Dusty Dunes** | Reuses Pyramid/desert kit; cleanest 1:1 |
-| 8 | **Lotus Harbor** (Ch8) | **Dalaam** (temple) + spore-forest | Reuses Dalaam; +bamboo, +spore layer |
+| 8 | **Lotus Harbor** (Ch8) | **Dalaam** (temple) + spore-forest | **Production layout/art implemented 2026-07-13; final close pending:** fan-shaped terraced river crescent, eight explicit Lotus facade promotions, braided Bamboo ascent, asymmetric safe-pocket Spore loops, and folded Mt. Shu courts. Shared 47-blob ground-family polish remains separate. |
 | 9 | **Chandrapore** (Ch7) | **Fourside** (density) + **Scaraba** (warmth) | **Production layout + art shipped 2026-07-13:** three-district 120×88 city, fourteen original source/promoted facade pairs, Majestic/Station landmarks, and palace-spire axis. Shared 47-blob ground-family polish remains separate. |
 | 10 | **Valea Stelelor** (Ch9) | **Threed** (castle) + Winters/Dalaam (monastery) | Emotional heart; bespoke Threed gothic palette |
 | 11 | **Aurora + Mauna Lani** (Ch10) | **Winters-ice** + **Summers-lava** | Reuses proven grammars + elemental layers |
@@ -183,7 +189,7 @@ Per region:
   llama_jungle_paths, valle_dorado_wishers) and the baked BRICKTON lettering (hospital sign, Bugle box).**
 - **KEY PIVOT:** the approved cliff LOOK stays, but the production art is (re)authored as **continuous
   47-blob reference-blocks** for seamlessness (the nine-slice/curve sheets were the look study).
-- **NEXT (Otterbrook/Onett, map #1 — establishes the universal geometry):** author the full Onett EB
+- **NEXT shared-art track (Otterbrook/Onett, map #1 — establishes the universal geometry):** author the full Onett EB
   kit — the cliff-face + cliff-lip 47-blob continuous blocks, the grass fields + tall-grass, the
   grass↔dirt path transition, round oak trees, stairs — via ChatGPT (user approves each), install via
   the apply-kit/skin machinery, then rebuild `growOtterbrook` to the Onett grammar (`docs/OTTERBROOK_ONETT_REBUILD.md`).
@@ -217,3 +223,29 @@ shore families, cliff corners/caps, and other shared terrain families remain
 game-wide art work. Do not reopen the twelve Chapter 3 layouts merely to make
 progress on those shared strips; land shared art through the frozen-index
 pipeline and re-review Chapter 3 as a consumer.
+
+### Chapter 8 status amendment (2026-07-13)
+
+Chapter 8 is no longer a future Dalaam/spore placeholder. Its four maps preserve
+their stable ids while claiming four different spatial signatures:
+
+- `lotus_harbor` (112×80): a fan-shaped working river crescent, not a grid or a
+  Chandrapore-style district knot;
+- `bamboo_road` (104×64): reconnecting river braids that become alternating
+  switchbacks around a persistent public lock;
+- `spore_forest` (88×104): asymmetric hazard loops taught through clean safe
+  pockets and retreat lines;
+- `mt_shu_temple` (96×104): alternating folded courts with a Dragon arena and
+  separately gated bell destination.
+
+Lotus Harbor's eight source identities each have an explicit authored
+city-scale promotion. Bamboo/Spore silhouettes, lacquer/jade/gold city art,
+rice-paper guardian spaces, and the China regional strip supply the chapter's
+current visual vocabulary. The map identities are protected by `CH8_WORLD`,
+map contracts, the diversity ledger, and ADR-143.
+
+As with Chapter 3, this production close does **not** declare the game-wide
+47-blob program finished. Universal ground transitions, shore/corner families,
+or later per-region shared refinements must land through the frozen-index art
+pipeline and re-review Chapter 8 as a consumer; they are not permission to
+replace its four layouts or authored Lotus facade closed world.

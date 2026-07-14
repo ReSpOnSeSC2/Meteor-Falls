@@ -301,7 +301,7 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
 // the code arm AND the pin here together. ('down' is the revive line, handled
 // separately in both scenes.)
 {
-  const HANDLED_CURES = new Set(['down', 'sunburn', 'crying', 'paralyzed', 'asleep', 'hushed', 'homesick']);
+  const HANDLED_CURES = new Set(['down', 'sunburn', 'crying', 'paralyzed', 'asleep', 'hushed', 'homesick', 'mushroomize']);
   const HANDLED_BATTLE_STATUS = new Set(['crying', 'asleep', 'paralyzed']);
   for (const item of Object.values(ITEMS)) {
     for (const c of item.cures ?? []) {
@@ -2402,6 +2402,46 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     // ── CHAPTER 9 (Romania) — §A10 the named core quest (Buni's Table), banking the
     //    warmest finale CALLER (the bible's base ally). Giver placed in valea_stelelor.
     //    Reward the Feast Basket recipe (basket_feast). ──
+    lanterns_of_the_false_fold: {
+      name: 'Lanterns of the False Fold',
+      chapter: 8,
+      giver: 'lh_lantern_girl',
+      startFlag: 'q_false_fold_lanterns',
+      objectiveFlags: ['q_false_fold_lanterns_read', 'q_false_fold_lanterns_refolded'],
+      rewardItem: 'paper_crane_charm',
+      doneFlag: 'q_false_fold_lanterns_done',
+      caller: { name: 'The Lantern Girl', kind: 'damage', power: 820 },
+    },
+    the_yak_who_waits: {
+      name: 'The Yak Who Waits',
+      chapter: 8,
+      giver: 'lh_yak_handler',
+      startFlag: 'q_yak_waits',
+      objectiveFlags: ['q_yak_waits_feed', 'q_yak_waits_route'],
+      rewardItem: 'jade_salamander_charm',
+      doneFlag: 'q_yak_waits_done',
+      caller: { name: 'The Yak Handler', kind: 'damage', power: 880 },
+    },
+    the_harbors_balance: {
+      name: "The Harbor's Balance",
+      chapter: 8,
+      giver: 'lh_harbor_master',
+      startFlag: 'q_harbor_balance',
+      objectiveFlags: ['q_harbor_balance_weights', 'q_harbor_balance_delivered'],
+      rewardItem: 'river_beads',
+      doneFlag: 'q_harbor_balance_done',
+      caller: { name: 'The Harbor Master', kind: 'damage', power: 900 },
+    },
+    tea_for_the_empty_chair: {
+      name: 'Tea for the Empty Chair',
+      chapter: 8,
+      giver: 'lh_tea_monk',
+      startFlag: 'q_empty_chair',
+      objectiveFlags: ['q_empty_chair_brewed', 'q_empty_chair_offered'],
+      rewardItem: 'temple_incense',
+      doneFlag: 'q_empty_chair_done',
+      caller: { name: 'The Tea-House Monk', kind: 'heal', power: 960 },
+    },
     bunis_table: {
       name: "Buni's Table",
       chapter: 9,
@@ -2548,6 +2588,8 @@ parseAll('awakenings', AwakeningDefSchema, AWAKENINGS);
     // the first time the Whisperwig is dragged out of the Sleeper's ear (vibe_volt_a
     // left her L20 unlock row in the same commit; one-path rule).
     the_thunder_snore: { hero: 'faye', ability: 'vibe_volt_a', flag: 'awake_volt_a', dialogue: 'awake_the_thunder_snore' },
+    // Ch.8 (Mt. Shu) — the elder's short-step lesson is Teleport Beta's only path.
+    awake_teleport_b: { hero: 'rex', ability: 'teleport_b', flag: 'awake_teleport_b', dialogue: 'awake_teleport_b' },
     // S16 ("The Old Light, Doubled") — Jay's three iconic late beats. Reserved
     // as awakenings (the 80/20 split): true MIND WARP, the party REFLECT, and
     // the Surge Σ capstone. Each lands mid-to-late, where the §A6 arc has room

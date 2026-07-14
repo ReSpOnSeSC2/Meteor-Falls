@@ -129,10 +129,11 @@ export type PrayWeights = z.infer<typeof PrayWeightsSchema>;
 
 /** S14 adds the §A7 Ch.2 vocabulary: 'stealcash' (Pickpocket Parrot — the
  *  pending-cash theft, recovered on victory), 'gild' (Gilded Beetle's gold
- *  form: physical-immune turns), and 'shield' (Step-Mask casts Shield). */
+ *  form: physical-immune turns), and 'shield' (Step-Mask casts Shield).
+ *  Chapter 8 adds 'refold': a guarded Origami state with a live elemental read. */
 // 'mend' (ADR-099) — §A7 Ch.3 Tea Poltergeist: heals every STANDING ally enemy a
 // little (hospitality misfiled). The deferred half of ADR-095's Tea Poltergeist note.
-export const MoveKindSchema = z.enum(['attack', 'strong', 'status', 'latch', 'drain', 'steal', 'taunt', 'stealcash', 'gild', 'shield', 'mend']);
+export const MoveKindSchema = z.enum(['attack', 'strong', 'status', 'latch', 'drain', 'steal', 'taunt', 'stealcash', 'gild', 'shield', 'refold', 'mend', 'split']);
 export type MoveKind = z.infer<typeof MoveKindSchema>;
 
 export const EnemyMoveSchema = z.strictObject({
@@ -151,7 +152,11 @@ export const EnemyMoveSchema = z.strictObject({
    *  hero's voice, the Hush made a status. The engine already models a hushed
    *  hero (BattleScene HeroStatus.hushed, STATUS_LANDED.hushed, the bust shimmer,
    *  partyStatus); this lets a standard §A7 foe inflict it, not just the finale. */
-  status: z.enum(['sunburn', 'crying', 'asleep', 'productive', 'paralyzed', 'hushed']).optional(),
+  status: z.enum(['sunburn', 'crying', 'asleep', 'productive', 'paralyzed', 'hushed', 'mushroomize']).optional(),
+  /** Chapter 8 porcelain can break into smaller, already-authored roster
+   * problems. `split` is threshold-gated and once-only in BattleScene. */
+  summon: z.string().min(1).optional(),
+  count: z.number().int().min(1).max(3).optional(),
   text: z.string().min(1),
   weight: z.number().positive(),
 });

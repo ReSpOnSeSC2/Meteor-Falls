@@ -56,7 +56,6 @@ export const HEROES: Record<HeroId, HeroDef> = {
       { level: 36, ability: 'ward_s' }, // S16: party-wide elemental ward
       { level: 38, ability: 'lifeup_g' },
       { level: 40, ability: 'flash_o' }, // S16: stronger blind
-      { level: 34, ability: 'teleport_b' }, // S16: the escape upgrade
       { level: 46, ability: 'lifeup_o' }, // S16: the big party heal
       { level: 35, ability: 'vibe_surge_o' }, // ADR-133: L47→35 (Ch.7) — Ω lands mid-game, not wasted in Ch.10
     ],

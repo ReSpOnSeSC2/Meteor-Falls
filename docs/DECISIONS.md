@@ -6488,3 +6488,104 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   unit/service role, Locket flag meaning, boss timing, or resonance order require
   migration and contract-test review. Exact evidence and the authored-art inventory
   are recorded in `docs/CH7_PRODUCTION_VERIFICATION.md`. ☄️
+
+## ADR-143 — CHAPTER 8 PRODUCTION CONTRACT (four China maps, Mushroomized, save v25)
+
+- **Date:** 2026-07-13
+- **Status:** Accepted and implemented on the Chapter 8 production branch. Final
+  release-command and live-QA evidence is recorded separately in
+  `docs/CH8_PRODUCTION_VERIFICATION.md` rather than inferred from registration.
+  This decision explicitly supersedes “unlanded / no maps / no art,” the 4,100-HP
+  Paper Dragon, the obsolete twenty-enemy package count, “Mushroomized remains
+  deferred,” and the claim that a registered compact scaffold is production-complete.
+- **Decision — stable four-map world:** Chapter 8 owns the save-facing ids
+  `lotus_harbor`, `bamboo_road`, `spore_forest`, and `mt_shu_temple`, at 112×80,
+  104×64, 88×104, and 96×104. `src/data/maps_ch8.ts` and exported `CH8_WORLD`
+  are canonical for dimensions, route mouths and landings, story/quest/hazard
+  rectangles, safe pockets, recovery, vehicle parking, migration, and developer
+  profiles. Lotus Harbor is a fan-shaped terraced working river crescent; Bamboo
+  Road is a braided lock-and-switchback ascent; Spore Forest is an asymmetric
+  safe-pocket loop network; Mt. Shu is a folded processional climb that keeps the
+  Dragon arena physically separate from the gated bell resonance.
+- **Decision — Lotus tenancy and authored scale:** Lotus Harbor places twenty-four
+  facade sources and deterministically produces twenty-two live units, `unit_0`
+  through `unit_21`; two suffix lots remain locked. The historical unlocked prefix
+  is frozen as lantern shop → `unit_0` realtor, tea house → `unit_1` home host,
+  temple → `unit_2` dealer, and tea house → `unit_3` hotel clerk. New tenancy
+  appends without renumbering those services. All eight Lotus source identities
+  have explicit authored city-scale promotions; no Lotus city-scale facade may
+  fall through the procedural formal-city path. The existing property, agency,
+  dealership, hotel room, market, phone, ATM, dock, fuel, and vehicle ids remain
+  stable.
+- **Decision — travel and contextual cinema:** Bert and Lucille reach only the
+  riverboat connection. The riverboat owns the canonical Lotus arrival, Lucille
+  remains the safe backtracking network, and the visible Yak Express owns the
+  forest-to-temple leg. `ch8_journey` remains the complete seven-panel gallery in
+  riverboat, harbor, forest, Yak, guardian, Dragon, bell order. Runtime plays only
+  the matching contextual cut at each beat; Dragon and Heartlight panels also have
+  Pippa-present and Pippa-departed variants so neither branch fabricates a party
+  member.
+- **Decision — Trust, Clicker, and Pippa:** missing Trust setup/escalation scenes
+  are staged through Lotus, Bamboo, Spore, and Mt. Shu; migration never invents
+  FREE or STRINGS. FREE keeps Pippa. STRINGS keeps her only when reconciled and
+  rewind debt is at most two; otherwise her exact serialized hero record moves to
+  the departed bench and can be restored without duplication. Pippa supplies early
+  crease reads when present and the elder supplies equivalent route knowledge when
+  absent. Milo's public Bamboo lock clearing controls only unoccupied machinery,
+  exposes the spoof, leaves a repaired painted lock, and awards The Lotus Bargeman
+  Caller once.
+- **Decision — real Mushroomized:** the stable internal status token remains
+  `mushroomize`; player-facing text is **Mushroomized**. The entered authored hazard
+  latches one deterministic phase: clockwise, counter-clockwise, or reverse logical
+  movement. The transform occurs after shared `INPUT.dir()` handling, so keyboard,
+  touch, and controller use one rule while confirm/cancel/menu/cutscene input stays
+  unchanged. The status persists through save/load and map travel, records a clean
+  recovery point, and clears on cure or defeat recovery. Spore Puffer inflicts it;
+  a consumed Spore Antidote, reusable Scroll of Calm, or doctor cures it.
+- **Decision — Teleport Beta:** Teleport Alpha remains the level-26 ability with a
+  96-native-pixel run-up. Beta is not a level-34 unlock: the Mt. Shu elder grants
+  `awake_teleport_b` once after “You run too much. Run less,” and Beta uses a
+  32-native-pixel dash. Field travel lists only visited, story-open safe anchors;
+  success and a wall-crash attempt charge PP once, followers reform, and vehicles
+  remain where they were. Battle, cutscene, modal, incompatible-vehicle, and
+  stolen-Locket states block use. v25 backfills Beta only from flags proving the
+  elder or later Chapter 8 state.
+- **Decision — exactly five quests:** the manifest order is
+  `brushes_of_mt_shu`, `lanterns_of_the_false_fold`, `the_yak_who_waits`,
+  `the_harbors_balance`, and `tea_for_the_empty_chair`. Their rewards are Scroll
+  of Calm, Paper Crane Charm, Jade Salamander Charm, River Beads, and Temple
+  Incense; their Callers are The Calligrapher (heal 1,400), The Lantern Girl
+  (damage 820), The Yak Handler (damage 880), The Harbor Master (damage 900), and
+  The Tea-House Monk (heal 960). Every flow is persistent, backtrackable,
+  hands-full retry-safe, and leaves a local world footprint.
+- **Decision — focused combat and progression:** Chapter 8 deliberately implements the
+  authored four-enemy roster `paper_lantern_wisp` (5,500 HP), `spore_puffer`
+  (6,500), `origami_warrior` (8,000), and `porcelain_warlord` (11,000), plus
+  Paper Dragon; the old twenty-enemy planning quota does not apply to this slice.
+  Origami Warrior's dedicated `refold` move kind lasts four turns, keeps its
+  physical shield, replaces normal FIRE weakness/FREEZE resistance with FREEZE
+  weakness/FIRE resistance, retains
+  VOLT weakness, feeds the same live profile to damage and Spy/Scope, then returns
+  to its normal profile when the creases relax.
+  Paper Dragon is exactly **45,000 HP**, level 40, offense 80, defense 42, speed
+  34, no weakness, Volt resistant, and mind immune. It starts AIRBORNE and is
+  physical-immune only in that form; Volt or Bottle Rockets ground it for exactly
+  two turns. Below 30% once it enters a distinct BURNING family and doubles speed.
+  Normal HP victory sets the boss flag, then the retry-safe Paper Fan is awarded
+  exactly once before bell access. Bell resonance then sets the Heartlight flag,
+  Ember 8, the exact Ember count of eight, and chapter completion.
+- **Decision — compatibility and survey seams:** save version is **25**. v24→v25
+  recovers all four maps, `lotus_harbor_unit_0` through `_21`, the Lotus hotel
+  room, and Chapter 8 parking through `CH8_WORLD`; adds the Mushroomized record
+  and departed-hero bench; preserves branch, party, inventory, economy, quests,
+  callers, echoes, and unrelated coordinates; and remains deterministic,
+  idempotent, and future-version rejecting. Thirteen TitleScene profiles cover
+  `arrival`, `city`, `barge`, `trustFree`, `trustStrings`, `mushroomized`,
+  `forestCured`, `brushes`, `yak`, `temple`, `boss`, `postBoss`, and `complete`
+  with coherent Pippa/Trust/Clicker, Teleport, reward, and Ember state.
+- **Consequences:** changes to a stable map id, `CH8_WORLD` point, historical
+  facade prefix, unit/service role, hazard phase, Trust/Pippa interpretation,
+  Teleport teaching flag, quest id/reward, Paper Fan order, boss phase, or bell
+  order require migration and focused contract-test review. Exact gate, editor,
+  art, render, and live-QA evidence belongs in
+  `docs/CH8_PRODUCTION_VERIFICATION.md`. ☄️

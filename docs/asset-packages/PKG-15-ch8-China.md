@@ -1,76 +1,122 @@
-# PKG-15 — Chapter 8: China (full region bundle)
+# PKG-15 — Chapter 8: China (production asset record)
 
-A complete art set for an **unlanded** chapter (no art exists yet). Canon source:
-`src/data/chapters.ts` (`CHAPTER_MANIFESTS['8']`) + `docs/GAME_BIBLE.md §A6/§A7`.
+Status: **production implementation present on `codex/chapter-8-production-rollout`**.
+Canonical source: ADR-143, `src/data/chapters.ts`, `src/data/maps_ch8.ts`, and
+`docs/CH8_PRODUCTION_VERIFICATION.md`.
 
-- **Region:** China · **biome:** painted-gates / spore forest
-- **Boss:** paper_dragon (4100 HP)
-- **Settlement(s):** lotus_harbor
-- **Travel in:** riverboat · **Dungeon:** spore_forest
+This package record supersedes its pre-production “unlanded / no art” brief,
+the 4,100-HP Paper Dragon, nonexistent `src/data/drafts/ch8/` paths, and the
+twenty-enemy art quota. Executable canon is a four-regular-enemy authored roster
+plus a **45,000-HP** Paper Dragon.
 
-## Resolution target
-The HD render is live: `ART_SCALE = 4` → **1600×900** framebuffer. Runtime cells
-are **native × 4**; size source art to the 4× cell (a gentle reduction, not the
-old 1× crush).
+## Production world contract
 
-- Tiles: 16×16 native → **64×64** runtime cells.
-- Characters: 24×32 native → **96×128** runtime cells, exactly the
-  `*_4x_master` cell, so they are native at 4× with no downscale.
-- Busts: 32×32 native → **128×128** runtime cells.
-- Battlers: 28×36 native → **112×144** runtime cells.
-- Athletes/golfers: 32×40 native → **128×160** runtime cells.
+| Map | Size | Production identity |
+| --- | ---: | --- |
+| `lotus_harbor` | 112×80 | Fan-shaped terraced working river crescent: quay, ghats, lantern market, tea lanes, painted civic gate, Yak/road interchange. |
+| `bamboo_road` | 104×64 | Braided river-and-lock ascent with a public barge crisis, reconnecting paths, switchbacks, rest grove, and Yak depot. |
+| `spore_forest` | 88×104 | Asymmetric fungal loop network with three deterministic Mushroomized belts, clean retreats, kiln, shortcuts, and Yak pickup. |
+| `mt_shu_temple` | 96×104 | Alternating folded courts and guardian halls; the Dragon arena and gated bell resonance are separate destinations. |
 
-Full-screen art (cutscene panels, screen backgrounds) is authored at **1600×900**.
+`CH8_WORLD` owns dimensions, landings, route mouths, story/quest/hazard
+rectangles, recovery, parking, migration, and profile spawns. Riverboat owns
+arrival, Yak Express owns the forest-to-temple leg, and Lucille remains the
+safe backtracking connection.
 
-## 1. Region tileset (~12–16 cells, 64×64 runtime / 16×16 native)
-Ground/wall/floor/water for the painted-gates / spore forest biome. Add new named cells to
-`TILESET` (`src/spritegen/tiles.ts`) and pack into a region strip
-`assets/art/world/China_tiles_16.png`.
+## Resolution and frame contracts
 
-## 2. Dungeon art (spore_forest)
-Walls, floor, props, set dressing, the boss-trigger door. Built in the LEVELKIT
-LAB recipe; reskin with hand art. `assets/art/world/dungeons/spore_forest/`.
+- Full-screen panels: 1600×900.
+- World tiles: 16×16 native → 64×64 runtime cells.
+- Characters: 24×32 native → 96×128 runtime cells; 46 populated frames in a
+  384×1536 four-column sheet.
+- Enemies and bosses: one authored still per base/wear/form key; BattleScene
+  supplies motion. Matching minis provide overworld tells.
+- Runtime and retained master/source pairs are pinned by focused asset tests.
 
-## 3. Settlement facades (~8)
-Landmark + generic buildings for lotus_harbor in the region style. Path
-`assets/art/world/facades/`.
+## Environment, facades, and interiors
 
-## 4. NPC roster — ~10–15, 8-dir 96×128 runtime / 24×32 native
-Townsfolk, shopkeepers, quest-givers. Same 8-direction → 46-frame contract as
-the heroes. `assets/art/characters/<id>_anim_46_4x.png`; add ids to
-`NPC_CHARACTER_ART` in `src/spritegen/authored.ts`. (Ids come from the
-chapter's promoted settlement draft — `src/data/drafts/ch8/`.)
+- The retained regional strip is `assets/art/world/China_tiles_16.png`; Bamboo
+  and Spore edge props provide place-specific silhouettes.
+- Lotus Harbor has eight source identities: Grand Market, Harbor Office,
+  Lantern Shop, Pagoda, Row House, Tea House, Temple, and Theater.
+- Each source has an explicit authored city-scale PNG under
+  `assets/art/world/facades/` and a retained generation source under
+  `assets/art/masters/generated/lh_cityscale_*_src.png`. No Lotus city-scale key
+  is allowed to use procedural formal-city fallback.
+- Twenty-four facade placements produce twenty-two deterministic live units,
+  `lotus_harbor_unit_0` through `_21`; two suffix lots remain locked. Historical
+  units 0–3 retain realtor, home-host, dealer, and hotel-clerk roles.
+- `citysvc_lotus_harbor_hotel_room` and the existing property, agency,
+  dealership, market, phone, ATM, dock, fuel, and vehicle seams remain live.
+- Visual evidence: `output/ch8_lotus_harbor_facades_contact.png` and
+  `output/maps_ch8.png`. Final close findings belong in the verification record.
 
-## 5. Enemy roster — **20 enemies × 3 wear = 60 images**
-The §A7 ecosystem (`GAME_BIBLE.md` line 530/551):
-- 4 road/field roamers
-- 3 dungeon specialists
-- 2 social/urban oddities
-- 2 rare/high-value
-- 2 late-chapter pressure
-- 1 set-piece enemy
+## Named Chapter 8 cast
 
-Author each at battle scale (large; fit-scaled in engine). Three wear stages
-each: `battle_<id>.png`, `_w1.png`, `_w2.png` under `assets/art/enemies/`;
-add to `ENEMY_BATTLE_ART` in `src/spritegen/authored.ts`. The 20 ids are
-scaffolded in `src/data/drafts/ch8/roster.ts` (`npm run scaffold -- ch8`).
+Seven named roles have distinct 46-frame authored identities:
 
-## 6. Boss — paper_dragon
-Bespoke, multi-frame, larger than enemies (NOT an enlarged enemy). 3 wear
-stages. `assets/art/enemies/battle_paper_dragon*.png`.
+- retained: `lh_harbor_master`, `lh_calligrapher`, `lh_lantern_girl`,
+  `lh_tea_monk`;
+- added for the production world: `lh_yak_handler`, `lotus_bargeman`,
+  `mt_shu_elder`.
 
-## 7. Battle background
-The region's arena backdrop. `assets/art/backgrounds/spore_forest.png`.
+The three added sheets have synchronized runtime and animation masters under
+`assets/art/characters/` and `assets/art/masters/characters/animation/`, with
+their retained directional generation sources under
+`assets/art/masters/generated/ch8-named-npcs/`.
 
-## 8. Cutscene panels (~6–8, 1600×900)
-The chapter's §A6 beats + the **riverboat** travel-in set-piece. (Coordinate file
-names with PKG-01: `assets/art/cutscenes/ch8/<beat>_NN.png`.)
+## Enemy and boss package
 
-## 9. Regional extras
-- One **home/interior** for the property arc (`src/data/properties.ts`).
-- The region's **road vehicle(s)** (coordinate with PKG-07).
-- ~3 **picnic table** placements use the shared prop (no new art).
+The production regular roster is exactly:
 
-## Acceptance
-Tileset, dungeon, facades, ~12 NPCs, 20-enemy roster (×3 wear), boss, backdrop,
-cutscene panels, and the regional home all authored and wired for Chapter 8.
+| Enemy | HP | Authored gameplay/art hook |
+| --- | ---: | --- |
+| `paper_lantern_wisp` | 5,500 | Floating fire tell; base, `_w1`, `_w2`, mini. |
+| `spore_puffer` | 6,500 | Inflicts real Mushroomized; base, `_w1`, `_w2`, mini. |
+| `origami_warrior` | 8,000 | Dedicated `refold` move kind lasts four turns, keeps physical shield, swaps FIRE weakness/FREEZE resistance to FREEZE weakness/FIRE resistance, retains VOLT weakness, and updates damage plus Spy/Scope until relaxation; base, `_w1`, `_w2`, mini. |
+| `porcelain_warlord` | 11,000 | Breaks into smaller same-roster pressure; base, `_w1`, `_w2`, mini. |
+
+`paper_dragon` is a bespoke boss at exactly 45,000 HP. Its authored package
+contains base, `_w1`, `_w2`, mini, and a distinct BURNING base/`_w1`/`_w2`
+family. It starts AIRBORNE, is physical-immune only there, grounds for exactly
+two turns from Volt or Bottle Rockets, and enters BURNING below 30% once with
+doubled speed. The Spore Forest battle background remains
+`assets/art/backgrounds/spore_forest.png`.
+
+## Cutscenes and travel craft
+
+The canonical seven 1600×900 panel pairs are:
+
+1. `riverboat_to_lotus_harbor`
+2. `lotus_harbor_arrival`
+3. `spore_forest_scramble`
+4. `yak_express_to_mt_shu`
+5. `paper_guardians_false_folds`
+6. `paper_dragon_reveal`
+7. `temple_bell_resonance`
+
+Dorin is present in the corrected canonical party compositions. Dedicated
+`paper_dragon_reveal_departed` and `temple_bell_resonance_departed` variants
+keep the post-Trust story accurate when Pippa has left. Runtime art lives under
+`assets/art/cutscenes/ch8/`; source panels live under
+`assets/art/masters/world/ch8-cutscene-panels/`. The complete gallery remains
+`ch8_journey`, while one-panel contextual ids play at their actual world beats.
+The existing `assets/art/vehicles/riverboat.png` and `yak_express.png` are the
+two visible chapter travel craft.
+
+## Items and system-facing art
+
+- Paper Dragon reward: `paper_fan`, awarded retry-safely once before bell access.
+- Quest/cure items include Scroll of Calm, Spore Antidote, Paper Crane Charm,
+  Jade Salamander Charm, River Beads, Temple Incense, and Yak Treats.
+- Mushroomized is a real saved/input status; it is not only an icon or shader.
+- Teleport Beta is taught once by the Mt. Shu elder; it is not a level-34 grant.
+
+## Production acceptance
+
+Source and focused tests must continue to pin the four maps, eight promoted
+facades, twenty-two units, seven named NPC identities, four regular enemies,
+Paper Dragon form families, nine branch-safe panel pairs, save v25, and thirteen
+developer profiles. Exact final strict visual/animation, enemy-frame, balance,
+test, build, render, original-resolution, and live-QA results are intentionally
+recorded only in `docs/CH8_PRODUCTION_VERIFICATION.md` after those commands run.

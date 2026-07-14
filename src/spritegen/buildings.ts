@@ -235,9 +235,14 @@ export const FORMAL_CITY_FACADE_SOURCE_WIDTHS: Record<FormalCityScaleId, Readonl
     bldg_chandrapore_station: 4,
   },
   lotus_harbor: {
+    bldg_lotus_harbor_grand_market: 4,
+    bldg_lotus_harbor_harbor_office: 4,
     bldg_lotus_harbor_lantern_shop: 4,
+    bldg_lotus_harbor_pagoda: 4,
+    bldg_lotus_harbor_row_house: 4,
     bldg_lotus_harbor_tea_house: 4,
     bldg_lotus_harbor_temple: 4,
+    bldg_lotus_harbor_theater: 4,
   },
 };
 
@@ -258,7 +263,10 @@ export const FORMAL_CITY_LANDMARK_SOURCES: ReadonlySet<string> = new Set([
   'bldg_chandrapore_silver_parasol',
   'bldg_chandrapore_majestic_cinema',
   'bldg_chandrapore_station',
+  'bldg_lotus_harbor_grand_market',
+  'bldg_lotus_harbor_pagoda',
   'bldg_lotus_harbor_temple',
+  'bldg_lotus_harbor_theater',
 ]);
 
 const CITY_SCALE_PALETTE: Record<FormalCityScaleId, readonly number[]> = {
@@ -338,9 +346,14 @@ const CITY_SCALE_SOURCE_SIGNS: Readonly<Record<string, string>> = {
   bldg_chandrapore_apartments_c: 'GHAT COURT',
   bldg_chandrapore_majestic_cinema: 'THE MAJESTIC',
   bldg_chandrapore_station: 'CHANDRAPORE',
+  bldg_lotus_harbor_grand_market: 'GRAND MARKET',
+  bldg_lotus_harbor_harbor_office: 'HARBOR OFFICE',
   bldg_lotus_harbor_lantern_shop: 'LANTERN SHOP',
+  bldg_lotus_harbor_pagoda: 'LOTUS PAGODA',
+  bldg_lotus_harbor_row_house: 'LOTUS ROW',
   bldg_lotus_harbor_tea_house: 'MOON TEA',
   bldg_lotus_harbor_temple: 'LOTUS TEMPLE',
+  bldg_lotus_harbor_theater: 'PAPER THEATER',
 };
 
 function cityScaleHash(text: string): number {

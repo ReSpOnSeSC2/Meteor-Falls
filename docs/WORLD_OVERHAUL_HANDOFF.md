@@ -1,10 +1,11 @@
 # WORLD OVERHAUL — Ch3+ program handoff (the master doc)
 
-> **Chapter 7 production close (2026-07-13):** India now ships four rebuilt maps,
-> a five-quest regional contract, explicit Locket theft/recovery, contextual
-> cinema, stable Chandrapore tenancy, nine developer profiles, original facade
-> art, and v24 recovery. Its fixed-point contract is ADR-142; future world work
-> proceeds to Chapter 8.
+> **Chapter 8 production rollout (2026-07-13):** China now has four production
+> maps, a five-quest regional contract, real Mushroomized and Teleport Beta,
+> contextual branch-safe panels, stable Lotus tenancy, thirteen developer
+> profiles, explicit city-scale facade art, and v25 recovery. Its fixed-point
+> contract is ADR-143; final command/live evidence is tracked in
+> `docs/CH8_PRODUCTION_VERIFICATION.md`.
 
 Copy this whole file into a fresh Claude Code session in `C:\Meteor Falls` to continue the
 program. It is the canonical, living source of truth; the plan-mode file
@@ -649,4 +650,60 @@ the retry-safe Heartlight 7 trigger.
 Save v24 recovers the four maps, generated interiors, parked vehicles, and
 Locket state without inventing story completion. Nine development profiles span
 arrival through complete. Exact art, test, editor, and visual evidence lives in
-`docs/CH7_PRODUCTION_VERIFICATION.md`; the next production slice is Chapter 8.
+`docs/CH7_PRODUCTION_VERIFICATION.md`; Chapter 8's successor contract is below.
+
+## Chapter 8 production rollout
+
+The save-facing roster is exactly `lotus_harbor`, `bamboo_road`,
+`spore_forest`, and `mt_shu_temple`, at 112×80, 104×64, 88×104, and 96×104.
+`CH8_WORLD` owns every dimension, route mouth and landing, story/quest/hazard
+rectangle, safe pocket, recovery point, vehicle bay, profile spawn, and
+migration target. The four maps deliberately claim different signatures: a
+fan-shaped terraced working river crescent, braided lock-and-switchback ascent,
+asymmetric safe-pocket fungal loop network, and folded processional temple with
+separate Dragon/bell goals.
+
+Lotus Harbor places twenty-four source facades and yields twenty-two live units.
+The historical unlocked prefix is lantern shop → `unit_0` realtor, tea house →
+`unit_1` home host, temple → `unit_2` dealer, and tea house → `unit_3` hotel
+clerk; appended tenancy cannot renumber those roles. All eight Lotus source
+identities have explicit authored city-scale variants, and the existing market,
+property, agency, dealership, hotel, phone, ATM, dock, fuel, and vehicle ids
+remain live.
+
+Riverboat, not Lucille, owns the Lotus arrival. Lucille remains the safe
+backtracking network and the visible Yak Express owns the forest-to-temple leg.
+The seven-panel `ch8_journey` gallery remains intact; contextual one-panel cuts
+play where each beat occurs, with dedicated departed-Pippa Dragon and bell
+variants. Missing Trust escalations are staged rather than invented by migration.
+FREE keeps Pippa; STRINGS retains her only when reconciled with rewind debt at
+most two, otherwise her exact serialized record moves to the departed bench.
+The Bamboo Clicker clearing is public, controls only unoccupied machinery, and
+leaves a repaired painted lock plus The Lotus Bargeman Caller.
+
+Mushroomized is a saved deterministic control transform: authored hazards latch
+clockwise, counter-clockwise, or reverse logical movement after common input
+handling. Spore Puffer can inflict it; a consumed Spore Antidote, reusable Scroll
+of Calm, doctor, or defeat recovery clears it. Clean-pocket recovery prevents
+stranding. The Mt. Shu elder is the sole Teleport Beta teacher; Alpha/Beta use
+96/32-native-pixel run-ups, safe visited destinations, single-charge PP
+accounting, follower re-forming, unchanged vehicles, and comic wall failure.
+
+Exactly five regional quests ship: Brushes of Mt. Shu, Lanterns of the False
+Fold, The Yak Who Waits, The Harbor's Balance, and Tea for the Empty Chair.
+Every flow is persistent, hands-full retry-safe, backtrackable after the boss,
+and leaves a local footprint. The accepted combat set is four authored regulars
+plus Paper Dragon, not the obsolete twenty-enemy package. Paper Dragon remains
+exactly 45,000 HP with AIRBORNE physical immunity, two-turn Volt/Bottle-Rocket
+grounding, one below-30% BURNING speed double, and normal HP victory. Retry-safe
+Paper Fan award precedes the gated bell, Heartlight 8, and exact Ember count 8.
+
+Save v25 recovers the four maps, `lotus_harbor_unit_0` through `_21`, the hotel
+room, and parking; adds Mushroomized and the departed-hero bench; preserves
+Trust, Clicker, Pippa, quest, reward, caller, echo, party, inventory, and economy
+state; and rejects future versions. Thirteen development profiles span arrival,
+city, barge, both Trust outcomes, hazardous/cured forest states, brushes, Yak,
+temple, boss, postBoss, and complete. Exact final editor, test, audit, render,
+original-resolution, and live-QA evidence belongs in
+`docs/CH8_PRODUCTION_VERIFICATION.md`; do not infer those passes from this
+implementation handoff.

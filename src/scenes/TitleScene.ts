@@ -1,7 +1,9 @@
 ﻿import Phaser from 'phaser';
 import { INPUT } from '../engine/input';
 import { AUDIO } from '../engine/audio';
-import { GS, makeHeroState } from '../engine/state';
+import { GS, makeHeroState, type MushroomizeState } from '../engine/state';
+import type { CallerRecord } from '../schemas';
+import { departHero } from '../engine/party';
 import { Dialogue } from '../ui/windows';
 import { colorOf } from '../palette';
 import { RAMP, px } from '../palette';
@@ -17,6 +19,8 @@ import { CH4_MAP_IDS, CH4_WORLD } from '../data/maps_ch4';
 import { CH5_MAP_IDS, CH5_WORLD } from '../data/maps_ch5';
 import { CH6_MAP_IDS, CH6_WORLD } from '../data/maps_ch6';
 import { CH7_MAP_IDS, CH7_WORLD } from '../data/maps_ch7';
+import { CH8_MAP_IDS, CH8_WORLD } from '../data/maps_ch8';
+import { CH8_CLICKER_CALLER } from '../engine/ch8Story';
 
 export const CH3_DEV_MAP_IDS = [
   'biplane_interior', 'foggybottom', 'kettle_taproom', 'kettle_snug',
@@ -294,6 +298,148 @@ export function chapter7DevSpawn(mapId: string, state: Chapter7DevState): { x: n
   };
 }
 
+export const CH8_DEV_MAP_IDS = CH8_MAP_IDS;
+const CH8_DEV_MAP_SET: ReadonlySet<string> = new Set(CH8_DEV_MAP_IDS);
+
+export const CH8_DEV_STATES = [
+  'arrival', 'city', 'barge', 'trustFree', 'trustStrings', 'mushroomized',
+  'forestCured', 'brushes', 'yak', 'temple', 'boss', 'postBoss', 'complete',
+] as const;
+export type Chapter8DevState = (typeof CH8_DEV_STATES)[number];
+type Chapter8HeroId = 'rex' | 'faye' | 'milo' | 'pippa' | 'dorin';
+
+export interface Chapter8DevProfile {
+  state: Chapter8DevState;
+  flags: readonly string[];
+  embers: 7 | 8;
+  keyItems: readonly string[];
+  items: readonly string[];
+  party: readonly Chapter8HeroId[];
+  departed: readonly Chapter8HeroId[];
+  level: 40;
+  rewindCount: number;
+  mushroomize: MushroomizeState;
+  callers: readonly CallerRecord[];
+}
+
+const CH8_BASE_FLAGS = [
+  'ember1', 'ember2', 'ember3', 'ember4', 'ember5', 'ember6', 'ember7',
+  'ch2_complete', 'ch3_arrived', 'ch3_complete', 'ch4_arrived', 'ch4_complete',
+  'ch5_arrived', 'ch5_complete', 'ch6_arrived', 'ch6_complete',
+  'ch7_arrived', 'ch7_complete', 'ch7_locket_recovered',
+  'milo_joined', 'pippa_joined', 'dorin_joined',
+  'repair_taught', 'milo_clicker', 'fleet_road', 'big_little_lens_built',
+  'mainframe_defeated', 'whisperwig_defeated', 'whiskerzilla_defeated',
+  'laughing_sphinx_defeated', 'cobra_raja_defeated', 'held_breath_unlocked',
+  'awake_freeze_a', 'awake_mindwarp_a', 'awake_volt_a', 'thread_trust_open',
+] as const;
+
+const CH8_FULL_PARTY = ['rex', 'faye', 'milo', 'pippa', 'dorin'] as const;
+
+const profileFeet = (
+  map: string,
+  point: Readonly<{ x: number; y: number; facing: 'up' | 'down' | 'left' | 'right' }>,
+) => ({
+  map,
+  x: point.x * TILE_PX + TILE_PX / 2,
+  y: point.y * TILE_PX + TILE_PX * 0.75,
+  facing: point.facing,
+});
+
+/** Exact Chapter 8 survey state. Ordinary profiles preserve an undecided Trust
+ * axis; the two named branch profiles are the only ones that choose FREE or
+ * STRINGS. Pippa remains present until the live Mt. Shu resolution applies the
+ * selected outcome, so the STRINGS profile cannot begin in an impossible seam. */
+export function chapter8DevProfile(value: string | null): Chapter8DevProfile {
+  const state: Chapter8DevState = CH8_DEV_STATES.includes(value as Chapter8DevState)
+    ? value as Chapter8DevState
+    : 'city';
+  const flags: string[] = [...CH8_BASE_FLAGS];
+  const atOrAfter = (milestone: Chapter8DevState): boolean =>
+    CH8_DEV_STATES.indexOf(state) >= CH8_DEV_STATES.indexOf(milestone);
+
+  if (state !== 'arrival') flags.push('ch8_arrived');
+  if (atOrAfter('barge')) {
+    flags.push('thread_trust_esc1', 'thread_trust_esc2', 'thread_clicker_seed');
+  }
+  if (atOrAfter('trustFree')) flags.push('thread_trust_esc3');
+  if (atOrAfter('mushroomized')) {
+    flags.push('thread_clicker_crisis', 'thread_clicker_clearing');
+  }
+  if (atOrAfter('forestCured')) flags.push('spore_forest_scramble');
+  if (atOrAfter('brushes')) flags.push('thread_trust_esc4', 'q_brushes', 'q_brush_river', 'q_brush_kiln');
+  if (atOrAfter('yak')) flags.push('q_brush_cloud', 'q_brushes_gather', 'q_yak_waits', 'q_yak_waits_feed', 'q_yak_waits_route');
+  if (atOrAfter('temple')) flags.push('ch8_yak_departed', 'ch8_yak_arrived', 'ch8_false_folds_seen');
+  if (atOrAfter('boss')) {
+    flags.push('thread_trust_climax', 'thread_trust_resolve', 'awake_teleport_b', 'ch8_elder_beta_seen');
+  }
+  if (state === 'postBoss' || state === 'complete') {
+    flags.push('ch8_dragon_seen', 'paper_dragon_defeated', 'paper_fan_claimed');
+  }
+  if (state === 'complete') flags.push('ch8_heartlight_seen', 'ember8', 'ch8_complete');
+
+  let party: readonly Chapter8HeroId[] = CH8_FULL_PARTY;
+  let departed: readonly Chapter8HeroId[] = [];
+  let rewindCount = 0;
+  if (state === 'trustFree') flags.push('ch6_string_decided', 'axis_trust_free');
+  if (state === 'trustStrings') {
+    flags.push('ch6_string_decided', 'axis_trust_strings');
+    rewindCount = 3;
+  }
+
+  const recovery = profileFeet('spore_forest', CH8_WORLD.sporeForest.recovery);
+  const mushroomize: MushroomizeState = state === 'mushroomized'
+    ? { active: true, phase: 0, source: CH8_WORLD.sporeForest.hazards[0].id, recovery }
+    : { active: false, phase: 0, source: null, recovery: null };
+
+  const keyItems = [
+    'star_locket', 'big_little_lens', 'royal_thimble', 'train_ticket', 'riverboat_pass',
+    ...(atOrAfter('temple') ? ['lotus_seal'] : []),
+  ];
+  return {
+    state,
+    flags: [...new Set(flags)],
+    embers: state === 'complete' ? 8 : 7,
+    keyItems: [...new Set(keyItems)],
+    items: state === 'postBoss' || state === 'complete' ? ['paper_fan'] : [],
+    party,
+    departed,
+    level: 40,
+    rewindCount,
+    mushroomize,
+    callers: atOrAfter('mushroomized')
+      ? [{ ...CH8_CLICKER_CALLER, effect: { ...CH8_CLICKER_CALLER.effect } }]
+      : [],
+  };
+}
+
+/** Every state/map pair lands at a fixed CH8_WORLD point. State-specific
+ * positions win on their authored map; other combinations use that map's
+ * nearest harmless profile point so query-string surveying cannot hit a wall. */
+export function chapter8DevSpawn(mapId: string, state: Chapter8DevState): { x: number; y: number; facing: Facing } {
+  const point = mapId === CH8_MAP_IDS[0]
+    ? state === 'arrival' ? CH8_WORLD.lotusHarbor.profiles.arrival : CH8_WORLD.lotusHarbor.profiles.city
+    : mapId === CH8_MAP_IDS[1]
+      ? CH8_WORLD.bambooRoad.profiles.barge
+      : mapId === CH8_MAP_IDS[2]
+        ? state === 'mushroomized' ? CH8_WORLD.sporeForest.profiles.mushroomized
+          : state === 'brushes' ? CH8_WORLD.sporeForest.profiles.brushes
+            : state === 'yak' ? CH8_WORLD.sporeForest.profiles.yak
+              : CH8_WORLD.sporeForest.profiles.forestCured
+        : mapId === CH8_MAP_IDS[3]
+          ? state === 'boss' ? CH8_WORLD.mtShuTemple.profiles.boss
+            : state === 'postBoss' ? CH8_WORLD.mtShuTemple.profiles.postBoss
+              : state === 'complete' ? CH8_WORLD.mtShuTemple.profiles.complete
+                : CH8_WORLD.mtShuTemple.profiles.temple
+          : null;
+  if (!point) return chapter3DevSpawn(mapId);
+  return {
+    x: point.x * TILE_PX + TILE_PX / 2,
+    y: point.y * TILE_PX + TILE_PX * 0.75,
+    facing: point.facing,
+  };
+}
+
 /** A representative, deterministic Chapter 3 survey save. It includes the
  * two prior Heartlights and Mia's Freeze; post-join states also carry Jay's
  * First Borrow and enough real stats/PP to exercise PUPPET. */
@@ -371,7 +517,7 @@ export class TitleScene extends Phaser.Scene {
     if (import.meta.env.DEV) {
       const params = new URLSearchParams(window.location.search);
       const devMap = params.get('devMap');
-      if (devMap && (LEGACY_DEV_MAPS.has(devMap) || CH3_DEV_MAP_SET.has(devMap) || CH4_DEV_MAP_SET.has(devMap) || CH5_DEV_MAP_SET.has(devMap) || CH6_DEV_MAP_SET.has(devMap) || CH7_DEV_MAP_SET.has(devMap))) {
+      if (devMap && (LEGACY_DEV_MAPS.has(devMap) || CH3_DEV_MAP_SET.has(devMap) || CH4_DEV_MAP_SET.has(devMap) || CH5_DEV_MAP_SET.has(devMap) || CH6_DEV_MAP_SET.has(devMap) || CH7_DEV_MAP_SET.has(devMap) || CH8_DEV_MAP_SET.has(devMap))) {
         GS.reset();
         GS.setFlag('intro_done');
         GS.setFlag('op_fell');
@@ -384,6 +530,7 @@ export class TitleScene extends Phaser.Scene {
         const isChapter5 = CH5_DEV_MAP_SET.has(devMap);
         const isChapter6 = CH6_DEV_MAP_SET.has(devMap);
         const isChapter7 = CH7_DEV_MAP_SET.has(devMap);
+        const isChapter8 = CH8_DEV_MAP_SET.has(devMap);
         if (isChapter3) {
           // Default to a clean post-join/pre-boss survey state. `devState`
           // exposes the production before/after beats without console surgery:
@@ -426,6 +573,27 @@ export class TitleScene extends Phaser.Scene {
           GS.data.embers = profile.embers;
           GS.data.party = profile.party.map((id) => makeHeroState(id, profile.level, GS.data.heroNames[id]));
           GS.data.keyItems = [...new Set([...GS.data.keyItems, ...profile.keyItems])];
+        } else if (isChapter8) {
+          const profile = chapter8DevProfile(params.get('devState'));
+          profile.flags.forEach((flag) => GS.setFlag(flag));
+          GS.data.embers = profile.embers;
+          const roster = [...profile.party, ...profile.departed];
+          GS.data.party = roster.map((id) => makeHeroState(id, profile.level, GS.data.heroNames[id]));
+          GS.data.keyItems = [...new Set([...GS.data.keyItems, ...profile.keyItems])];
+          GS.data.echoes.rewindCount = profile.rewindCount;
+          GS.data.mushroomize = {
+            ...profile.mushroomize,
+            recovery: profile.mushroomize.recovery ? { ...profile.mushroomize.recovery } : null,
+          };
+          GS.data.callers = profile.callers.map((caller) => ({
+            ...caller,
+            effect: { ...caller.effect },
+          }));
+          profile.departed.forEach((id) => departHero(id));
+          for (const item of profile.items) {
+            const carrier = GS.hero('pippa') ?? GS.data.party[0];
+            if (carrier && !GS.hasItem(item)) GS.addItem(item, carrier.id);
+          }
         }
         this.started = true;
         AUDIO.stopMusic();
@@ -460,7 +628,9 @@ export class TitleScene extends Phaser.Scene {
         const ch6Spawn = ch6Profile ? chapter6DevSpawn(devMap, ch6Profile.state) : null;
         const ch7Profile = isChapter7 ? chapter7DevProfile(params.get('devState')) : null;
         const ch7Spawn = ch7Profile ? chapter7DevSpawn(devMap, ch7Profile.state) : null;
-        let spawnPx = ch7Spawn ?? ch6Spawn ?? ch5Spawn ?? ch4Spawn ?? (ch3Spawn
+        const ch8Profile = isChapter8 ? chapter8DevProfile(params.get('devState')) : null;
+        const ch8Spawn = ch8Profile ? chapter8DevSpawn(devMap, ch8Profile.state) : null;
+        let spawnPx = ch8Spawn ?? ch7Spawn ?? ch6Spawn ?? ch5Spawn ?? ch4Spawn ?? (ch3Spawn
           ? { x: ch3Spawn.x, y: ch3Spawn.y, facing: ch3Spawn.facing }
           : { x: spawn.x * TILE_PX + TILE_PX / 2, y: spawn.y * TILE_PX, facing: 'down' as Facing });
         // Any rollout map can opt into an exact authored micro-scene without

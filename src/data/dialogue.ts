@@ -4178,7 +4178,25 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   // — the §A5 next leg: Bert offers the China flight (bertAirBeat, ch7→ch8) —
   bert_china_ask: [
     "@Uncle Bert taps the river charts. \"Word came up the wire — paper's gone WRONG away east. Temple-folk fold little paper guards to keep a place safe, and lately the guards have been... unfolding themselves. The locket's humming about it. That'll be number eight.\"",
-    '@"Lucille can\'t land on water, so I\'ll set you down at LOTUS HARBOR and you go up the river from there. Say the word and we fly."',
+    '@"Lucille can get us to the eastern river connection, but Lotus Harbor belongs to the water. I\'ll put you beside the riverboat; the bargeman owns the last leg. Say the word and we fly."',
+  ],
+  ch8_riverboat_handoff: [
+    '(Lucille settles beside a broad brown river, well west of Lotus Harbor. A red-canopied riverboat knocks gently against the landing below.)',
+    '@Uncle Bert points down the gangplank. "This is as far east as Lucille goes. The bargeman knows Lotus Harbor, and I\'ll keep this landing open whenever you need the old network back."',
+  ],
+  ch8_riverboat_board: [
+    '@The Lotus Bargeman checks every rope twice. "Lotus Harbor on the next bend. Keep your feet inside the boat and your questions outside the engine. The engine is shy."',
+    '(The riverboat pushes away. Lucille stays at the western landing, small and silver behind you.)',
+  ],
+  ch8_riverboat_return: [
+    '@The Lotus Bargeman tips his hat toward the west. "Back to Lucille\'s landing? River remembers both directions. It never locks a traveller in."',
+  ],
+  ch8_yak_depart: [
+    '(The waiting Yak lowers one enormous shoulder. Its saddle carries blankets, a route bell, and—without explanation—a little satellite dish.)',
+    '@The Yak Handler tightens one strap. "The forest-to-temple climb belongs to the Yak. She knows this road already—hold on, let her choose the switchbacks, and do not insult the dish."',
+  ],
+  ch8_yak_arrive: [
+    '(The Yak Express climbs out of the spores in three patient switchbacks and steps onto Mt. Shu\'s white lower terrace. Its route bell rings once. The whole mountain answers.)',
   ],
 
   // — Lotus Harbor signs —
@@ -4201,6 +4219,91 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   npc_lh_lantern_girl: [
     '@(A girl strings paper lanterns the length of the market.) I fold them tight and true, the way Grandmother showed me — but lately, come morning, some have re-folded themselves into shapes I never taught them. Crane-shapes. Teeth-shapes. I don\'t like the teeth ones.',
   ],
+  npc_lh_yak_handler: [
+    '@The Yak Handler has been waiting so patiently that the Yak has begun waiting for HIM. "She will not take the high route hungry, and the route bell has gone quiet. I have treats. What I lack is a traveller she respects."',
+  ],
+  npc_lotus_bargeman: [
+    '@The Lotus Bargeman watches the repaired lock cycle through fresh red paint. "That Clicker boy told us every move before he made it. Hard to blame a hand when the whole harbor saw the ghost signal arrive after he let go."',
+  ],
+  ch8_lock_footprint: [
+    '(The repaired Bamboo Road lock cycles beneath fresh signal-red paint. Its crane rests over the empty safe sluice; the public command board still preserves Milo\'s narrated clearing sequence.)',
+  ],
+  npc_mt_shu_elder: [
+    '@The Mt. Shu elder draws a line in ash no longer than two floor tiles. "The mountain is not impressed by distance. When the lesson is ready, run less."',
+  ],
+
+  // — Chapter 8 regional quests: start / active / interaction / retry / close —
+  q_brushes_start: [
+    '@The Calligrapher shows you three empty red loops on her brush rack. "River, kiln, cloud—my best three. Bring all of them home and I will finish the temple banner. The Scroll of Calm is yours when the reward fits safely in your bag."',
+  ],
+  q_brushes_active: ['@"Three brushes," the Calligrapher reminds you. "One near the low river trail, one by the old kiln, one under the cloud-cap. The rack will remember each one you recover."'],
+  q_brushes_river: ['(A long river-hair brush is wedged beneath a wet root. You free it; the ferrule is cold, but every bristle is straight.)', '@Recovered: RIVER BRUSH.'],
+  q_brushes_kiln: ['(The kiln brush lies in blue-white ash beside the Porcelain Warlord\'s basin. Its handle is warm enough to feel alive.)', '@Recovered: KILN BRUSH.'],
+  q_brushes_cloud: ['(A white-tipped brush hangs from the underside of a giant cap, painting one slow line through the spores whenever the forest breathes.)', '@Recovered: CLOUD BRUSH.'],
+  q_brushes_gathered: ['(All three red loops on the recovered-brush rack are marked. Carry the brushes back to the Calligrapher.)'],
+  q_brushes_full: ['@The Calligrapher keeps the returned brushes and rolled Scroll of Calm on her dry shelf. "Make one space. The banner and your reward will both wait, and neither will become two rewards."'],
+  q_brushes_done: [
+    '(The Calligrapher sets the three brushes into their marked rack, then draws one unbroken black line down the finished Mt. Shu banner.)',
+    '@"Steady hands," she says, giving you the reusable Scroll of Calm. "Call me when the world will not hold still. I owe YOU one quiet line."',
+  ],
+  q_brushes_post: ['@The finished temple banner dries above three occupied red loops. "Every bristle home," says the Calligrapher. "Every line honest."'],
+  q_brushes_footprint_banner: ['(The finished Mt. Shu banner hangs over the painted gate. Its single calm stroke does not waver in the river wind.)'],
+  q_brushes_footprint_rack: ['(The recovered-brush rack is marked RIVER / KILN / CLOUD. All three loops are occupied.)'],
+
+  q_false_fold_start: [
+    '@The Lantern Girl points out three tooth-shaped lanterns on three different harbor terraces. "Read the bad creases first. Then refold them as cranes. I want the harbor to wake under wings, not teeth."',
+  ],
+  q_false_fold_active: ['@"Three false folds," says the Lantern Girl. "Old ferry steps, market string, civic terrace. Read before you refold, or the paper bites back."'],
+  q_false_fold_lantern_1: ['(At the old ferry steps, a tooth-fold hides a long honest wing crease. You mark the first false lantern.)'],
+  q_false_fold_lantern_2: ['(Above the market string, the second lantern has folded its painted smile inward into teeth. You mark the second false crease.)'],
+  q_false_fold_lantern_3: ['(On the civic terrace, the third tooth-fold matches the first two. Together their marks reveal the true crane pattern.)'],
+  q_false_fold_read: ['(Under the lantern paint, three matching creases run the wrong direction. Once read together, they form the Hush\'s tooth pattern—and reveal the honest crane fold beneath.)'],
+  q_false_fold_refold: ['(One by one, the tooth folds open. Three honest paper cranes replace them, their wings facing the river.)'],
+  q_false_fold_full: ['@The Lantern Girl cups the tiny Paper Crane reward in both hands. "It stays right here until your bag has room. The big lanterns will not unfold themselves again."'],
+  q_false_fold_done: ['@"No teeth," the Lantern Girl says, looking up at three crane lanterns. She presses a thumbnail-sized Paper Crane into your hand. "If the dark folds wrong around YOU, call me. I know the honest crease now."'],
+  q_false_fold_post: ['@The Lantern Girl counts the silhouettes overhead. "Wing, wing, wing. Good. Tomorrow morning they will still be wings."'],
+  q_false_fold_footprint: ['(Three honest crane lanterns fly over the harbor terraces where the tooth-folds used to hang.)'],
+
+  q_yak_waits_start: [
+    '@The Yak Handler offers a feedbag of Yak Treats. "She waits at the high depot. Feed her, water the climbing dish, and ring the route bell. Walk the scenic loop with her so she knows the road is a road again."',
+  ],
+  q_yak_waits_treats_full: ['@The Yak Handler keeps the feedbag hooked beside him. "Make room and ask again. A hungry Yak is patient; a duplicated feedbag is how legends become property damage."'],
+  q_yak_waits_active: ['@"Treats at the high depot," says the Yak Handler. "Then water, bell, loop. She will tell you whether the route is repaired by moving exactly one eyebrow."'],
+  q_yak_waits_feed: ['(The waiting Yak eats one hay-cake, then the entire feedbag, then considers the buckle. One eyebrow moves. This is apparently approval.)'],
+  q_yak_waits_route: ['(Fresh water fills the climbing dish. The repaired route bell rings clear, and the Yak walks the opened scenic depot loop without once stopping to argue with the mountain.)'],
+  q_yak_waits_full: ['@The Yak Handler keeps the Jade Salamander tied safely to the repaired bell. "The route stays open. Make one bag space; the charm will wait for the traveller who earned it."'],
+  q_yak_waits_done: ['@The Yak Handler unties a Jade Salamander from the route bell. "You waited for her to choose the road. She noticed. When the road gets hot around YOU, call us; we know the cool way through."'],
+  q_yak_waits_post: ['@The fed Yak circles the open scenic loop and rings the repaired route bell with her shoulder on every lap.'],
+  q_yak_waits_footprint: ['(The Yak\'s dish is full, the route bell is repaired, and the scenic depot loop stands open.)'],
+
+  q_harbor_balance_start: [
+    '@The Harbor Master taps an empty scale beam. "Two tide-weights walked off in the lock panic—one by the old ferry steps, one at the east landing. Balance the quay, clear the stranded allotment, and stock the market fairly."',
+  ],
+  q_harbor_balance_active: ['@"West ferry steps and east landing," says the Harbor Master. "Two weights, one honest beam. Then the market gets exactly what the river brought."'],
+  q_harbor_balance_weight_1: ['(The west tide-weight is caught beneath an old ferry rope. You free it and carry its stamped half back toward the scales.)'],
+  q_harbor_balance_weight_2: ['(The east tide-weight rests beside the market landing. Its stamp matches the west half; together they can make the beam honest.)'],
+  q_harbor_balance_weights: ['(The two tide-weights settle into opposite pans. The beam comes level; painted marks prove neither side has been shaved.)'],
+  q_harbor_balance_delivered: ['(With the scales honest again, the quay clears. Porters carry equal allotments uphill and the Grand Market shelf fills from end to end.)'],
+  q_harbor_balance_full: ['@The Harbor Master loops the River Beads around the balanced beam. "They wait here until your bag can carry them. The quay stays cleared and the shelf stays stocked."'],
+  q_harbor_balance_done: ['@The Harbor Master gives you the River Beads. "Every hand took its weight today. When YOUR beam tips, call Lotus Harbor. We will put a shoulder under it."'],
+  q_harbor_balance_post: ['@The Harbor Master checks the level beam, the clear quay, and the stocked shelf. "Fair weight. Fair road. Fair day."'],
+  q_harbor_balance_footprint: ['(The quay scales balance exactly. The working lane is clear, and the Grand Market shelf is fully stocked.)'],
+
+  q_empty_chair_start: [
+    '@The Tea-House Monk covers a small empty cup. "An old friend still has a chair at Mt. Shu. Brew here where the river cools the first pour. Carry it covered. Leave it steaming at the chair; do not wait for anyone to sit."',
+  ],
+  q_empty_chair_active: ['@"River-cool the first pour here," says the Tea-House Monk. "Then the empty chair in the elder\'s court. Warmth can arrive even when a person cannot."'],
+  q_empty_chair_brewed: ['(The remembrance tea steeps amber, then cools beside the river until its steam curls in one thin, unbroken line. You cover the cup for Mt. Shu.)'],
+  q_empty_chair_offered: ['(You set the cup on the low table beside the empty remembrance chair. It remains there, steaming gently in the mountain air.)'],
+  q_empty_chair_full: ['@The Tea-House Monk keeps the Temple Incense dry beside the second cup. "Make room. The offering remains offered, and gratitude does not multiply because a bag was full."'],
+  q_empty_chair_done: ['@The Tea-House Monk does not ask whether anyone sat down. He gives you Temple Incense and pours a second cup. "If YOU ever wait alone, call. I will keep this one hot."'],
+  q_empty_chair_post: ['@The Tea-House Monk pours two cups, as always. One is served. One is remembered.'],
+  q_empty_chair_footprint: ['(A covered cup remains at the temple remembrance chair, always freshly steaming.)'],
+
+  q_lotus_jade_cache: ['(Behind the old ferry stones, a lacquer box holds a cool green JADE BI DISC wrapped in oil-paper.)'],
+  q_bamboo_islet_cache: ['(The repaired lock exposes a tiny river islet. Beneath its marker waits a dry HARBOR LANTERN.)'],
+  q_spore_kiln_cache: ['(The Warlord\'s cracked kiln hides one flawless BLUE-WHITE VASE under the ash.)'],
+  q_mt_shu_jade_cache: ['(An honest crease in the guardian screen opens onto a palm-sized TERRACOTTA FIGURE.)'],
 
   // — the §A8 Ch.8 shop (the Harbor Market shelf) —
   shop_lotus_harbor_greet: ['@The Harbor Master slides the whole shelf your way — buns and tea and broth, a bamboo hat, a silk coat, an antidote for the wood, a lucky paper crane. \"Fair prices, fair weather, fair warning about the mountain. What\'ll it be?\"'],
@@ -4216,16 +4319,105 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   // — Mt. Shu Temple sign —
   sign_mt_shu_temple: ['(An inscription worn smooth around the great bell-frame:) HERE HANGS THE VOICE OF THE MOUNTAIN. Ring it true and the valley hears. (Someone has brushed, hastily, below:) the paper got in. the bell will not ring. wake it.'],
 
+  // — Chapter 8 compatibility scenes: actual missing Trust/Clicker beats —
+  ch8_trust_open: [
+    '(At the painted gate, a porter caught in Hush-static moves when {rex} reaches through him. The party sees the borrowed step. Nobody cheers. {faye} takes one half-step back.)',
+    '@"You let him go," {faye} says. Not a question. {rex} does. The porter blinks, himself again, and the space between the children does not close quite all the way.',
+  ],
+  ch8_trust_esc1: [
+    '@{faye} keeps watching the freed porter rub his hands. "He remembers hearing you from the inside," she says. "That has to cost something, even when it works."',
+  ],
+  ch8_trust_esc2: [
+    '@{milo} talks too quickly. "It is just inputs. A temporary control layer. Totally fine." He stops. "I said that too fast, didn\'t I." Nobody answers.',
+  ],
+  ch8_clicker_seed: [
+    '(A market lantern pulley lurches when {milo} tests the Clicker. One tiny paper float rolls over a cabbage and stops.)',
+    '@"Input lag," {milo} says. The cabbage disagrees. Everybody laughs, but {milo} checks the signal log twice before he pockets the remote.',
+  ],
+  ch8_trust_esc3: [
+    '(At the Bamboo Road lock, {rex} could borrow a worker and clear the jam in seconds. He does not. {faye} notices the hand he keeps closed around the Locket.)',
+    '@"Good," she says, too softly for the crowd. The fact that she needed to say it is louder than the river.',
+  ],
+  ch8_clicker_crisis: [
+    '(The lock gates reverse. A passenger barge slews sideways toward the spillway while the crane above it swings on a command {milo} did not send.)',
+    '@Someone sees the Clicker in {milo}\'s hand. "He did it!" {milo} stares at the live signal, white-faced. "That packet has my name on it. It is not my INPUT."',
+  ],
+  ch8_clicker_clearing: [
+    '@{milo} climbs onto the lock rail and holds the Clicker where everyone can see it. "I narrate everything. LEFT: close the empty east sluice. A: release the unmanned winch. RIGHT: swing the bare crane. DOWN: lower the empty gate. Nobody under it. Nobody in it. I checked."',
+    '(Each machine moves exactly as named. The barge slides into still water. Every passenger steps onto the quay.)',
+    '@{milo} takes both hands off the Clicker. A second signal still flashes across the lock—and orders the occupied gate shut. The Harbor Master catches the spoof on the public board. The crowd sees it too.',
+    '@The Lotus Bargeman grips {milo}\'s shoulder. "You saved every soul on my boat and showed us the ghost wearing your name. If your people ever need a harbor moved, call me."',
+  ],
+  ch8_trust_esc4: [
+    '@In the Spore Forest, {pippa} stops at a fork only she can read. "The left crease is painted on. The right one is real." She looks up at {rex}. "And choosing it was ME, yes? ...Yes. I needed to hear myself say it."',
+  ],
+  ch8_trust_esc4_elder: [
+    '(At the same forest fork, a fresh temple annotation marks the painted-left crease and the true-right hinge. Whoever reads it can take the safe route; no absent child is required to open the mountain.)',
+  ],
+  ch8_trust_climax: [
+    '(The false-fold gallery whispers in every paper mouth: HOW DO YOU KNOW THE BOY IS NOT HOLDING YOUR STRINGS RIGHT NOW?)',
+    '@The party separates by one careful step. The easy answer would be for {rex} to take one will and make everyone safe. He opens his hand instead. The Locket stays dark.',
+  ],
+  ch8_trust_resolve_free: [
+    '@{pippa} crosses the space first and puts her tiny hand in {rex}\'s open one. "I followed because I chose you, giant. Kindly stop looking surprised." The others close ranks around them, freely.',
+  ],
+  ch8_trust_resolve_strings_stay: [
+    '@{pippa} studies the open hand for a long time. "You pulled once. You listened after. And you did not keep reaching back through time until my answer pleased you." She takes the hand. "We repair this forward."',
+  ],
+  ch8_trust_resolve_strings_leave: [
+    '@{pippa} does not take the hand. "I believe you are trying. I do not yet believe I can hear my own choices beside that power." She gives {rex} her exact, formal salute. "I am going home by my road. Do not rebuild a version of me that stayed."',
+  ],
+  ch8_trust_resolve_neutral: [
+    '@No old answer is forced into the silence. The party preserves exactly who is here and who is away, and carries the undecided truth forward without naming it STRINGS or FREE.',
+  ],
+  ch8_pippa_creases: [
+    '@{pippa} catches a spore-damp paper scrap before it blows uphill. "These trail marks are folded, not drawn. The false creases point at the temple; the honest crease leaves us a clean way through."',
+    '(She pins the scrap beneath a stone with its true edge facing north. The next paper marker can be read before it can misdirect anyone.)',
+  ],
+  ch8_pippa_creases_elder: [
+    '(A spore-damp paper marker lies pinned beneath a stone, its false creases crossed out in temple ink. The surviving fold points north and leaves a clean route through the upper forest.)',
+  ],
+  ch8_false_folds_pippa: [
+    '@{pippa} walks beneath the paper guardians and points without hesitation. "Tooth fold: false. Shoulder crease: false. The hinge under the left wing is real. Follow the honest creases and they cannot turn the hall around us."',
+  ],
+  ch8_false_folds_elder: [
+    '@The temple elder has annotated the guardian screen in fresh black ink: FALSE TEETH. FALSE SHOULDER. TRUE HINGE BELOW LEFT WING. "The paper taught us by failing to hide it," he says.',
+  ],
+  ch8_elder_teleport_beta: [
+    '@The elder watches {rex} sprint the full court and strike the far wall face-first. He waits for the soot to settle. "You run too much. Run less."',
+    '(He marks a short line in ash—only two tiles long. {rex} takes one quick dash, catches the world between steps, and arrives at the other end with his eyebrows intact.)',
+    '@TELEPORT BETA awakened. A short dash can reach visited, story-open towns. Walls still win arguments and still charge the attempt.',
+  ],
+  ch8_elder_teleport_beta_done: [
+    '@The elder points to the short ash line. "Less," he reminds {rex}. The lesson has already been given; wisdom does not need a second unlock flag.',
+  ],
+  awake_teleport_b: [
+    '@The elder watches {rex} sprint the full court and strike the far wall face-first. He waits for the soot to settle. "You run too much. Run less."',
+    '(He marks a short line in ash. One quick dash catches the world between steps. TELEPORT BETA awakened.)',
+  ],
+
   // — §A6 BOSS 8 — the Paper Dragon (the phase machine reads these) —
   dragon_air: ['(The Dragon uncoils off the bell-frame and POURS itself into the air — a long bright ribbon of folded paper, weightless, wheeling out of every reach. Bats and fists pass clean through it. It needs bringing DOWN.)'],
   dragon_burn: ['(The Dragon is failing — and rather than fall, it tips its own head to a temple candle and CATCHES. Fire runs the length of it in a heartbeat.)', '@(A dry papery roar, faster now, brighter:) "BURN, then. Burn BRIGHT. The Hush burns brightest of all at the very end—"'],
   dragon_burning: ['(It is all flame now, folding and unfolding twice as fast, a blazing origami comet loose in the bell-court. It will not last long like this — but neither, it clearly intends, will you.)'],
 
   // — the boss-trigger approach + the win (OverworldScene paperDragonBossScene) —
-  paper_dragon_door: ['(The bell-court is hushed and high and wrapped in cloud. Around the great bell coils a DRAGON of folded paper, beautiful and wrong, the Hush rustling under every crease. {pippa} squints up at it and tugs {rex}\'s sleeve. "Its weak points are FAKE," she says. "False folds — I can see the real creases under them. When it comes down, hit where I tell you.")'],
+  paper_dragon_door: ['(The bell-court is hushed and high and wrapped in cloud. Around the great bell coils a DRAGON of folded paper, beautiful and wrong, the Hush rustling under every crease. The elder\'s ink marks show the true hinge beneath its false armor. When it comes down, hit the honest crease.)'],
+  paper_dragon_door_pippa: ['(The bell-court is hushed and high and wrapped in cloud. Around the great bell coils a DRAGON of folded paper, beautiful and wrong. {pippa} tugs {rex}\'s sleeve. "Its weak points are FAKE. I can see the real crease underneath. When it comes down, hit where I tell you.")'],
+  paper_dragon_door_elder: ['(The bell-court is hushed and high and wrapped in cloud. The elder\'s black annotation runs across the nearest screen: AIRBORNE PAPER CANNOT BE STRUCK. VOLT OR ROCKETS GROUND IT. TRUE HINGE BELOW LEFT WING.)'],
   paper_dragon_win: [
     '(The last fire gutters out, and the long body comes apart in the air — a hundred soft scraps of plain paper, cooling, drifting down to settle over the bell-court like the quietest snow. The Hush goes out of every one of them.)',
-    '@(The temple elder steps from behind the bell, unhurried, brushing ash from his sleeve.) "You came up the mountain at a dead run, all five of you, and you WON by standing still long enough to look. There — now you understand the lesson. Take the bell\'s voice with you."',
+    '@(The temple elder steps from behind the bell, unhurried, brushing ash from his sleeve.) "You came up the mountain at a dead run, all of you, and you WON by standing still long enough to look. There — now you understand the lesson. Take the bell\'s voice with you."',
+  ],
+  paper_fan_get: [
+    '(The elder folds one unburned square into a broad PAPER FAN and places it in your hands. Its ribs hold the Dragon\'s honest final crease.)',
+    '@Got the PAPER FAN. The bell-court path settles into a safe place to begin again.',
+  ],
+  paper_fan_full: [
+    '@The elder keeps the folded Paper Fan on the ash line. "Make one space. The Dragon will remain defeated, the reward will remain one reward, and the bell will wait."',
+  ],
+  mt_shu_temple_fan_wait: [
+    '(The bell is free, but the elder still guards the Paper Fan below. Claim the Dragon\'s reward before ringing the mountain\'s Heartlight.)',
   ],
   mt_shu_temple_early: ['(The great bell hangs silent under the coiled paper thing — it will not ring, not while the Hush is folded into the rafters. The resonance keeps its peace until the Paper Dragon is unmade.)'],
 
@@ -4242,7 +4434,8 @@ export const DIALOGUE: Record<string, DialogueScript> = {
 
   // — the §A6 arrival (OverworldScene ch8ArrivalScene) —
   ch8_arrival: [
-    '(Lucille banks low over a bright river crowded with boats, and sets the party down on the ghats of LOTUS HARBOR — lacquer-red gates, a thousand paper lanterns, a guzheng drifting somewhere up the market over the smell of tea and river-mud.)',
+    '(The riverboat rounds the final bend and LOTUS HARBOR opens above it — crescent ghats, lacquer-red gates, a thousand paper lanterns, and a guzheng drifting over tea steam and river-mud.)',
+    '(The Bargeman brings the hull alongside the west quay. Lucille is nowhere on the water; she waits safely back at the river connection, exactly where Bert promised.)',
     '@"Up the river and up the mountain," says {rex}, shading his eyes at the green hills beyond the town. "...When did UP start meaning trouble every single time?"',
   ],
 

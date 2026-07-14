@@ -379,20 +379,58 @@ const CH7: Cutscene[] = [
   { id: 'ch7_cinema', chapter: 'ch7', beats: [CH7_BEATS.cinema] },
 ];
 
+const CH8_BEATS = {
+  riverboat: panels('riverboat_to_lotus_harbor')[0],
+  arrival: panels('lotus_harbor_arrival')[0],
+  spore: panels('spore_forest_scramble')[0],
+  yak: panels('yak_express_to_mt_shu')[0],
+  falseFolds: panels('paper_guardians_false_folds')[0],
+  dragon: panels('paper_dragon_reveal')[0],
+  dragonDeparted: panels('paper_dragon_reveal_departed')[0],
+  heartlight: panels('temple_bell_resonance')[0],
+  heartlightDeparted: panels('temple_bell_resonance_departed')[0],
+} satisfies Record<string, CutsceneBeat>;
+
+export type Ch8PartyCutsceneMoment = 'dragon' | 'heartlight';
+export type Ch8PartyCutsceneId =
+  | 'ch8_dragon'
+  | 'ch8_dragon_departed'
+  | 'ch8_heartlight'
+  | 'ch8_heartlight_departed';
+
+/** Keep post-Trust stills honest for both the Pippa-present and departed paths. */
+export function ch8PartyCutsceneId(
+  moment: Ch8PartyCutsceneMoment,
+  pippaPresent: boolean,
+): Ch8PartyCutsceneId {
+  return `ch8_${moment}${pippaPresent ? '' : '_departed'}` as Ch8PartyCutsceneId;
+}
+
 const CH8: Cutscene[] = [
+  // Gallery order is canonical. Runtime uses only the contextual one-panel
+  // entries below, so chapter entry cannot reveal the forest, Dragon, or bell.
   {
     id: 'ch8_journey',
     chapter: 'ch8',
-    beats: panels(
-      'riverboat_to_lotus_harbor',
-      'lotus_harbor_arrival',
-      'spore_forest_scramble',
-      'yak_express_to_mt_shu',
-      'paper_guardians_false_folds',
-      'paper_dragon_reveal',
-      'temple_bell_resonance',
-    ),
+    beats: [
+      CH8_BEATS.riverboat,
+      CH8_BEATS.arrival,
+      CH8_BEATS.spore,
+      CH8_BEATS.yak,
+      CH8_BEATS.falseFolds,
+      CH8_BEATS.dragon,
+      CH8_BEATS.heartlight,
+    ],
   },
+  { id: 'ch8_riverboat', chapter: 'ch8', beats: [CH8_BEATS.riverboat] },
+  { id: 'ch8_arrival', chapter: 'ch8', beats: [CH8_BEATS.arrival] },
+  { id: 'ch8_spore', chapter: 'ch8', beats: [CH8_BEATS.spore] },
+  { id: 'ch8_yak', chapter: 'ch8', beats: [CH8_BEATS.yak] },
+  { id: 'ch8_false_folds', chapter: 'ch8', beats: [CH8_BEATS.falseFolds] },
+  { id: 'ch8_dragon', chapter: 'ch8', beats: [CH8_BEATS.dragon] },
+  { id: 'ch8_dragon_departed', chapter: 'ch8', beats: [CH8_BEATS.dragonDeparted] },
+  { id: 'ch8_heartlight', chapter: 'ch8', beats: [CH8_BEATS.heartlight] },
+  { id: 'ch8_heartlight_departed', chapter: 'ch8', beats: [CH8_BEATS.heartlightDeparted] },
 ];
 
 const CH9: Cutscene[] = [

@@ -80,9 +80,13 @@ export function initNativeShell(): void {
   // durable storage: best-effort, browser and WebView alike (ADR-018 family)
   try {
     if (typeof navigator !== 'undefined' && navigator.storage?.persist) {
-      void navigator.storage.persist().then((granted) => {
-        if (import.meta.env.DEV) console.info(`[native] storage.persist() -> ${granted}`);
-      });
+      void navigator.storage.persist()
+        .then((granted) => {
+          if (import.meta.env.DEV) console.info(`[native] storage.persist() -> ${granted}`);
+        })
+        .catch(() => {
+          /* persistence permission unavailable or denied — ordinary saves still work */
+        });
     }
   } catch {
     /* storage manager unavailable — play on */

@@ -237,7 +237,7 @@ export const SHOPS: Record<string, ShopDef> = {
     stock: [
       'baozi', 'jiaozi', 'congee', 'mooncake', 'jade_tea',
       'bamboo_hat', 'silk_changshan', 'lacquer_robe',
-      'spore_antidote', 'paper_crane_charm',
+      'spore_antidote',
     ],
     greet: 'shop_lotus_harbor_greet',
     farewell: 'shop_lotus_harbor_bye',

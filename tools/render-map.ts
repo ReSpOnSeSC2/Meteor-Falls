@@ -221,7 +221,9 @@ function contactSheet(title: string, ids: string[], cellW: number, cellMaxH: num
       const x = PAD + c*(colW+GAP);
       fillRect(sheet, x, y, colW, BAR + cell.img.h + 8, [28,30,38]);
       fillRect(sheet, x, y, colW, BAR, C_BAR);
-      text(sheet, `${cell.name}  (${cell.id})`, x+8, y+8, C_TXT, 2);
+      const label = `${cell.name}  (${cell.id})`;
+      const labelScale = textW(label, 2) <= colW - 16 ? 2 : 1;
+      text(sheet, label, x+8, y + (labelScale === 2 ? 8 : 11), C_TXT, labelScale);
       const imgX = x + Math.floor((colW - cell.img.w)/2);
       blit(sheet, cell.img, Math.max(x+4, imgX), y + BAR + 4);
     }
@@ -320,6 +322,20 @@ const SETS: Record<string, { title: string; ids: string[]; cellW: number; cellH:
       'chandrapore', 'monsoon_road', 'night_train', 'palace_throne',
       ...Object.keys(MAPS)
         .filter((id) => /^chandrapore_unit_\d+$/.test(id))
+        .sort((a, b) => Number(a.slice(a.lastIndexOf('_') + 1)) - Number(b.slice(b.lastIndexOf('_') + 1))),
+    ],
+    cellW: 560, cellH: 460,
+  },
+  ch8: {
+    title: 'METEOR FALLS - CHAPTER 8: THE PAPER DRAGON (CHINA)',
+    // The four production maps lead the sheet. Lotus tenancy is discovered from
+    // the assembled registry so appended unit_4+ interiors can never disappear
+    // from design review; numeric sorting preserves the historical 0..3 prefix.
+    ids: [
+      'lotus_harbor', 'bamboo_road', 'spore_forest', 'mt_shu_temple',
+      'citysvc_lotus_harbor_hotel_room',
+      ...Object.keys(MAPS)
+        .filter((id) => /^lotus_harbor_unit_\d+$/.test(id))
         .sort((a, b) => Number(a.slice(a.lastIndexOf('_') + 1)) - Number(b.slice(b.lastIndexOf('_') + 1))),
     ],
     cellW: 560, cellH: 460,
