@@ -36,7 +36,7 @@ export const AWAKENINGS: Record<string, AwakeningDef> = Object.fromEntries(
       ability: 'vibe_surge_a',
       flag: 'awake_surge_a',
       dialogue: 'awake_old_light',
-      toast: '{rex} awakened VIBE SURGE Alpha!',
+      toast: '{rex} awakened VIBE SURGE Alpha! Choose VIBE on the next turn.',
     }),
     W({
       id: 'last_spark',

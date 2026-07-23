@@ -79,7 +79,7 @@ export function freshMushroomize(): MushroomizeState {
 }
 
 export interface GameStateData {
-  version: 27;
+  version: 28;
   party: HeroState[];
   guest: string | null; // e.g. Chad tagging along
   keyItems: string[];
@@ -244,7 +244,7 @@ export function newGameData(): GameStateData {
   rex.bag = ['cracked_bat', 'corn_dog', 'corn_dog'];
   rex.equip = { weapon: 'cracked_bat' };
   return {
-    version: 27,
+    version: 28,
     party: [rex],
     guest: null,
     keyItems: [],

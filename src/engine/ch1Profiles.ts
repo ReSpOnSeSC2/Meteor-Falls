@@ -136,6 +136,7 @@ const WAKE = ['op_fell', 'op_house', 'meteor_fell', 'intro_done'] as const;
 const CRATER_READY = [...WAKE, 'chad_joined', 'ch1_hill_entry_warning_seen', CH1_STORY_FLAGS.metGlint] as const;
 const SENTINEL_WON = [
   ...CRATER_READY,
+  CH1_STORY_FLAGS.surgeAwake,
   CH1_STORY_FLAGS.sentinelRepelled,
   CH1_STORY_FLAGS.sentinelHusk,
   CH1_STORY_FLAGS.glintWalkHome,
@@ -317,7 +318,7 @@ function storyProfile(state: Chapter1DevState): Chapter1DevProfile {
     case 'sentinelTurn2':
       return makeProfile(state, { flags: CRATER_READY, point: P.crater, party: [rex(2)], guest: 'chad', keyItems: ['star_locket'], cash: 24, frontier: 'crater:sentinel_battle', battle: sentinelBattle(1) });
     case 'sentinelTurn5':
-      return makeProfile(state, { flags: CRATER_READY, point: P.crater, party: [rex(2)], guest: 'chad', keyItems: ['star_locket'], cash: 24, frontier: 'crater:sentinel_battle', battle: sentinelBattle(4) });
+      return makeProfile(state, { flags: [...CRATER_READY, CH1_STORY_FLAGS.surgeAwake], point: P.crater, party: [rex(2)], guest: 'chad', keyItems: ['star_locket'], cash: 24, frontier: 'crater:sentinel_battle', battle: sentinelBattle(4) });
     case 'postSentinel':
       return makeProfile(state, { flags: SENTINEL_WON, point: P.crater, party: [rex(3)], keyItems: ['star_locket'], cash: 36, frontier: 'crater:sentinel_after' });
     case 'walkHome':

@@ -19,6 +19,7 @@ export function chapter1BannerTag(phase: Chapter1Phase): string | undefined {
  * separate from the world-state flags that unlock later gameplay. */
 export const CH1_STORY_FLAGS = {
   metGlint: 'met_glint',
+  surgeAwake: 'awake_surge_a',
   sentinelRepelled: 'sentinel_repelled',
   sentinelHusk: 'sentinel_husk_left',
   sentinelAfterSeen: 'ch1_sentinel_after_seen',
@@ -90,7 +91,11 @@ export function planCh1CraterStory(
   const walkFlagWrong = zapperHasClaimedGlint
     ? isSet(CH1_STORY_FLAGS.glintWalkHome)
     : !isSet(CH1_STORY_FLAGS.glintWalkHome);
-  if (!isSet(CH1_STORY_FLAGS.sentinelHusk) || walkFlagWrong) return ready('sentinel_victory_repair');
+  if (
+    !isSet(CH1_STORY_FLAGS.surgeAwake)
+    || !isSet(CH1_STORY_FLAGS.sentinelHusk)
+    || walkFlagWrong
+  ) return ready('sentinel_victory_repair');
   if (!isSet(CH1_STORY_FLAGS.sentinelAfterSeen)) return ready('sentinel_after');
   return done();
 }

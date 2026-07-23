@@ -1,5 +1,6 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DIALOGUE } from '../data/dialogue';
+import { availableAbilities } from '../data/heroes';
 import { BAG_MAX } from '../data/items';
 import {
   CH1_FAYE_PAN_ID,
@@ -564,6 +565,9 @@ describe('Chapter 1 crater, porch, and Tick transactions', () => {
     await expect(ch1Runtime().craterScene.call(scene)).rejects.toThrow('aftermath interrupted');
     expect(GS.data.keyItems.filter((id) => id === CH1_STAR_LOCKET_ID)).toHaveLength(1);
     expect(GS.flag(CH1_STORY_FLAGS.sentinelRepelled)).toBe(true);
+    expect(GS.flag(CH1_STORY_FLAGS.surgeAwake)).toBe(true);
+    expect(availableAbilities('rex', GS.hero('rex')!.level, (flag) => GS.flag(flag) === true))
+      .toContain('vibe_surge_a');
     expect(GS.flag(CH1_STORY_FLAGS.sentinelHusk)).toBe(true);
     expect(GS.flag(CH1_STORY_FLAGS.glintWalkHome)).toBe(true);
     expect(GS.flag(CH1_STORY_FLAGS.sentinelAfterSeen)).toBe(false);

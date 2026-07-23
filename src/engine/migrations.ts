@@ -117,6 +117,11 @@
  * v26 to v27 (2026-07 Chapter 1 production recovery): the orphaned downtown
  * pocket and four superseded hill-map ids recover to one phase-safe Otterbrook
  * anchor. Recursive Held Breath snapshots use the same deterministic step.
+ *
+ * v27 to v28 (2026-07 Sentinel awakening recovery): a repelled Hush Sentinel
+ * is irreversible proof that Jay reached the fight which teaches Vibe Surge
+ * Alpha. Repair the missing awakening flag in affected saves and nested Held
+ * Breath snapshots; `met_glint` alone is intentionally not enough proof.
  */
 import { ITEMS, BAG_MAX } from '../data/items';
 import { MGR_ROW } from '../data/arcade';
@@ -132,7 +137,7 @@ import { CH8_MAP_IDS, CH8_WORLD, LOTUS_HARBOR_UNIT_IDS, nativeFeet as chapter8Na
 import { CH9_MAP_IDS, CH9_WORLD, nativeFeet as chapter9NativeFeet } from '../data/maps_ch9';
 import { CH1_RETIRED_MAP_IDS, CH1_WORLD } from '../data/maps_ch1';
 
-export const CURRENT_SAVE_VERSION = 27;
+export const CURRENT_SAVE_VERSION = 28;
 
 export const CHAPTER1_LAYOUT_RECOVERY = Object.freeze(Object.fromEntries(
   CH1_RETIRED_MAP_IDS.map((mapId) => [mapId, CH1_WORLD.recovery]),
@@ -1125,6 +1130,15 @@ export const MIGRATIONS: MigrationStep[] = [
         raw.facing = target.facing;
       }
       raw.version = 27;
+      return raw;
+    },
+  },
+  {
+    to: 28,
+    migrate(raw) {
+      const flags = isObj(raw.flags) ? raw.flags : undefined;
+      if (flags?.sentinel_repelled === true) flags.awake_surge_a = true;
+      raw.version = 28;
       return raw;
     },
   },

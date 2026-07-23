@@ -22,8 +22,8 @@ describe('GameState serialization (Prompt 2: round-trip)', () => {
     expect(GS.hasItem('salt_shaker')).toBe(true);
   });
 
-  it('starts v27 with an inactive field status and an empty departed-hero bench', () => {
-    expect(GS.data.version).toBe(27);
+  it('starts v28 with an inactive field status and an empty departed-hero bench', () => {
+    expect(GS.data.version).toBe(28);
     expect(GS.data.mushroomize).toEqual({ active: false, phase: 0, source: null, recovery: null });
     expect(GS.data.departedHeroes).toEqual({});
   });

@@ -1641,7 +1641,7 @@ describe('save migration registry -- v24 to v25: Chapter 8 production rollout', 
 
   it('preserves malformed/current/future echo JSON byte-exact while outer future saves reject', () => {
     const malformed = '{not-json';
-    const current = ' { "version": 27, "custom": true } ';
+    const current = ' { "version": 28, "custom": true } ';
     const future = JSON.stringify({ version: 99, custom: true });
     const raw = v24At('otterbrook');
     raw.echoes = {
@@ -1701,8 +1701,8 @@ describe('save migration registry -- v25 forward: Chapter 9 production rollout',
   ] as const;
 
   it('pins the current version and every stable Chapter 9 map through CH9_WORLD', () => {
-    expect(CURRENT_SAVE_VERSION).toBe(27);
-    expect(newGameData().version).toBe(27);
+    expect(CURRENT_SAVE_VERSION).toBe(28);
+    expect(newGameData().version).toBe(28);
     expect(Object.keys(CHAPTER9_LAYOUT_RECOVERY)).toEqual([...CH9_MAP_IDS]);
     expect(Object.keys(CHAPTER9_PARKING_RECOVERY)).toEqual([...CH9_MAP_IDS]);
 
@@ -1899,8 +1899,8 @@ describe('save migration registry -- v26 to v27: Chapter 1 retired-map recovery'
   };
 
   it('pins the exact retired roster to the one phase-safe Otterbrook anchor', () => {
-    expect(CURRENT_SAVE_VERSION).toBe(27);
-    expect(newGameData().version).toBe(27);
+    expect(CURRENT_SAVE_VERSION).toBe(28);
+    expect(newGameData().version).toBe(28);
     expect(Object.keys(CHAPTER1_LAYOUT_RECOVERY)).toEqual([...CH1_RETIRED_MAP_IDS]);
     expect(CH1_WORLD.recovery).toMatchObject({
       mapId: 'otterbrook',
@@ -1987,5 +1987,54 @@ describe('save migration registry -- v26 to v27: Chapter 1 retired-map recovery'
       { ...newGameData(), version: CURRENT_SAVE_VERSION + 1 },
       newGameData(),
     )).toThrow(/unknown save version/);
+  });
+});
+
+describe('save migration registry -- v27 to v28: Sentinel awakening recovery', () => {
+  const v27Save = (flags: Record<string, number | boolean>): Record<string, unknown> => {
+    const raw = newGameData() as unknown as Record<string, unknown>;
+    raw.version = 27;
+    raw.flags = { ...flags };
+    return raw;
+  };
+
+  it('backfills Surge Alpha from irreversible Sentinel-victory proof', () => {
+    const raw = v27Save({ sentinel_repelled: true, custom_story_truth: 9 });
+    const before = JSON.parse(JSON.stringify(raw)) as Record<string, unknown>;
+    const migrated = migrateSave(raw, newGameData());
+
+    expect(migrated).toEqual({
+      ...before,
+      version: CURRENT_SAVE_VERSION,
+      flags: {
+        sentinel_repelled: true,
+        custom_story_truth: 9,
+        awake_surge_a: true,
+      },
+    });
+  });
+
+  it('does not grant Surge merely because Jay met Glint before the battle', () => {
+    const migrated = migrateSave(v27Save({ met_glint: true }), newGameData());
+
+    expect(migrated.version).toBe(CURRENT_SAVE_VERSION);
+    expect(migrated.flags.met_glint).toBe(true);
+    expect(migrated.flags.awake_surge_a).toBeUndefined();
+  });
+
+  it('repairs affected Held Breath snapshots through the same migration chain', () => {
+    const child = v27Save({ sentinel_repelled: true });
+    const outer = newGameData();
+    outer.echoes.stack = [{
+      choice: 'ch6_string',
+      chapter: 6,
+      json: JSON.stringify(child),
+      at: 12,
+    }];
+
+    const migrated = migrateSave(outer, newGameData());
+    const childAfter = JSON.parse(migrated.echoes.stack[0].json);
+    expect(childAfter.version).toBe(CURRENT_SAVE_VERSION);
+    expect(childAfter.flags.awake_surge_a).toBe(true);
   });
 });

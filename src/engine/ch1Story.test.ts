@@ -39,6 +39,7 @@ describe('Chapter 1 one-stage recovery planning', () => {
 
     on.add(CH1_STORY_FLAGS.sentinelRepelled);
     expect(planCh1CraterStory(isSet, 1).stage?.id).toBe('sentinel_victory_repair');
+    on.add(CH1_STORY_FLAGS.surgeAwake);
     on.add(CH1_STORY_FLAGS.sentinelHusk);
     on.add(CH1_STORY_FLAGS.glintWalkHome);
     expect(planCh1CraterStory(isSet, 1).stage?.id).toBe('sentinel_after');
@@ -48,6 +49,21 @@ describe('Chapter 1 one-stage recovery planning', () => {
     on.add(CH1_STORY_FLAGS.zapperHit);
     expect(planCh1CraterStory(isSet, 1).stage?.id).toBe('sentinel_victory_repair');
     on.delete(CH1_STORY_FLAGS.glintWalkHome);
+    expect(planCh1CraterStory(isSet, 1).status).toBe('done');
+  });
+
+  it('repairs a post-Sentinel save that is missing Surge Alpha', () => {
+    const on = new Set<string>([
+      CH1_STORY_FLAGS.metGlint,
+      CH1_STORY_FLAGS.sentinelRepelled,
+      CH1_STORY_FLAGS.sentinelHusk,
+      CH1_STORY_FLAGS.glintWalkHome,
+      CH1_STORY_FLAGS.sentinelAfterSeen,
+    ]);
+    const isSet = (flag: string): boolean => on.has(flag);
+
+    expect(planCh1CraterStory(isSet, 1).stage?.id).toBe('sentinel_victory_repair');
+    on.add(CH1_STORY_FLAGS.surgeAwake);
     expect(planCh1CraterStory(isSet, 1).status).toBe('done');
   });
 

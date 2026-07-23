@@ -4,10 +4,15 @@
   "private": true,
   "type": "module",
   "description": "METEOR FALLS — an EarthBound-style RPG. Five kids, ten Embers, one planet at the end of the road.",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "vite --host",
     "build": "tsc --noEmit && npm run validate && vite build",
     "preview": "vite preview --host",
+    "serve:dist": "node tools/serve-game.mjs",
+    "serve:lan": "npm run build && node tools/serve-game.mjs",
     "validate": "vite-node tools/content-validate.ts && npm run mapeditor:check",
     "mapeditor:gen": "vite-node tools/mapeditor/gen-manifest.ts",
     "mapeditor:twoton": "vite-node tools/mapeditor/author-twoton.ts",

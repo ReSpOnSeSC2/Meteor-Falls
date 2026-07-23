@@ -12768,6 +12768,11 @@ export class OverworldScene extends Phaser.Scene {
   private commitSentinelVictory(): void {
     GS.data.guest = null;
     this.removeFollower('chad');
+    // The turn-two presentation teaches Surge in BattleScene, but victory is the
+    // durable transaction boundary. Enforce the story invariant here as well so
+    // an interrupted presentation or recovered save can never be post-Sentinel
+    // while Jay is still missing the ability the encounter exists to teach.
+    GS.setFlag(CH1_STORY_FLAGS.surgeAwake);
     GS.setFlag(CH1_STORY_FLAGS.sentinelRepelled);
     GS.setFlag(CH1_STORY_FLAGS.sentinelHusk);
     const walkingHome = !GS.flag(CH1_STORY_FLAGS.zapperHit) && !GS.flag(CH1_STORY_FLAGS.zapperDone);

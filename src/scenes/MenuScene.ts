@@ -522,7 +522,11 @@ export class MenuScene extends Phaser.Scene {
         }
         return a.heal === true && a.power > 0 && !hero.down && hero.pp >= a.pp;
       };
-      const labels = ids.map((id) => `${ABILITIES[id].name}  ${ABILITIES[id].pp}pp`);
+      const labels = ids.map((id) => {
+        const a = ABILITIES[id];
+        const fieldUsableKind = isTeleportAbilityId(id) || (a.heal === true && a.power > 0);
+        return `${a.name}  ${a.pp}pp${fieldUsableKind ? '' : '  [BATTLE]'}`;
+      });
       const disabled = new Set(ids.map((id, i) => (usable(id) ? -1 : i)).filter((i) => i >= 0));
       const sel = await this.pick({
         x: s(96),

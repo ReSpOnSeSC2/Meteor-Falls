@@ -32,7 +32,13 @@ import {
 
 const WAKE = ['op_fell', 'op_house', 'meteor_fell', 'intro_done'] as const;
 const CRATER_READY = [...WAKE, 'chad_joined', 'ch1_hill_entry_warning_seen', 'met_glint'] as const;
-const SENTINEL_WON = [...CRATER_READY, 'sentinel_repelled', 'sentinel_husk_left', 'glint_walk_home'] as const;
+const SENTINEL_WON = [
+  ...CRATER_READY,
+  'awake_surge_a',
+  'sentinel_repelled',
+  'sentinel_husk_left',
+  'glint_walk_home',
+] as const;
 const WALK_HOME = [...SENTINEL_WON, 'ch1_sentinel_after_seen'] as const;
 const PORCH_REWARD = [
   ...SENTINEL_WON.filter((flag) => flag !== 'glint_walk_home'),
@@ -208,7 +214,7 @@ const EXPECTED: readonly ExpectedProfile[] = [
   row('bedroomWake', ['op_fell', 'op_house'], 'bedroom', 1, 'start', 12, 0, 'opening:4', { noLocket: true }),
   row('preSentinel', CRATER_READY, 'crater', 2, 'start', 24, 0, 'crater:sentinel_battle', { guest: 'chad' }),
   row('sentinelTurn2', CRATER_READY, 'crater', 2, 'start', 24, 0, 'crater:sentinel_battle', { guest: 'chad' }),
-  row('sentinelTurn5', CRATER_READY, 'crater', 2, 'start', 24, 0, 'crater:sentinel_battle', { guest: 'chad' }),
+  row('sentinelTurn5', [...CRATER_READY, 'awake_surge_a'], 'crater', 2, 'start', 24, 0, 'crater:sentinel_battle', { guest: 'chad' }),
   row('postSentinel', SENTINEL_WON, 'crater', 3, 'start', 36, 0, 'crater:sentinel_after'),
   row('walkHome', WALK_HOME, 'porch', 3, 'start', 36, 0, 'porch:zapper'),
   row('porchPending', WALK_HOME, 'porch', 3, 'start', 36, 0, 'porch:zapper'),
